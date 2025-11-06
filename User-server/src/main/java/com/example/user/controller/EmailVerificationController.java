@@ -1,6 +1,7 @@
 package com.example.user.controller;
 
-import com.example.common.dto.ApiResponse;
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.example.domain.dto.ApiResponse;
 import com.example.user.service.EmailVerificationService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -14,82 +15,124 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
  * 邮箱验证控制器
+ * 提供邮箱验证码发送和验证功能
  */
 @Slf4j
+@Api(tags = "邮箱验证", description = "邮箱验证码管理")
 @RestController
-@Api(tags = "用户管理", description = "用户相关接口")
-@RequestMapping("/api/users")
+@RequestMapping("/api/email")
 public class EmailVerificationController {
     
-    /*
-     * @auther Junjie 
-     * @version 1.0.0
-     * @date 2025-11-06
-     * 自动装配用户邮箱验证服务
-     */
     @Autowired
     private EmailVerificationService emailVerificationService;
     
     /**
-     * @author Junjie
-     * @version 2.0.0
-     * @date 2025-11-06
-     * 重新发送验证邮件（通过邮箱地址）
-     * 不需要登录，直接提供邮箱地址即可
+     * 发送邮箱验证码
      */
-    @ApiOperation(value = "重新发送验证邮件（通过邮箱地址）", notes = "当用户注册后未收到验证邮件或邮件过期时，可通过此接口重新发送")
-    @PostMapping("/resend-verification")
-    public ResponseEntity<ApiResponse> resendVerificationEmail(
-        @ApiParam(value = "email", required = true, example = "user@example.com") 
-        @RequestParam String email) {
+    @ApiOperation(value = "发送邮箱验证码", notes = "向指定邮箱发送验证码")
+    @SentinelResource(value = "sendVerificationCode", blockHandler = "handleBlock")
+    @PostMapping("/send-code")
+    public ResponseEntity<ApiResponse<Void>> sendVerificationCode(
+            @ApiParam(value = "邮箱地址", required = true)
+            @RequestBody Map<String, String> request) {
         
         try {
-            Map<String, Object> result = emailVerificationService.resendVerificationEmailByEmail(email);
+            String email = request.get("email");
             
-            if ((Boolean) result.get("success")) {
-                return ResponseEntity.ok(ApiResponse.success(
-                    "验证邮件已重新发送到您的邮箱", 
-                    result.get("email")
-                ));
-            } else {
-                return ResponseEntity.badRequest()
-                    .body(ApiResponse.error((String) result.get("message")));
+            if (email == null || email.isEmpty()) {
+                return ResponseEntity.ok(ApiResponse.error(400, "邮箱不能为空"));
             }
+            
+            // 检查是否已发送验证码
+            if (emailVerificationService.hasVerificationCode(email)) {
+                long remainingTime = emailVerificationService.getCodeRemainingTime(email);
+                return ResponseEntity.ok(ApiResponse.error(429, 
+                    "验证码已发送，请在 " + remainingTime + " 秒后重试"));
+            }
+            
+            boolean sent = emailVerificationService.sendVerificationCode(email);
+            
+            if (sent) {
+                return ResponseEntity.ok(ApiResponse.success("验证码已发送"));
+            } else {
+                return ResponseEntity.ok(ApiResponse.error(500, "发送失败"));
+            }
+            
         } catch (Exception e) {
-            log.error("重发验证邮件失败: {}", email, e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("发送失败，请稍后重试"));
+            log.error("发送验证码失败", e);
+            return ResponseEntity.ok(ApiResponse.error(500, "发送失败"));
         }
     }
     
     /**
-     * @author Junjie
-     * @version 2.0.0
-     * @date 2025-11-06
-     * 获取邮箱验证状态
+     * 验证邮箱验证码
      */
-    @ApiOperation(value = "获取邮箱验证状态", notes = "获取当前用户的邮箱验证状态")
-    @GetMapping("/verification-status")
-    public ResponseEntity<ApiResponse> getVerificationStatus(
-        @ApiParam(value = "request:请求数据(1:email)",required = true) 
-        @RequestBody HttpServletRequest request) {
-        String authHeader = request.getHeader("Authorization");
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest()
-                .body(ApiResponse.error("未授权，请先登录"));
-        }
+    @ApiOperation(value = "验证邮箱验证码", notes = "验证用户输入的验证码")
+    @PostMapping("/verify-code")
+    public ResponseEntity<ApiResponse<Boolean>> verifyCode(
+            @ApiParam(value = "验证请求", required = true)
+            @RequestBody Map<String, String> request) {
+        
         try {
-            String token = authHeader.substring(7);
-            Map<String, Object> status = emailVerificationService.getVerificationStatus(token);
-            return ResponseEntity.ok(ApiResponse.success("获取成功", status));
+            String email = request.get("email");
+            String code = request.get("code");
+            
+            if (email == null || code == null) {
+                return ResponseEntity.ok(ApiResponse.error(400, "参数不完整"));
+            }
+            
+            boolean valid = emailVerificationService.verifyCode(email, code);
+            
+            if (valid) {
+                return ResponseEntity.ok(ApiResponse.success(Boolean.TRUE, "验证成功"));
+            } else {
+                return ResponseEntity.ok(ApiResponse.error(400, "验证码错误或已过期"));
+            }
+            
         } catch (Exception e) {
-            log.error("获取验证状态失败", e);
-            return ResponseEntity.internalServerError()
-                .body(ApiResponse.error("获取失败"));
+            log.error("验证码验证失败", e);
+            return ResponseEntity.ok(ApiResponse.error(500, "验证失败"));
         }
+    }
+    
+    /**
+     * 验证邮箱并激活用户
+     */
+    @ApiOperation(value = "验证邮箱并激活用户", notes = "验证码通过后激活用户账户")
+    @PostMapping("/verify-and-activate")
+    public ResponseEntity<ApiResponse<Void>> verifyAndActivate(
+            @ApiParam(value = "验证请求", required = true)
+            @RequestBody Map<String, String> request) {
+        
+        try {
+            String email = request.get("email");
+            String code = request.get("code");
+            
+            if (email == null || code == null) {
+                return ResponseEntity.ok(ApiResponse.error(400, "参数不完整"));
+            }
+            
+            boolean success = emailVerificationService.verifyEmailAndActivate(email, code);
+            
+            if (success) {
+                return ResponseEntity.ok(ApiResponse.success("邮箱验证成功，账户已激活"));
+            } else {
+                return ResponseEntity.ok(ApiResponse.error(400, "验证失败"));
+            }
+            
+        } catch (Exception e) {
+            log.error("邮箱验证失败", e);
+            return ResponseEntity.ok(ApiResponse.error(500, "验证失败"));
+        }
+    }
+    
+    /**
+     * Sentinel 限流处理
+     */
+    public ResponseEntity<ApiResponse<Void>> handleBlock(Map<String, String> request, 
+                                                         HttpServletRequest httpRequest) {
+        log.warn("请求被限流: {}", httpRequest.getRequestURI());
+        return ResponseEntity.ok(ApiResponse.error(429, "请求过于频繁，请稍后重试"));
     }
 }

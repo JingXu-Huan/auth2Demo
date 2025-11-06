@@ -11,19 +11,34 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
     username: root
-    password: 123456
+    password: Swu@789789
+
+  # 邮件配置（用于邮箱验证功能）
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: 
+    password: 
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
   data:
     redis:
+      host: localhost
       port: 6379
       database: 0
+      password:   # 生产环境必须设置密码
       lettuce:
         pool:
           max-active: 8
           max-idle: 8
           min-idle: 0
           max-wait: -1ms
-      host: localhost
 
   # RabbitMQ 配置
   rabbitmq:
@@ -49,6 +64,30 @@ spring:
       config:
         import-check:
           enabled: false                   # 禁用配置导入检查
+    sentinel:
+      enabled: true
+      eager: true
+      transport:
+        dashboard: localhost:8858  # Sentinel 控制台地址
+        port: 8720                 # 与控制台通信的端口（不同于 auth-server）
+      datasource:
+        # 流控规则数据源 (Nacos)
+        flow:
+          nacos:
+            server-addr: 154.219.109.125:8848
+            dataId: user-server-flow-rules
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+        # 降级规则数据源 (Nacos)
+        degrade:
+          nacos:
+            server-addr: 154.219.109.125:8848
+            dataId: user-server-degrade-rules
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+      filter:
+        enabled: true
+      web-context-unify: false
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -62,3 +101,34 @@ mybatis-plus:
       table-prefix: ""
       # 更新策略：包含 null 值
       update-strategy: ignored
+
+# Spring Boot Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: user-server
+
+# 服务间认证配置（必须与 auth-server 保持一致）
+service:
+  auth:
+    secret: your_32_character_secret_key_here_12345  # 必须至少32位
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+    swagger-model-name: 实体类列表
+  basic:
+    enable: false
+  production: false

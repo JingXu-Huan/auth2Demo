@@ -8,7 +8,13 @@
         <option value="$PROJECT_DIR$/User-server/pom.xml" />
         <option value="$PROJECT_DIR$/OAuth2-Gateway/pom.xml" />
         <option value="$PROJECT_DIR$/common/pom.xml" />
+        <option value="$PROJECT_DIR$/domain/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/common1/src/main/java/com/example/domain/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK" />

@@ -1,17 +1,15 @@
 package com.example.common.converter;
 
-import com.example.common.dto.UserDTO;
-import com.example.common.model.User;
-import com.example.common.vo.UserRegisterVO;
-import com.example.common.vo.UserVO;
+import com.example.domain.dto.UserDTO;
+import com.example.domain.model.User;
+import com.example.domain.vo.UserRegisterVO;
+import com.example.domain.vo.UserVO;
 
 /**
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
- * 用户对象转换器
- * 负责 Model、DTO、VO 之间的转换
- */
+ * 用户对象转换�? * 负责 Model、DTO、VO 之间的转�? */
 public class UserConverter {
     
     /**
@@ -62,10 +60,10 @@ public class UserConverter {
             return null;
         }
         
-        return new UserRegisterVO(
-            user.getId(),
-            user.getUsername(),
-            user.getEmail()
-        );
+        UserRegisterVO vo = new UserRegisterVO();
+        vo.setUserId(user.getId());
+        vo.setUsername(user.getUsername());
+        vo.setEmail(user.getEmail());
+        return vo;
     }
 }

@@ -19,31 +19,73 @@ spring:
       config:
         import-check:
           enabled: false                   # 禁用配置导入检查
+    sentinel:
+      enabled: true
+      eager: true  # 启动时立即初始化 Sentinel
+      transport:
+        dashboard: localhost:8858  # Sentinel 控制台地址
+        port: 8719                 # 与控制台通信的端口
+      datasource:
+        # 流控规则数据源 (Nacos)
+        flow:
+          nacos:
+            server-addr: 154.219.109.125:8848
+            dataId: oauth2-auth-server-flow-rules
+            groupId: SENTINEL_GROUP
+            rule-type: flow
+        # 降级规则数据源 (Nacos)
+        degrade:
+          nacos:
+            server-addr: 154.219.109.125:8848
+            dataId: oauth2-auth-server-degrade-rules
+            groupId: SENTINEL_GROUP
+            rule-type: degrade
+        # 系统规则数据源 (Nacos)
+        system:
+          nacos:
+            server-addr: 154.219.109.125:8848
+            dataId: oauth2-auth-server-system-rules
+            groupId: SENTINEL_GROUP
+            rule-type: system
+      # Sentinel 过滤器配置
+      filter:
+        enabled: true
+      # Sentinel Web 配置
+      web-context-unify: false
+  
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: Swu@789789
+  
   redis:
     host: localhost
     port: 6379
     database: 0
+    password:   # 生产环境必须设置密码
     lettuce:
       pool:
         max-active: 8
         max-idle: 8
         min-idle: 0
         max-wait: -1ms
-    password:
 
 # 日志配置
 logging:
   level:
-    org.springframework.security: DEBUG
-    org.springframework.security.oauth2: DEBUG
+    root: INFO
+    org.springframework.security: INFO
+    org.springframework.security.oauth2: INFO
+    com.example: INFO
 
 # Gitee 第三方应用配置
 gitee:
   oauth:
     # 应用ID（Client ID，在Gitee第三方应用中获取）
-    client-id: d1a2ac4fff8f727fb348850d48f7a78e53b9435199364635c87e93cec30ebbb3
+    client-id: 
     # 应用密钥（Client Secret）
-    client-secret: 5131627b7d3f69838d9a155e78e8478b0779060551ff2da8c6615c885c5dbe4e
+    client-secret: 
     # 授权回调地址（需要在Gitee应用中配置）
     redirect-uri: http://localhost:8080/oauth/gitee/callback
     # 授权页面URL
@@ -62,3 +104,40 @@ knife4j:
   basic:
     enable: false
   production: false
+
+# Feign 配置
+feign:
+  sentinel:
+    enabled: true  # 启用 Feign Sentinel 支持
+  client:
+    config:
+      default:
+        connectTimeout: 5000  # 连接超时 5 秒
+        readTimeout: 10000    # 读取超时 10 秒
+        loggerLevel: BASIC    # 日志级别
+
+# Spring Boot Actuator 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,circuitbreakers,circuitbreakerevents
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+    ratelimiters:
+      enabled: true
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      application: oauth2-auth-server
+
+# 服务间认证配置
+service:
+  auth:
+    secret: your_32_character_secret_key_here_12345  # 必须至少32位

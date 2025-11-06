@@ -1,9 +1,10 @@
 package com.example.auth.service;
 
 import com.example.auth.config.GiteeProperties;
-import com.example.common.model.GiteeUser;
+import com.example.domain.model.GiteeUser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
+import com.example.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -39,8 +40,8 @@ public class GiteeOAuthService {
     }
     
     /**
-     * 通过授权码获取 access_token
-     * Gitee 回调后，用 code 换取 access_token
+     * 通过授权码获�?access_token
+     * Gitee 回调后，�?code 换取 access_token
      */
     public String getAccessToken(String code) {
         // 构建请求参数
@@ -51,7 +52,7 @@ public class GiteeOAuthService {
         params.put("client_secret", giteeProperties.getClientSecret());
         params.put("redirect_uri", giteeProperties.getRedirectUri());
         
-        // 发送 POST 请求
+        // 发�?POST 请求
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         
@@ -74,13 +75,13 @@ public class GiteeOAuthService {
      * 通过 access_token 获取用户信息
      */
     public GiteeUser getUserInfo(String accessToken) {
-        // 构建请求URL（Gitee API 需要在 URL 中传递 access_token）
+        // 构建请求URL（Gitee API 需要在 URL 中传�?access_token�?
         String url = UriComponentsBuilder
                 .fromHttpUrl(giteeProperties.getUserInfoUrl())
                 .queryParam("access_token", accessToken)
                 .toUriString();
         
-        // 发送 GET 请求
+        // 发�?GET 请求
         ResponseEntity<GiteeUser> response = restTemplate.getForEntity(
                 url,
                 GiteeUser.class

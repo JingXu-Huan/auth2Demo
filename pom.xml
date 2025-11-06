@@ -16,10 +16,11 @@
     <!-- 子模块 -->
     <modules>
         <module>common</module>
+        <module>domain</module>
         <module>oauth2-auth-server</module>
         <module>User-server</module>
         <module>Email-server</module>
-        <module>OAuth2-Gateway</module>
+        <module>Gateway</module>
     </modules>
 
     <!-- 版本管理 -->
@@ -32,8 +33,13 @@
         <spring-cloud.version>2021.0.8</spring-cloud.version>
         <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
         <spring-security-oauth2.version>2.3.4.RELEASE</spring-security-oauth2.version>
-        <mybatis-plus.version>3.5.3.1</mybatis-plus.version>
+        <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
+        <mybatis-plus.version>3.5.5</mybatis-plus.version>
         <mysql.version>8.0.33</mysql.version>
+        <springfox.version>3.0.0</springfox.version>
+        <knife4j.version>3.0.3</knife4j.version>
+        <jjwt.version>0.12.5</jjwt.version>
+        <validation-api.version>2.0.1.Final</validation-api.version>
     </properties>
 
     <!-- 依赖管理 -->
@@ -85,6 +91,41 @@
                 <groupId>mysql</groupId>
                 <artifactId>mysql-connector-java</artifactId>
                 <version>${mysql.version}</version>
+            </dependency>
+            
+            <!-- Springfox Swagger -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-swagger2</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+            
+            <!-- JWT -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            
+            <!-- Spring Security JWT -->
+            <dependency>
+                <groupId>org.springframework.security</groupId>
+                <artifactId>spring-security-jwt</artifactId>
+                <version>${spring-security-jwt.version}</version>
+            </dependency>
+            
+            <!-- Knife4j -->
+            <dependency>
+                <groupId>com.github.xiaoymin</groupId>
+                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <version>${knife4j.version}</version>
+            </dependency>
+            
+            <!-- Common Module -->
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>common</artifactId>
+                <version>${project.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

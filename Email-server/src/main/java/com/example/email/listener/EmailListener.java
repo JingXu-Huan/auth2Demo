@@ -26,7 +26,8 @@ public class EmailListener {
     private String fromEmail;
     
     /**
-     * 监听邮件发送队列（安全验证码等）
+     * 监听邮件发送队列（通用邮件发送）
+     * 注意：email.confirmation.queue 由 UserListener 处理，避免重复消费
      */
     @RabbitListener(queues = "email.send.queue")
     public void handleEmailSend(Map<String, Object> emailData) {
@@ -43,27 +44,6 @@ public class EmailListener {
             
         } catch (Exception e) {
             log.error("邮件发送失败", e);
-        }
-    }
-    
-    /**
-     * 监听用户注册确认邮件队列
-     */
-    @RabbitListener(queues = "email.confirmation.queue")
-    public void handleRegistrationConfirm(Map<String, Object> emailData) {
-        try {
-            String to = (String) emailData.get("to");
-            String subject = (String) emailData.get("subject");
-            String content = (String) emailData.get("content");
-            
-            log.info("收到注册确认邮件请求: to={}, subject={}", to, subject);
-            
-            sendEmail(to, subject, content);
-            
-            log.info("注册确认邮件发送成功: to={}", to);
-            
-        } catch (Exception e) {
-            log.error("注册确认邮件发送失败", e);
         }
     }
     

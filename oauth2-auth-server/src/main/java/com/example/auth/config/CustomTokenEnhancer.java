@@ -1,7 +1,7 @@
 package com.example.auth.config;
 
 import com.example.auth.feign.UserServiceClient;
-import com.example.common.dto.UserDetailsDTO;
+import com.example.domain.dto.UserDetailsDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 /**
  * 自定义 Token 增强器
- * 在 Token 中添加用户邮箱验证状态等额外信息
+ * 在 Token 中添加额外的用户信息
  */
 @Component
 public class CustomTokenEnhancer implements TokenEnhancer {
@@ -26,23 +26,26 @@ public class CustomTokenEnhancer implements TokenEnhancer {
     public OAuth2AccessToken enhance(OAuth2AccessToken accessToken, OAuth2Authentication authentication) {
         Map<String, Object> additionalInfo = new HashMap<>();
         
-        String username = authentication.getName();
+        // 获取用户名（实际是邮箱）
+        String email = authentication.getName();
         
-        // 获取用户详细信息
-        UserDetailsDTO userDetails = null;
-        if (username.contains("@")) {
-            userDetails = userServiceClient.getUserDetailsByEmail(username);
-        } else {
-            userDetails = userServiceClient.getUserDetails(username);
-        }
-        
-        if (userDetails != null) {
-            // 添加额外信息到 Token
-            additionalInfo.put("user_id", userDetails.getUserId());
-            additionalInfo.put("email", userDetails.getEmail());
-            additionalInfo.put("email_verified", userDetails.getEmailVerified());
-            additionalInfo.put("username", userDetails.getUsername());
-            additionalInfo.put("display_name", userDetails.getDisplayName());
+        try {
+            // 通过 Feign 调用 User-server 获取用户详细信息
+            UserDetailsDTO userDetails = userServiceClient.getUserDetailsByEmail(email);
+            
+            if (userDetails != null) {
+                // 添加用户ID
+                additionalInfo.put("user_id", userDetails.getUserId());
+                // 添加用户名
+                additionalInfo.put("username", userDetails.getUsername());
+                // 添加邮箱
+                additionalInfo.put("email", userDetails.getEmail());
+                // 添加登录方式
+                additionalInfo.put("provider", userDetails.getProvider());
+            }
+        } catch (Exception e) {
+            // 如果获取用户信息失败，只添加基本信息
+            additionalInfo.put("email", email);
         }
         
         ((DefaultOAuth2AccessToken) accessToken).setAdditionalInformation(additionalInfo);

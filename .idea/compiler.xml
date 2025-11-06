@@ -11,7 +11,8 @@
         <module name="email-server" />
         <module name="common" />
         <module name="user-server" />
-        <module name="oauth2-gateway" />
+        <module name="Gateway" />
+        <module name="domain" />
       </profile>
     </annotationProcessing>
   </component>
