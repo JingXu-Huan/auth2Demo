@@ -1,0 +1,78 @@
+server:
+  port: 9000
+spring:
+  application:
+    name: oauth2-gateway
+  thymeleaf:
+    check-template-location: false  # 网关不需要模板引擎
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        namespace: public                # 命名空间
+        group: DEFAULT_GROUP               # 分组
+      config:
+        import-check:
+          enabled: false                   # 禁用配置导入检查
+    gateway:
+      routes:
+        # ========== 公开接口（不需要认证） ==========
+        
+        # 授权服务器路由（OAuth2 登录和认证接口）
+        - id: auth-server
+          uri: http://localhost:8080
+          predicates:
+            - Path=/oauth/**,/login.html,/api/auth/**
+          filters:
+            - StripPrefix=0
+        
+        # 用户注册路由（公开）
+        - id: user-register
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/register
+          filters:
+            - StripPrefix=0
+        
+        # 邮箱验证路由（公开）
+        - id: user-confirm
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/confirm
+          filters:
+            - StripPrefix=0
+        
+        # 邮箱存在性检查路由（公开）
+        - id: user-email-check
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/users/exists/email/**
+          filters:
+            - StripPrefix=0
+        
+        # 安全验证接口（公开）
+        - id: security-verification
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/security/**
+          filters:
+            - StripPrefix=0
+        
+        # ========== 受保护接口（需要认证） ==========
+        
+        # 用户服务受保护路由
+        - id: user-server
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/**
+          filters:
+            - TokenRelay
+        
+        # 资源服务器路由
+        - id: resource-server
+          uri: http://localhost:8081
+          predicates:
+            - Path=/resource/**
+          filters:
+            - TokenRelay
+      # CORS 配置已完全移至 CorsConfig.java 类中处理

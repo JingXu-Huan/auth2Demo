@@ -1,0 +1,85 @@
+server:
+  port: 8083
+  # 用户服务网关地址（用于API调用）
+  user-service-url: http://localhost:9000
+  # 前端地址（用于邮件链接）
+  frontend-url: http://localhost:5173
+
+spring:
+  application:
+    name: email-server
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        namespace: public                # 命名空间
+        group: DEFAULT_GROUP               # 分组
+      config:
+        import-check:
+          enabled: false                   # 禁用配置导入检查
+  # 邮件配置
+  mail:
+    host: smtp.qq.com
+    port: 587
+    username: yangjj1235@qq.com
+    password: liunfvzmfjyodfde
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+  # RabbitMQ 配置
+  rabbitmq:
+    host: 154.219.109.125
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    # 连接超时配置
+    connection-timeout: 15000
+    # 消费者配置
+    listener:
+      simple:
+        acknowledge-mode: auto
+        concurrency: 5
+        max-concurrency: 10
+        prefetch: 1
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+          multiplier: 2
+
+  data:
+    redis:
+      port: 6379
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+      host: localhost
+
+
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.email.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: ""

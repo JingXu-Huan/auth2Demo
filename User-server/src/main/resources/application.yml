@@ -1,0 +1,64 @@
+server:
+  port: 8082
+
+spring:
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  application:
+    name: user-server
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+
+  data:
+    redis:
+      port: 6379
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+      host: localhost
+
+  # RabbitMQ 配置
+  rabbitmq:
+    host: 154.219.109.125
+    port: 5672
+    username: guest
+    password: guest
+    virtual-host: /
+    # 连接超时配置
+    connection-timeout: 15000
+    # 发布者确认
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    template:
+      mandatory: true
+
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        namespace: public                # 命名空间
+        group: DEFAULT_GROUP
+      config:
+        import-check:
+          enabled: false                   # 禁用配置导入检查
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.user.model
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: ""
+      # 更新策略：包含 null 值
+      update-strategy: ignored

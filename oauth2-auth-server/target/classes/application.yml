@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: oauth2-auth-server
+  
+  # 解决 Spring Boot 2.6+ 与 Swagger 3.0 的兼容性问题
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        namespace: public                # 命名空间
+        group: DEFAULT_GROUP               # 分组
+      config:
+        import-check:
+          enabled: false                   # 禁用配置导入检查
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
+    password:
+
+# 日志配置
+logging:
+  level:
+    org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
+
+# Gitee 第三方应用配置
+gitee:
+  oauth:
+    # 应用ID（Client ID，在Gitee第三方应用中获取）
+    client-id: d1a2ac4fff8f727fb348850d48f7a78e53b9435199364635c87e93cec30ebbb3
+    # 应用密钥（Client Secret）
+    client-secret: 5131627b7d3f69838d9a155e78e8478b0779060551ff2da8c6615c885c5dbe4e
+    # 授权回调地址（需要在Gitee应用中配置）
+    redirect-uri: http://localhost:8080/oauth/gitee/callback
+    # 授权页面URL
+    authorize-url: https://gitee.com/oauth/authorize
+    # 获取access_token的URL
+    access-token-url: https://gitee.com/oauth/token
+    # 获取用户信息的URL
+    user-info-url: https://gitee.com/api/v5/user
+
+# Knife4j 配置
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+    swagger-model-name: 实体类列表
+  basic:
+    enable: false
+  production: false
