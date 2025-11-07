@@ -1,4 +1,4 @@
-package com.example.common.exception;
+﻿package com.example.common.exception;
 
 import com.example.domain.vo.Result;
 import lombok.extern.slf4j.Slf4j;
@@ -13,17 +13,20 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.stream.Collectors;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 全局异常处理器
  * 统一处理各种异常，返回标准的错误响应
- * 
- * @author Cascade
- * @date 2025-11-02
  */
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理参数校验异常（@Valid）
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -42,6 +45,9 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理绑定异常
      */
     @ExceptionHandler(BindException.class)
@@ -60,6 +66,9 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理业务异常
      */
     @ExceptionHandler(BusinessException.class)
@@ -72,6 +81,9 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理非法参数异常
      */
     @ExceptionHandler(IllegalArgumentException.class)
@@ -84,6 +96,9 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理空指针异常
      */
     @ExceptionHandler(NullPointerException.class)
@@ -97,6 +112,9 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 处理其他未捕获的异常
      */
     @ExceptionHandler(Exception.class)

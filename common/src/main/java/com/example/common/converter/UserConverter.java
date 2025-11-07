@@ -9,10 +9,14 @@ import com.example.domain.vo.UserVO;
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
- * 用户对象转换�? * 负责 Model、DTO、VO 之间的转�? */
+ * 用户对象转换器
+ */
 public class UserConverter {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * User Entity -> UserVO
      */
     public static UserVO toVO(User user) {
@@ -33,6 +37,9 @@ public class UserConverter {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * UserDTO -> UserVO
      */
     public static UserVO dtoToVO(UserDTO dto) {
@@ -53,6 +60,9 @@ public class UserConverter {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * User Entity -> UserRegisterVO
      */
     public static UserRegisterVO toRegisterVO(User user) {

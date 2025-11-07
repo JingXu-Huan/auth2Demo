@@ -1,4 +1,4 @@
-package com.example.common.config;
+﻿package com.example.common.config;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -13,19 +13,34 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * Springfox 与 Spring Boot 2.6+ 兼容性配置
  * 通过 BeanPostProcessor 修复 WebMvcRequestHandlerProvider 的空指针问题
- * 
- * @author Common Module
- * @version 1.0.0
  */
 @Configuration
+
 public class SpringfoxWebMvcConfiguration {
 
+    /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
+     * BeanPostProcessor
+     * 修复 WebMvcRequestHandlerProvider 的空指针问题
+     */
     @Bean
     public static BeanPostProcessor springfoxHandlerProviderBeanPostProcessor() {
         return new BeanPostProcessor() {
 
+            /**
+             * @author Junjie
+             * @version 1.0.0
+             * @date 2025-11-06
+             * BeanPostProcessor
+             * 修复 WebMvcRequestHandlerProvider 的空指针问题
+             */
             @Override
             public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
                 if (bean instanceof WebMvcRequestHandlerProvider) {
@@ -34,6 +49,13 @@ public class SpringfoxWebMvcConfiguration {
                 return bean;
             }
 
+            /**
+             * @author Junjie
+             * @version 1.0.0
+             * @date 2025-11-06
+             * BeanPostProcessor
+             * 修复 WebMvcRequestHandlerProvider 的空指针问题
+             */
             private <T extends RequestMappingInfoHandlerMapping> void customizeSpringfoxHandlerMappings(List<T> mappings) {
                 List<T> copy = mappings.stream()
                         .filter(mapping -> mapping.getPatternParser() == null)
@@ -42,6 +64,13 @@ public class SpringfoxWebMvcConfiguration {
                 mappings.addAll(copy);
             }
 
+            /**
+             * @author Junjie
+             * @version 1.0.0
+             * @date 2025-11-06
+             * BeanPostProcessor
+             * 修复 WebMvcRequestHandlerProvider 的空指针问题
+             */
             @SuppressWarnings("unchecked")
             private List<RequestMappingInfoHandlerMapping> getHandlerMappings(Object bean) {
                 try {

@@ -17,11 +17,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 登录尝试过滤器
  * 在 OAuth2 登录前检查是否被锁定
- * 
- * @author Security Team
- * @version 1.0.0
  */
 @Slf4j
 @Component

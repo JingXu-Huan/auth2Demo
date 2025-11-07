@@ -8,11 +8,11 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 登录尝试服务
  * 防止暴力破解攻击
- * 
- * @author Security Team
- * @version 1.0.0
  */
 @Slf4j
 @Service

@@ -12,6 +12,9 @@ import javax.mail.internet.MimeMessage;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 邮件监听器
  * 监听邮件队列并发送邮件
  */
@@ -26,6 +29,9 @@ public class EmailListener {
     private String fromEmail;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 监听邮件发送队列（通用邮件发送）
      * 注意：email.confirmation.queue 由 UserListener 处理，避免重复消费
      */
@@ -48,6 +54,9 @@ public class EmailListener {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 发送邮件的通用方法
      */
     private void sendEmail(String to, String subject, String content) throws Exception {

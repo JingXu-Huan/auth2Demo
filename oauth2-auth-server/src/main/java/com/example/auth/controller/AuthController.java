@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 认证相关接口控制器
  * 提供用户注册、登录前的检查等功能
  */

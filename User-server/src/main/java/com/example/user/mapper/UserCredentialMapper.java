@@ -5,6 +5,9 @@ import com.example.domain.model.UserCredential;
 import org.apache.ibatis.annotations.*;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * UserCredential Mapper 接口
  * 用户凭证数据访问层
  */
@@ -12,6 +15,9 @@ import org.apache.ibatis.annotations.*;
 public interface UserCredentialMapper extends BaseMapper<UserCredential> {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 根据用户ID和登录方式查询凭证
      */
     @Select("SELECT * FROM user_credentials WHERE user_id = #{userId} AND provider = #{provider}")
@@ -19,6 +25,9 @@ public interface UserCredentialMapper extends BaseMapper<UserCredential> {
                                           @Param("provider") String provider);
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 根据第三方平台ID查询凭证
      */
     @Select("SELECT * FROM user_credentials WHERE provider = #{provider} AND provider_user_id = #{providerUserId}")
@@ -26,6 +35,9 @@ public interface UserCredentialMapper extends BaseMapper<UserCredential> {
                                                    @Param("providerUserId") String providerUserId);
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 更新密码
      */
     @Update("UPDATE user_credentials SET password_hash = #{passwordHash} WHERE user_id = #{userId} AND provider = 'email'")

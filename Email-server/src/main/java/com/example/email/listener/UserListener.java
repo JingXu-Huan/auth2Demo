@@ -9,6 +9,9 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 用户相关邮件监听器
  * 监听用户注册、验证等邮件发送任务
  */
@@ -26,6 +29,9 @@ public class UserListener {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 监听邮箱验证邮件队列
      */
     @RabbitListener(queues = "email.verification.queue")
@@ -49,6 +55,9 @@ public class UserListener {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 监听欢迎邮件队列
      */
     @RabbitListener(queues = "email.welcome.queue")
@@ -72,6 +81,9 @@ public class UserListener {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 监听确认邮件队列
      */
     @RabbitListener(queues = "email.confirmation.queue")

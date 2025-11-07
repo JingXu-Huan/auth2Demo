@@ -14,6 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 用户详情服务实现
  * 通过 Feign 调用 User-server 获取用户信息
  */

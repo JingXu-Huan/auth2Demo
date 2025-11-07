@@ -20,6 +20,9 @@ import javax.servlet.http.HttpSession;
 import java.util.*;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * Gitee OAuth 登录控制器
  * 处理 Gitee 第三方登录流程
  */

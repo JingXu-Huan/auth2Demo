@@ -18,6 +18,9 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 邮箱验证服务
  * 处理邮箱验证码的发送和验证
  */
@@ -42,6 +45,9 @@ public class EmailVerificationService {
     private static final int CODE_LENGTH = 6;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 发送验证码到指定邮箱
      */
     public boolean sendVerificationCode(String email) {
@@ -74,6 +80,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证邮箱验证码
      */
     public boolean verifyCode(String email, String code) {
@@ -103,6 +112,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证邮箱并激活用户
      */
     public boolean verifyEmailAndActivate(String email, String code) {
@@ -136,6 +148,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 检查验证码是否存在
      */
     public boolean hasVerificationCode(String email) {
@@ -144,6 +159,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 获取验证码剩余时间（秒）
      */
     public long getCodeRemainingTime(String email) {
@@ -153,6 +171,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 生成随机验证码
      */
     private String generateVerificationCode() {
@@ -165,6 +186,9 @@ public class EmailVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 构建邮件内容
      */
     private String buildEmailContent(String code) {

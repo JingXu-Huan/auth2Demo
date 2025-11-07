@@ -20,6 +20,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 用户服务
  * 处理用户相关的业务逻辑
  */
@@ -40,6 +43,9 @@ public class UserService {
     private RabbitTemplate rabbitTemplate;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 根据邮箱获取用户详情（用于登录认证）
      */
     @Cacheable(value = "userDetails", key = "#email")
@@ -59,6 +65,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 根据用户名获取用户详情
      */
     public UserDetailsDTO getUserDetailsByUsername(String username) {
@@ -71,6 +80,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 检查邮箱是否存在
      */
     public boolean checkEmailExists(String email) {
@@ -84,6 +96,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 检查用户名是否存在
      */
     public boolean checkUsernameExists(String username) {
@@ -97,6 +112,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 根据用户ID获取用户信息
      */
     public User getUserById(Long userId) {
@@ -109,6 +127,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 创建新用户（邮箱注册）
      */
     @Transactional(rollbackFor = Exception.class)
@@ -153,6 +174,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 创建或更新第三方登录用户
      */
     @Transactional(rollbackFor = Exception.class)
@@ -203,6 +227,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 更新用户信息
      */
     @Transactional(rollbackFor = Exception.class)
@@ -226,6 +253,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 修改密码
      */
     @Transactional(rollbackFor = Exception.class)
@@ -261,6 +291,9 @@ public class UserService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 发送欢迎邮件
      */
     private void sendWelcomeEmail(String email, String username) {

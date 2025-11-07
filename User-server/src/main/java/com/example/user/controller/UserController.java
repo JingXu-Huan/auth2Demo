@@ -23,6 +23,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 用户控制器
  * 提供用户相关的 REST API
  */

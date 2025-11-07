@@ -48,7 +48,14 @@ public class ServiceAuthFilter extends OncePerRequestFilter {
         "/v2/api-docs",
         "/doc.html"
     );
-    
+
+    /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
+     * 过滤器核心方法
+     * 检查请求URI并验证服务认证Token
+     */
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
                                    HttpServletResponse response, 

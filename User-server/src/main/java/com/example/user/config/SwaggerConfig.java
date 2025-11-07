@@ -7,11 +7,10 @@ import springfox.documentation.spring.web.plugins.Docket;
 import springfox.documentation.swagger2.annotations.EnableSwagger2WebMvc;
 
 /**
- * User 服务 Swagger 配置
- * 
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
+ * User 服务 Swagger 配置
  */
 @Configuration
 @EnableSwagger2WebMvc

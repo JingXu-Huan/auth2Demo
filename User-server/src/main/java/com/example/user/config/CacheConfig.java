@@ -32,6 +32,9 @@ import java.util.Map;
 public class CacheConfig {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 配置 RedisTemplate
      */
     @Bean
@@ -62,6 +65,9 @@ public class CacheConfig {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 配置缓存管理器
      */
     @Bean

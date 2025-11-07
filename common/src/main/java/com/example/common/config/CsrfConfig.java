@@ -1,20 +1,23 @@
-package com.example.common.config;
+﻿package com.example.common.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
-
 /**
- * CSRF 保护配置
- * 
- * @author Security Team
+ * @author Junjie
  * @version 1.0.0
+ * @date 2025-11-06
+ * CSRF 保护配置
  */
 @Configuration
+
 public class CsrfConfig {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 配置 CSRF Token 存储方式
      * 使用 Cookie 存储，便于前后端分离架构使用
      * 

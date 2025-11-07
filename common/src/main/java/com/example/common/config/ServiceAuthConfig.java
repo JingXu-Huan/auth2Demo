@@ -11,11 +11,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 服务间认证配置
  * 用于生成和验证服务间调用的 JWT Token
- * 
- * @author Common Module
- * @version 1.0.0
  */
 @Configuration
 @Slf4j
@@ -28,6 +28,9 @@ public class ServiceAuthConfig {
     private String serviceName;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 获取签名密钥
      * 将配置的密钥字符串转换为SecretKey对象
      */
@@ -37,9 +40,11 @@ public class ServiceAuthConfig {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 生成服务间调用的 JWT Token
      * Token 有效期为 1 小时
-     * 
      * @return JWT Token
      */
     public String generateServiceToken() {
@@ -59,8 +64,10 @@ public class ServiceAuthConfig {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证服务间调用的 Token
-     * 
      * @param token JWT Token
      * @return 是否有效
      */
@@ -78,8 +85,10 @@ public class ServiceAuthConfig {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 从 Token 中获取服务名称
-     * 
      * @param token JWT Token
      * @return 服务名称
      */

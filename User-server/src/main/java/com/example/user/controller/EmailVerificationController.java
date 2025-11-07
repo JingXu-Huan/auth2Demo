@@ -15,6 +15,9 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 邮箱验证控制器
  * 提供邮箱验证码发送和验证功能
  */
@@ -28,6 +31,9 @@ public class EmailVerificationController {
     private EmailVerificationService emailVerificationService;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 发送邮箱验证码
      */
     @ApiOperation(value = "发送邮箱验证码", notes = "向指定邮箱发送验证码")
@@ -66,6 +72,9 @@ public class EmailVerificationController {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证邮箱验证码
      */
     @ApiOperation(value = "验证邮箱验证码", notes = "验证用户输入的验证码")

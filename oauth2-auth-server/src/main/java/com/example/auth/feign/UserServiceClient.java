@@ -1,4 +1,4 @@
-package com.example.auth.feign;
+﻿package com.example.auth.feign;
 
 import com.example.domain.dto.UserDetailsDTO;
 import com.example.domain.vo.Result;
@@ -6,7 +6,13 @@ import com.example.domain.vo.UserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
+
+
+
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * User 服务 Feign 客户端
  * 用于调用 User-server 的接口
  */
@@ -14,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
     name = "user-server",
     fallback = com.example.auth.fallback.UserServiceClientFallback.class
 )
+
 public interface UserServiceClient {
     
     /**

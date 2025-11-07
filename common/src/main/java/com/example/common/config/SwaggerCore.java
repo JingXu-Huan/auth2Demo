@@ -9,17 +9,19 @@ import springfox.documentation.spi.DocumentationType;
 import springfox.documentation.spring.web.plugins.Docket;
 
 /** 
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * Swagger 核心配置工具类
  * 提供统一的 Swagger 文档配置
- * 
- * @author Common Module
- * @version 1.0.0
  */
 public class SwaggerCore {
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 默认的 Docket 构建器
-     * 
      * @param groupName 分组名称，用于区分不同的API文档
      * @param basePackage 扫描的包路径
      * @param title 文档标题
@@ -36,8 +38,10 @@ public class SwaggerCore {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 自定义 Docket 构建器
-     * 
      * @param groupName 分组名称
      * @param basePackage 扫描的包路径
      * @param title 文档标题
@@ -55,8 +59,10 @@ public class SwaggerCore {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 构建 API 基本信息
-     * 
      * @param title 文档标题
      * @param description 文档描述
      * @return ApiInfo 对象

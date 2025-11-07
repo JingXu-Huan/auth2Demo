@@ -30,6 +30,9 @@ public class SecurityConfig {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 配置Spring Security过滤链
      * 允许所有API请求通过，由ServiceAuthFilter进行服务间认证
      */

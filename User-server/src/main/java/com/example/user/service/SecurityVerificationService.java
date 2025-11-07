@@ -16,6 +16,9 @@ import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 安全验证服务
  * 处理密码验证、安全码等功能
  */
@@ -40,6 +43,9 @@ public class SecurityVerificationService {
     private static final int CODE_LENGTH = 6;
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证用户密码
      */
     public boolean validatePassword(Long userId, String password) {
@@ -73,6 +79,9 @@ public class SecurityVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 发送安全验证码
      */
     public boolean sendSecurityCode(String email) {
@@ -105,6 +114,9 @@ public class SecurityVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 验证安全码
      */
     public boolean verifySecurityCode(String email, String code) {
@@ -134,6 +146,9 @@ public class SecurityVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 生成安全验证码
      */
     private String generateSecurityCode() {
@@ -146,6 +161,9 @@ public class SecurityVerificationService {
     }
     
     /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-06
      * 构建安全验证码邮件内容
      */
     private String buildSecurityCodeEmail(String code) {

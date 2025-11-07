@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author Junjie
  * @version 1.0.0
- * @date 2025-11-07
+ * @date 2025-11-06
  * Sentinel 配置类
  * 配置流控规则和降级规则
  */

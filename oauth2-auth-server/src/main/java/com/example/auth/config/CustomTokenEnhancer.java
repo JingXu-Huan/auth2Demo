@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 自定义 Token 增强器
  * 在 Token 中添加额外的用户信息
  */

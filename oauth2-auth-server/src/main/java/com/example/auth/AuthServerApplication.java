@@ -9,10 +9,10 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.client.RestTemplate;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * OAuth2 授权服务器启动类
- * 
- * @author Cascade
- * @date 2025-11-02
  */
 @SpringBootApplication
 @EnableDiscoveryClient

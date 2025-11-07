@@ -13,6 +13,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * Gitee OAuth 服务
  * 处理 Gitee 授权登录的业务逻辑
  */

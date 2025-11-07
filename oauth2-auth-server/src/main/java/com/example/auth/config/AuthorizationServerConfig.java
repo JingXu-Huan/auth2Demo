@@ -13,9 +13,15 @@ import org.springframework.security.oauth2.config.annotation.web.configurers.Aut
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 
+/**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
+ * 授权服务器配置
+ * 继承认证服务器的基类
+ */
 @Configuration
-@EnableAuthorizationServer //启用授权功能
-//继承认证服务器的基类
+@EnableAuthorizationServer
 public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdapter {
 
     //导入认证管理器,密码模式使用他验证账号和密码

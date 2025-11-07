@@ -8,12 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 /**
- * Feign 请求拦截器
- * 为每个 Feign 请求添加服务认证 Token
- * 
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
+ * Feign 请求拦截器
+ * 为每个 Feign 请求添加服务认证 Token
  */
 @Component
 @Slf4j

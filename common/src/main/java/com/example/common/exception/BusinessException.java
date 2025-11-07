@@ -1,4 +1,4 @@
-package com.example.common.exception;
+﻿package com.example.common.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -11,6 +11,11 @@ import org.springframework.http.HttpStatus;
  * @version 1.0.0
  */
 @Getter
+/**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
+ */
 public class BusinessException extends RuntimeException {
     
     /**

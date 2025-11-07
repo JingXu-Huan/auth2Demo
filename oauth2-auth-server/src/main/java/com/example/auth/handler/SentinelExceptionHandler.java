@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * @author Junjie
  * @version 1.0.0
- * @date 2025-11-07
+ * @date 2025-11-06
  * Sentinel 异常处理器
  * 自定义被限流、降级、系统保护拦截时的响应
  */

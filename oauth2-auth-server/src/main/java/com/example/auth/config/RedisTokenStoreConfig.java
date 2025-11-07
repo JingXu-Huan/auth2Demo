@@ -7,8 +7,12 @@ import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.InMemoryTokenStore;
 import org.springframework.security.oauth2.provider.token.store.redis.RedisTokenStore;
 
-
-//redis配置
+/**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
+ * Redis Token存储配置
+ */
 @Configuration
 public class RedisTokenStoreConfig {
 

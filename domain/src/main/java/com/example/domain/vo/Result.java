@@ -1,4 +1,4 @@
-package com.example.domain.vo;
+﻿package com.example.domain.vo;
 
 import lombok.Data;
 
@@ -12,6 +12,11 @@ import java.io.Serializable;
  * @version 1.0.0
  */
 @Data
+/**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
+ */
 public class Result<T> implements Serializable {
     
     private static final long serialVersionUID = 1L;

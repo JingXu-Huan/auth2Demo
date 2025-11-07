@@ -15,6 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-06
  * 安全验证控制器
  * 提供密码验证、安全码等功能
  */

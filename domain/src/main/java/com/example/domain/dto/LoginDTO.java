@@ -1,4 +1,4 @@
-package com.example.domain.dto;
+﻿package com.example.domain.dto;
 
 import lombok.Data;
 
@@ -6,9 +6,9 @@ import javax.validation.constraints.NotBlank;
 
 /**
  * 登录DTO
- * 
- * @author Security Team
+ * @author Junjie
  * @version 1.0.0
+ * @date 2025-11-06
  */
 @Data
 public class LoginDTO {
