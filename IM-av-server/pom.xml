@@ -9,10 +9,10 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
-    <artifactId>IM-av-service</artifactId>
+    <artifactId>IM-av-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>IM-av-service</name>
-    <description>IM-av-service</description>
+    <name>IM-av-server</name>
+    <description>IM-av-server</description>
     <url/>
     <licenses>
         <license/>

@@ -3,15 +3,16 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.example</groupId>
-        <artifactId>oauth2-demo</artifactId>
-        <version>1.0.0</version>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.5.7</version>
+        <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>org.example</groupId>
-    <artifactId>IM-file-service</artifactId>
+    <artifactId>IM-search-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>IM-file-service</name>
-    <description>IM-file-service</description>
+    <name>IM-search-service</name>
+    <description>IM-search-service</description>
     <url/>
     <licenses>
         <license/>
