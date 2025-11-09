@@ -6,6 +6,110 @@
 - **基础路径**: /api/v1/messages  
 - **版本**: v1.0.0
 
+**鉴权描述**:
+建立WebSocket连接
+   ↓
+   前端 → IMGateway (/ws)
+   ↓ 携带Token (通过Header或Query参数)
+   IMGateway验证Token
+   ↓ (Token有效)
+   建立WebSocket连接
+
+┌─────────────────────────────────────────────────────────────┐
+│              带鉴权的完整消息流程                            │
+└─────────────────────────────────────────────────────────────┘
+
+1. 用户登录
+   ↓
+   前端 → UserService.login()
+   ↓
+   返回 JWT Token (包含userId, username, 过期时间等)
+   ↓
+   前端存储Token
+
+
+2. 建立WebSocket连接
+   ↓
+   前端 → IMGateway (/ws)
+   ↓ 携带Token (通过Header或Query参数)
+   IMGateway验证Token
+   ↓ (Token有效)
+   建立WebSocket连接
+
+
+3. 发送消息（关键流程）
+   ↓
+   ┌──────────────────────────────────────────────────────────┐
+   │ 前端                                                      │
+   │ stompClient.send('/app/chat/private', {}, JSON.stringify({│
+   │   senderId: "user123",                                    │
+   │   receiverId: "user456",                                  │
+   │   content: "Hello"                                        │
+   │ }))                                                       │
+   └────────────────────┬─────────────────────────────────────┘
+   ↓ WebSocket + Token
+   ┌──────────────────────────────────────────────────────────┐
+   │ IMGateway (8080)                                          │
+   │ 1. 从WebSocket Session中提取Token                        │
+   │ 2. 验证Token有效性                                        │
+   │ 3. 从Token中提取真实的userId                              │
+   │ 4. 对比消息中的senderId是否匹配（防止伪造）               │
+   └────────────────────┬─────────────────────────────────────┘
+   ↓ HTTP转发 + Token传递
+   ┌──────────────────────────────────────────────────────────┐
+   │ ChatService (8081)                                        │
+   │ @MessageMapping("/chat/private")                          │
+   │ public void handlePrivateMessage(                         │
+   │     ChatMessage message,                                  │
+   │     @Header("Authorization") String token  ← 从Header获取 │
+   │ ) {                                                       │
+   │     // 1. 验证Token（二次验证）                           │
+   │     if (!tokenService.validateToken(token)) {             │
+   │         throw new UnauthorizedException();                │
+   │     }                                                     │
+   │                                                           │
+   │     // 2. 从Token中提取userId                             │
+   │     String userId = tokenService.getUserId(token);        │
+   │                                                           │
+   │     // 3. 验证senderId是否匹配                            │
+   │     if (!message.getSenderId().equals(userId)) {          │
+   │         throw new ForbiddenException("不能冒充他人发送");  │
+   │     }                                                     │
+   │                                                           │
+   │     // 4. 处理消息                                        │
+   │     chatService.sendPrivateMessage(message);              │
+   │ }                                                         │
+   └──────────────────────────────────────────────────────────┘
+**流程图设计**:
+---
+用户发送消息
+↓
+ChatController (@MessageMapping)
+↓
+ChatService.sendPrivateMessage()
+├─→ 1. Redis存储 (历史记录，保持不变)
+└─→ 2. RabbitMQ发送 (rabbitTemplate.convertAndSend)
+↓
+┌─────────────────────────────────────┐
+│   RabbitMQ Topic Exchange           │
+│   chat.message.exchange             │
+│   Routing Key: chat.private.{userId}│
+└─────────────────────────────────────┘
+↓ (广播到所有队列)
+┌───────┴────────┬────────┬────────┐
+↓                ↓        ↓        ↓
+Queue1          Queue2    Queue3   Queue4
+(实例1独占)     (实例2)   (实例3)  (实例4)
+↓                ↓        ↓        ↓
+@RabbitListener  @RabbitListener  ...
+MessageConsumer.handleMessage()  ← 替代原来的onMessage
+↓                ↓        ↓        ↓
+检查用户是否连接到本实例
+↓
+SimpMessagingTemplate.convertAndSendToUser()
+↓
+WebSocket推送给客户端
+---
 ---
 
 ## 目录
