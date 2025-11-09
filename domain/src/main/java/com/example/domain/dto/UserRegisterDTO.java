@@ -15,11 +15,6 @@ import javax.validation.constraints.Size;
  * @version 1.0.0
  */
 @Data
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserRegisterDTO {
     
     /**

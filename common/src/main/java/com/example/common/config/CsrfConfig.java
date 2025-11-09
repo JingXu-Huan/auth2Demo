@@ -20,7 +20,6 @@ public class CsrfConfig {
      * @date 2025-11-06
      * 配置 CSRF Token 存储方式
      * 使用 Cookie 存储，便于前后端分离架构使用
-     * 
      * @return CsrfTokenRepository
      */
     @Bean

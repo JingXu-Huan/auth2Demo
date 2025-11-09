@@ -17,10 +17,16 @@
     <modules>
         <module>common</module>
         <module>domain</module>
-        <module>oauth2-auth-server</module>
+        <module>Oauth2-auth-server</module>
         <module>User-server</module>
         <module>Email-server</module>
         <module>Gateway</module>
+        <module>IM-Gateway</module>
+        <module>IM-message-server</module>
+        <module>IM-group-server</module>
+        <module>IM-file-service</module>
+        <module>IM-push-service</module>
+
     </modules>
 
     <!-- 版本管理 -->

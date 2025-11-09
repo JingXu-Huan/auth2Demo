@@ -14,11 +14,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserRegisterVO {
     
     /**

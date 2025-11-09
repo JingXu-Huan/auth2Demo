@@ -1,0 +1,72 @@
+server:
+  port: 8084
+  # WebSocket连接配置
+  netty:
+    connection-timeout: 30s
+    idle-timeout: 600s  # 10分钟空闲超时
+
+spring:
+  application:
+    name: im-gateway
+  main:
+    web-application-type: reactive
+
+  # 禁用静态资源服务（纯API网关，不提供前端）
+  web:
+    resources:
+      add-mappings: false
+
+  # Redis配置（用于限流）
+  data:
+    redis:
+      host: 154.219.109.125
+      port: 6379
+
+  # Default: dev profile
+  cloud:
+    nacos:
+      discovery:
+        enabled: true  # 默认启用Nacos
+        server-addr: 154.219.109.125:8848
+        namespace: public
+    gateway:
+      # IM专用WebSocket网关配置
+      httpclient:
+        websocket:
+          max-frame-payload-length: 10485760  # 10MB
+        connect-timeout: 10000
+        response-timeout: 30s
+      # 全局过滤器配置
+      default-filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 100  # 每秒补充100个令牌
+            redis-rate-limiter.burstCapacity: 200  # 桶容量200
+            key-resolver: "#{@ipKeyResolver}"  # 基于IP限流
+      # 负载均衡配置
+      loadbalancer:
+        use404: true
+      server:
+        webflux:
+          routes:
+            # WebSocket路由 - IM核心（负载均衡）
+            - id: chat-service-websocket
+              uri: lb://chat-service # 使用Nacos进行负载均衡
+              predicates:
+                - Path=/ws/**
+              metadata:
+                response-timeout: 600000  # WebSocket长连接超时10分钟
+                connect-timeout: 10000
+            # HTTP API路由 - 辅助功能（负载均衡）
+            - id: chat-service-api
+              uri: lb://chat-service # 使用Nacos进行负载均衡
+              predicates:
+                - Path=/chat/**
+              filters:
+                - StripPrefix=0
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: INFO

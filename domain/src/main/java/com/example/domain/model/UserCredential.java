@@ -17,11 +17,6 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("user_credentials")
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserCredential {
     
     @TableId(type = IdType.AUTO)

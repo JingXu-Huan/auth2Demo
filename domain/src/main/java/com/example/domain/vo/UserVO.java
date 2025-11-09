@@ -12,11 +12,6 @@ import java.time.LocalDateTime;
  * @version 1.0.0
  */
 @Data
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserVO {
     
     private Long id;
