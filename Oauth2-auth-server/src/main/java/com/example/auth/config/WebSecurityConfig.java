@@ -39,26 +39,6 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     }
     
     /**
-     * CORS 配置已在 OAuth2-Gateway 中统一处理
-     * 如果直接访问此服务（不通过网关），取消注释下面的配置
-     */
-    /*
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("*"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
-        
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
-    */
-    
-    /**
      * 配置用户认证信息
      * 从数据库读取用户信息（支持多种登录方式）
      */
@@ -68,6 +48,11 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
             .passwordEncoder(passwordEncoder());
     }
 
+    /*
+     * 配置 HTTP 安全设置
+     * 禁用 CORS，由网关统一处理
+     * 启用 CSRF 保护，但对 OAuth2 端点和 API 端点禁用（因为使用 Token 认证）
+     */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http

@@ -4,21 +4,21 @@ spring:
   application:
     name: oauth2-gateway
   thymeleaf:
-    check-template-location: false  # 网关不需要模板引擎
+    check-template-location: false
   cloud:
     nacos:
       discovery:
-        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
-        namespace: public                # 命名空间
-        group: DEFAULT_GROUP               # 分组
-      config:
-        import-check:
-          enabled: false                   # 禁用配置导入检查
+        server-addr: 154.219.109.125:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        # 开发环境允许启动失败容错
+        fail-fast: false
     gateway:
       routes:
         # ========== 公开接口（不需要认证） ==========
         
-        # 授权服务器路由（OAuth2 登录和认证接口）
+        # 授权服务器路由
+        # OAuth2 登录和认证接口
         - id: auth-server
           uri: http://localhost:8080
           predicates:
@@ -26,7 +26,7 @@ spring:
           filters:
             - StripPrefix=0
         
-        # 用户注册路由（公开）
+        # 用户注册路由
         - id: user-register
           uri: http://localhost:8082
           predicates:
@@ -34,7 +34,7 @@ spring:
           filters:
             - StripPrefix=0
         
-        # 邮箱验证路由（公开）
+        # 邮箱验证路由
         - id: user-confirm
           uri: http://localhost:8082
           predicates:
@@ -42,7 +42,7 @@ spring:
           filters:
             - StripPrefix=0
         
-        # 邮箱存在性检查路由（公开）
+        # 邮箱存在性检查路由
         - id: user-email-check
           uri: http://localhost:8082
           predicates:
@@ -50,7 +50,7 @@ spring:
           filters:
             - StripPrefix=0
         
-        # 安全验证接口（公开）
+        # 安全验证接口
         - id: security-verification
           uri: http://localhost:8082
           predicates:
@@ -75,4 +75,12 @@ spring:
             - Path=/resource/**
           filters:
             - TokenRelay
-      # CORS 配置已完全移至 CorsConfig.java 类中处理
+
+# CORS 配置已完全移至 CorsConfig.java 类中处理
+
+# 服务间认证配置
+# 必须与其他服务保持一致
+service:
+  auth:
+    # 密钥必须至少32位
+    secret: your_32_character_secret_key_here_12345

@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
  * @version 1.0.0
  * @date 2025-11-06
  * UserServiceClient 降级处理
+ * 适用于sentinel 等服务降级方案
  * 当 User-server 服务不可用时的备用方案
  */
 @Slf4j

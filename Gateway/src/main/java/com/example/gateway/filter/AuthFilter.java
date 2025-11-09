@@ -10,6 +10,13 @@ import reactor.core.publisher.Mono;
 
 import org.springframework.util.AntPathMatcher;
 
+/**
+ * @author Junjie
+ * @version 1.0.0
+ * @date 2025-11-09
+ * Gateway 认证过滤器
+ * 对所有请求进行认证，包括授权相关端点、公开的认证接口、公开的用户服务接口和安全验证接口。
+ */
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
     

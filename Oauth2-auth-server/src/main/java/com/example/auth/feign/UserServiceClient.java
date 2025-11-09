@@ -1,4 +1,4 @@
-﻿package com.example.auth.feign;
+package com.example.auth.feign;
 
 import com.example.domain.dto.UserDetailsDTO;
 import com.example.domain.vo.Result;
