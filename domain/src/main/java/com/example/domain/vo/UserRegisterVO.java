@@ -1,4 +1,4 @@
-﻿package com.example.domain.vo;
+package com.example.domain.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,11 +14,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserRegisterVO {
     
     /**

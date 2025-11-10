@@ -7,17 +7,31 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="oauth2-auth-server" />
         <module name="email-server" />
-        <module name="common" />
+        <module name="Oauth2-auth-server" />
         <module name="user-server" />
+        <module name="IM-group-server" />
+        <module name="IM-message-server" />
+        <module name="IM-search-server" />
+        <module name="common" />
+        <module name="IM-Gateway" />
         <module name="Gateway" />
         <module name="domain" />
+        <module name="IM-file-server" />
+        <module name="IM-av-server" />
+        <module name="IM-push-server" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="IM-Gateway" options="" />
+      <module name="IM-av-server" options="-parameters" />
+      <module name="IM-file-server" options="" />
+      <module name="IM-group-server" options="" />
+      <module name="IM-message-server" options="" />
+      <module name="IM-push-server" options="" />
+      <module name="IM-search-server" options="-parameters" />
       <module name="user-server" options="" />
     </option>
   </component>

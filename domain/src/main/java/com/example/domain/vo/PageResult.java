@@ -1,4 +1,4 @@
-﻿package com.example.domain.vo;
+package com.example.domain.vo;
 
 import lombok.Data;
 
@@ -12,11 +12,6 @@ import java.util.List;
  * @version 1.0.0
  */
 @Data
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class PageResult<T> {
     
     /**

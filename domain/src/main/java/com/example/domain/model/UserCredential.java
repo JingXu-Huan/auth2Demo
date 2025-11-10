@@ -1,4 +1,4 @@
-﻿package com.example.domain.model;
+package com.example.domain.model;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
@@ -17,11 +17,6 @@ import java.time.LocalDateTime;
  */
 @Data
 @TableName("user_credentials")
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class UserCredential {
     
     @TableId(type = IdType.AUTO)

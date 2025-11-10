@@ -1,4 +1,4 @@
-﻿package com.example.common.exception;
+package com.example.common.exception;
 
 import lombok.Getter;
 import org.springframework.http.HttpStatus;
@@ -6,16 +6,11 @@ import org.springframework.http.HttpStatus;
 /**
  * 业务异常类
  * 用于处理业务逻辑中的异常情况
- * 
- * @author Security Team
- * @version 1.0.0
- */
-@Getter
-/**
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
  */
+@Getter
 public class BusinessException extends RuntimeException {
     
     /**

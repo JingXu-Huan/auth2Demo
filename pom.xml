@@ -11,18 +11,24 @@
     <packaging>pom</packaging>
 
     <name>OAuth2 Demo Parent</name>
-    <description>Spring Cloud OAuth2 密码模式示例项目</description>
+    <description>AIO</description>
 
     <!-- 子模块 -->
     <modules>
         <module>common</module>
         <module>domain</module>
-        <module>oauth2-auth-server</module>
+        <module>Oauth2-auth-server</module>
         <module>User-server</module>
         <module>Email-server</module>
         <module>Gateway</module>
+        <module>IM-Gateway</module>
+        <module>IM-message-server</module>
+        <module>IM-group-server</module>
+        <module>IM-file-server</module>
+        <module>IM-push-server</module>
+        <module>IM-av-server</module>
+        <module>IM-search-server</module>
     </modules>
-
     <!-- 版本管理 -->
     <properties>
         <java.version>1.8</java.version>

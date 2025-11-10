@@ -1,24 +1,19 @@
-﻿package com.example.domain.dto;
+package com.example.domain.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * API 响应 DTO
- * 用于统一的 API 响应格式
- * 
  * @author Junjie
  * @version 1.0.0
+ * @date 2025-11-06
+ * API 响应 DTO
+ * 用于统一的 API 响应格式
  */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-/**
- * @author Junjie
- * @version 1.0.0
- * @date 2025-11-06
- */
 public class ApiResponse<T> {
     
     /**

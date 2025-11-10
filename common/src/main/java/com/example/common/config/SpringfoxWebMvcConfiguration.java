@@ -1,4 +1,4 @@
-﻿package com.example.common.config;
+package com.example.common.config;
 
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
