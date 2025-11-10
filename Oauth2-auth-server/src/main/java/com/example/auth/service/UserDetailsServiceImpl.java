@@ -42,17 +42,22 @@ public class UserDetailsServiceImpl implements UserDetailsService {
             throw new UsernameNotFoundException("用户不存在: " + emailOrUsername);
         }
         
-        // 3. 检查是否有密码（第三方登录用户没有密码）
+        // 3. 检查邮箱是否已验证
+        if (userDetails.getEmailVerified() == null || !userDetails.getEmailVerified()) {
+            throw new UsernameNotFoundException("邮箱未验证，请先验证邮箱后再登录: " + emailOrUsername);
+        }
+        
+        // 4. 检查是否有密码（第三方登录用户没有密码）
         if (userDetails.getPasswordHash() == null) {
             throw new UsernameNotFoundException("该账户不支持密码登录，请使用第三方登录: " + emailOrUsername);
         }
         
-        // 4. 检查登录方式
+        // 5. 检查登录方式
         if (!"email".equals(userDetails.getProvider())) {
             throw new UsernameNotFoundException("该账户使用第三方登录: " + userDetails.getProvider() + " 方式");
         }
         
-        // 3. 构建权限
+        // 6. 构建权限
         List<GrantedAuthority> authorities = new ArrayList<>();
         if ("admin".equals(userDetails.getUsername()) || "admin@example.com".equals(userDetails.getEmail())) {
             authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));

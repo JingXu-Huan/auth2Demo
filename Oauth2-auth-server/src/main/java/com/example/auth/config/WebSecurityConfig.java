@@ -1,5 +1,7 @@
 package com.example.auth.config;
 
+import com.example.auth.handler.LoginFailureHandler;
+import com.example.auth.handler.LoginSuccessHandler;
 import com.example.auth.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -26,6 +28,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     
     @Autowired
     private UserDetailsServiceImpl userDetailsService;
+    
+    @Autowired
+    private LoginSuccessHandler loginSuccessHandler;
+    
+    @Autowired
+    private LoginFailureHandler loginFailureHandler;
     
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -75,6 +83,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .antMatchers("/oauth/**", "/login.html", "/api/auth/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
-                .formLogin().permitAll();
+                .formLogin()
+                    .successHandler(loginSuccessHandler)  // 登录成功处理器
+                    .failureHandler(loginFailureHandler)  // 登录失败处理器
+                    .permitAll();
     }
 }

@@ -54,7 +54,12 @@ public class UserController {
                 return ResponseEntity.ok(Result.error(400, "邮箱已被注册"));
             }
             
-            // 2. 创建用户
+            // 2. 验证用户名是否已存在（安全改进）
+            if (userService.checkUsernameExists(userDTO.getUsername())) {
+                return ResponseEntity.ok(Result.error(400, "用户名已被使用"));
+            }
+            
+            // 3. 创建用户
             User user = userService.createUser(
                 userDTO.getUsername(),
                 userDTO.getEmail(),
@@ -238,6 +243,27 @@ public class UserController {
         } catch (Exception e) {
             log.error("修改密码失败: userId={}", userId, e);
             return ResponseEntity.ok(Result.error(500, "修改密码失败"));
+        }
+    }
+    
+    /**
+     * 更新用户最后登录时间
+     * 此接口由 OAuth2-auth-server 在用户登录成功后调用
+     */
+    @ApiOperation(value = "更新最后登录时间", notes = "用户登录成功后更新最后登录时间")
+    @PostMapping("/update-login-time")
+    public ResponseEntity<Result<Void>> updateLastLoginTime(
+            @ApiParam(value = "用户邮箱", required = true)
+            @RequestParam String email) {
+        
+        try {
+            userService.updateLastLoginTime(email);
+            log.info("更新最后登录时间成功: email={}", email);
+            return ResponseEntity.ok(Result.success("更新成功"));
+            
+        } catch (Exception e) {
+            log.error("更新最后登录时间失败: email={}", email, e);
+            return ResponseEntity.ok(Result.error(500, "更新失败"));
         }
     }
 }

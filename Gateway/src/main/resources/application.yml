@@ -3,6 +3,21 @@ server:
 spring:
   application:
     name: oauth2-gateway
+  sleuth:
+    sampler:
+      # 采样率：1.0 表示 100% 采样（生产环境建议降低）
+      probability: 1.0
+    web:
+      # 跳过不需要追踪的路径
+      skip-pattern: /actuator.*|/health.*
+  zipkin:
+    # Zipkin 服务器地址
+    base-url: http://154.219.109.125:9411
+    # 发送方式：web（HTTP）或 kafka/rabbitmq
+    sender:
+      type: web
+    # 启用 Zipkin
+    enabled: true
   thymeleaf:
     check-template-location: false
   cloud:
@@ -84,3 +99,13 @@ service:
   auth:
     # 密钥必须至少32位
     secret: your_32_character_secret_key_here_12345
+
+# 日志配置 - 显示 TraceId 和 SpanId
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+  level:
+    root: INFO
+    com.example: INFO
+    # Sleuth 日志级别
+    org.springframework.cloud.sleuth: DEBUG

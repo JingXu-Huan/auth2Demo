@@ -5,13 +5,28 @@ spring:
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
+  sleuth:
+    sampler:
+      # 采样率：1.0 表示 100% 采样（生产环境建议降低）
+      probability: 1.0
+    web:
+      # 跳过不需要追踪的路径
+      skip-pattern: /actuator.*|/health.*
+  zipkin:
+    # Zipkin 服务器地址
+    base-url: http://154.219.109.125:9411
+    # 发送方式：web（HTTP）或 kafka/rabbitmq
+    sender:
+      type: web
+    # 启用 Zipkin
+    enabled: true
   application:
     name: user-server
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: Swu@789789
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://101.42.157.163:5432/aio?currentSchema=public
+    username: user
+    password: 202430904JINGxu
 
   # 邮件配置（用于邮箱验证功能）
   mail:
@@ -27,18 +42,17 @@ spring:
             enable: true
             required: true
 
-  data:
-    redis:
-      host: localhost
-      port: 6379
-      database: 0
-      password:   # 生产环境必须设置密码
-      lettuce:
-        pool:
-          max-active: 8
-          max-idle: 8
-          min-idle: 0
-          max-wait: -1ms
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    password:   # 生产环境必须设置密码
+    lettuce:
+      pool:
+        max-active: 8
+        max-idle: 8
+        min-idle: 0
+        max-wait: -1ms
 
   # RabbitMQ 配置
   rabbitmq:
@@ -132,3 +146,13 @@ knife4j:
   basic:
     enable: false
   production: false
+
+# 日志配置 - 显示 TraceId 和 SpanId
+logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
+  level:
+    root: INFO
+    com.example: INFO
+    # Sleuth 日志级别
+    org.springframework.cloud.sleuth: DEBUG

@@ -32,10 +32,10 @@ spring:
             required: true
           
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: Swu@789789
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://101.42.157.163:5432/aio?currentSchema=public
+    username: user
+    password: 202430904JINGxu
 
   # RabbitMQ 配置
   rabbitmq:

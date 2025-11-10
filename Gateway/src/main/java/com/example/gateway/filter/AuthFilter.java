@@ -1,9 +1,12 @@
 package com.example.gateway.filter;
 
+import brave.Tracer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
 import org.springframework.stereotype.Component;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
@@ -20,8 +23,25 @@ import org.springframework.util.AntPathMatcher;
 @Component
 public class AuthFilter implements GlobalFilter, Ordered {
     
+    @Autowired(required = false)
+    private Tracer tracer;
+    
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
+        // 添加链路追踪信息到请求头
+        ServerHttpRequest request = exchange.getRequest();
+        if (tracer != null && tracer.currentSpan() != null) {
+            String traceId = tracer.currentSpan().context().traceIdString();
+            String spanId = tracer.currentSpan().context().spanIdString();
+            
+            request = request.mutate()
+                .header("X-B3-TraceId", traceId)
+                .header("X-B3-SpanId", spanId)
+                .build();
+            
+            exchange = exchange.mutate().request(request).build();
+        }
+        
         String path = exchange.getRequest().getURI().getPath();
         AntPathMatcher matcher = new AntPathMatcher();
 

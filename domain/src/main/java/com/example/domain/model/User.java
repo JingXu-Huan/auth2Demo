@@ -52,4 +52,39 @@ public class User {
      */
     @JsonIgnore
     private LocalDateTime lastLoginAt;
+    
+    /**
+     * 账户是否启用（默认启用）
+     */
+    private Boolean enabled;
+    
+    /**
+     * 账户是否过期（默认未过期）
+     */
+    @JsonIgnore
+    private Boolean accountNonExpired;
+    
+    /**
+     * 账户是否锁定 - 管理员手动锁定（默认未锁定）
+     */
+    @JsonIgnore
+    private Boolean accountNonLocked;
+    
+    /**
+     * 密码是否过期（默认未过期）
+     */
+    @JsonIgnore
+    private Boolean credentialsNonExpired;
+    
+    /**
+     * 账户锁定原因
+     */
+    @JsonIgnore
+    private String lockReason;
+    
+    /**
+     * 账户锁定时间
+     */
+    @JsonIgnore
+    private LocalDateTime lockedAt;
 }

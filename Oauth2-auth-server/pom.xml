@@ -150,10 +150,22 @@
             <artifactId>micrometer-registry-prometheus</artifactId>
         </dependency>
         
-        <!-- MySQL Driver -->
+        <!-- Spring Cloud Sleuth for distributed tracing -->
         <dependency>
-            <groupId>com.mysql</groupId>
-            <artifactId>mysql-connector-j</artifactId>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+        
+        <!-- Zipkin Client for trace reporting -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+        </dependency>
+        
+        <!-- PostgreSQL Driver -->
+        <dependency>
+            <groupId>org.postgresql</groupId>
+            <artifactId>postgresql</artifactId>
         </dependency>
         
         <dependency>

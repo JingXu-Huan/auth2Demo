@@ -4,12 +4,26 @@ server:
 spring:
   application:
     name: oauth2-auth-server
-  
+  sleuth:
+    sampler:
+      # 采样率：1.0 表示 100% 采样（生产环境建议降低）
+      probability: 1.0
+    web:
+      # 跳过不需要追踪的路径
+      skip-pattern: /actuator.*|/health.*
+  zipkin:
+    # Zipkin 服务器地址
+    base-url: http://154.219.109.125:9411
+    # 发送方式：web（HTTP）或 kafka/rabbitmq
+    sender:
+      type: web
+    # 启用 Zipkin
+    enabled: true
   # 解决 Spring Boot 2.6+ 与 Swagger 3.0 的兼容性问题
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
-  
+
   cloud:
     nacos:
       discovery:
@@ -52,13 +66,13 @@ spring:
         enabled: true
       # Sentinel Web 配置
       web-context-unify: false
-  
+
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://154.219.109.125:3306/oauth2_db?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai
-    username: root
-    password: Swu@789789
-  
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://101.42.157.163:5432/aio?currentSchema=public
+    username: user
+    password: 202430904JINGxu
+
   redis:
     host: localhost
     port: 6379
@@ -71,13 +85,17 @@ spring:
         min-idle: 0
         max-wait: -1ms
 
-# 日志配置
+# 日志配置 - 显示 TraceId 和 SpanId
 logging:
+  pattern:
+    level: '%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]'
   level:
     root: INFO
     org.springframework.security: INFO
     org.springframework.security.oauth2: INFO
     com.example: INFO
+    # Sleuth 日志级别
+    org.springframework.cloud.sleuth: DEBUG
 
 # Gitee 第三方应用配置
 gitee:

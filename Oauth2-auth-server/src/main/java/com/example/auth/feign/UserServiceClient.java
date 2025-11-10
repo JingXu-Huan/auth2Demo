@@ -52,4 +52,10 @@ public interface UserServiceClient {
      */
     @GetMapping("/api/users/{userId}")
     Result<UserVO> getUserById(@PathVariable("userId") Long userId);
+    
+    /**
+     * 更新用户最后登录时间
+     */
+    @PostMapping("/api/users/update-login-time")
+    void updateLastLoginTime(@RequestParam("email") String email);
 }

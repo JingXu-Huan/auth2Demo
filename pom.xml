@@ -41,11 +41,12 @@
         <spring-security-oauth2.version>2.3.4.RELEASE</spring-security-oauth2.version>
         <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
-        <mysql.version>8.0.33</mysql.version>
+        <postgresql.version>42.7.1</postgresql.version>
         <springfox.version>3.0.0</springfox.version>
         <knife4j.version>3.0.3</knife4j.version>
         <jjwt.version>0.12.5</jjwt.version>
         <validation-api.version>2.0.1.Final</validation-api.version>
+        <sleuth.version>3.1.9</sleuth.version>
     </properties>
 
     <!-- 依赖管理 -->
@@ -92,11 +93,11 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
             
-            <!-- MySQL -->
+            <!-- PostgreSQL -->
             <dependency>
-                <groupId>mysql</groupId>
-                <artifactId>mysql-connector-java</artifactId>
-                <version>${mysql.version}</version>
+                <groupId>org.postgresql</groupId>
+                <artifactId>postgresql</artifactId>
+                <version>${postgresql.version}</version>
             </dependency>
             
             <!-- Springfox Swagger -->
@@ -125,6 +126,20 @@
                 <groupId>com.github.xiaoymin</groupId>
                 <artifactId>knife4j-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
+            </dependency>
+            
+            <!-- Spring Cloud Sleuth -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-starter-sleuth</artifactId>
+                <version>${sleuth.version}</version>
+            </dependency>
+            
+            <!-- Zipkin Client -->
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+                <version>${sleuth.version}</version>
             </dependency>
             
             <!-- Common Module -->

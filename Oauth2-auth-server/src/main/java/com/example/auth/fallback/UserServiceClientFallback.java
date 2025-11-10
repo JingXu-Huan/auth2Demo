@@ -48,4 +48,10 @@ public class UserServiceClientFallback implements UserServiceClient {
         log.error("调用 User-server 失败，触发降级: getUserById({})", userId);
         return Result.error(500, "服务暂时不可用");
     }
+    
+    @Override
+    public void updateLastLoginTime(String email) {
+        log.error("调用 User-server 失败，触发降级: updateLastLoginTime({})", email);
+        // 更新登录时间失败不影响登录流程，只记录日志
+    }
 }

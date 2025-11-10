@@ -5,6 +5,8 @@ import com.example.domain.dto.UserDetailsDTO;
 import com.example.domain.model.User;
 import org.apache.ibatis.annotations.*;
 
+import java.time.LocalDateTime;
+
 /**
  * @author Junjie
  * @version 1.0.0
@@ -71,4 +73,16 @@ public interface UserMapper extends BaseMapper<User> {
             "WHERE uc.provider = #{provider} AND uc.provider_user_id = #{providerUserId}")
     User findByProviderAndProviderUserId(@Param("provider") String provider, 
                                          @Param("providerUserId") String providerUserId);
+    
+    /**
+     * 更新用户最后登录时间
+     */
+    @Update("UPDATE users SET last_login_at = NOW() WHERE email = #{email}")
+    int updateLastLoginTime(@Param("email") String email);
+    
+    /**
+     * 获取用户最后登录时间
+     */
+    @Select("SELECT last_login_at FROM users WHERE email = #{email}")
+    LocalDateTime getLastLoginTime(@Param("email") String email);
 }

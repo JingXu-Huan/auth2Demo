@@ -4,6 +4,7 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 /**
  * @author Junjie
@@ -13,6 +14,7 @@ import org.springframework.context.annotation.ComponentScan;
  */
 @SpringBootApplication
 @EnableDiscoveryClient
+@EnableAsync  // 启用异步支持（用于登录日志异步记录）
 @ComponentScan(basePackages = {"com.example.user", "com.example.common"})
 public class UserServerApplication {
     

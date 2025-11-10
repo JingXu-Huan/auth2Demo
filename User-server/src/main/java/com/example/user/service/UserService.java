@@ -6,6 +6,7 @@ import com.example.domain.model.User;
 import com.example.domain.model.UserCredential;
 import com.example.user.mapper.UserCredentialMapper;
 import com.example.user.mapper.UserMapper;
+import com.example.user.validator.PasswordValidator;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,9 @@ public class UserService {
     
     @Autowired
     private RabbitTemplate rabbitTemplate;
+    
+    @Autowired
+    private PasswordValidator passwordValidator;
     
     /**
      * @author Junjie
@@ -112,6 +116,18 @@ public class UserService {
     }
     
     /**
+     * 更新用户最后登录时间
+     */
+    public void updateLastLoginTime(String email) {
+        try {
+            userMapper.updateLastLoginTime(email);
+            log.info("更新最后登录时间成功: email={}", email);
+        } catch (Exception e) {
+            log.error("更新最后登录时间失败: email={}", email, e);
+        }
+    }
+    
+    /**
      * @author Junjie
      * @version 1.0.0
      * @date 2025-11-06
@@ -135,13 +151,20 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public User createUser(String username, String email, String password) {
         try {
-            // 1. 检查邮箱是否已存在
+            // 1. 验证密码强度
+            String passwordError = passwordValidator.validate(password);
+            if (passwordError != null) {
+                log.warn("密码强度不足: email={}, error={}", email, passwordError);
+                throw new IllegalArgumentException(passwordError);
+            }
+            
+            // 2. 检查邮箱是否已存在
             if (checkEmailExists(email)) {
                 log.warn("邮箱已存在: email={}", email);
                 return null;
             }
             
-            // 2. 创建用户
+            // 3. 创建用户
             User user = new User();
             user.setUsername(username);
             user.setEmail(email);

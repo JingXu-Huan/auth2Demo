@@ -58,8 +58,8 @@ public class AuthorizationServerConfig extends AuthorizationServerConfigurerAdap
                 .authorizedGrantTypes("password", "refresh_token")
                 // 授权范围：客户端能访问的资源范围
                 .scopes("read", "write")
-                // 访问令牌有效期（秒）：12小时
-                .accessTokenValiditySeconds(43200)
+                // 访问令牌有效期（秒）：2小时（安全改进：从12小时缩短）
+                .accessTokenValiditySeconds(7200)
                 // 刷新令牌有效期（秒）：7天
                 .refreshTokenValiditySeconds(604800);
     }
