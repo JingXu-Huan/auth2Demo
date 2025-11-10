@@ -28,6 +28,23 @@ spring:
         group: DEFAULT_GROUP
         # 开发环境允许启动失败容错
         fail-fast: false
+    sentinel:
+      enabled: true
+      eager: true  # 启动时立即初始化 Sentinel
+      transport:
+        dashboard: localhost:8858        # Sentinel 控制台地址（本地）
+        port: 8721                       # 与控制台通信的端口（Gateway 专用）
+        heartbeat-interval-ms: 5000      # 心跳间隔 5 秒
+      # 不配置 datasource，直接在 Sentinel 控制台管理规则
+      filter:
+        enabled: true
+      # Gateway 专用配置
+      scg:
+        fallback:
+          mode: response
+          response-status: 429
+          response-body: '{"code":429,"message":"请求过于频繁，请稍后再试"}'
+      web-context-unify: false
     gateway:
       routes:
         # ========== 公开接口（不需要认证） ==========
@@ -109,3 +126,6 @@ logging:
     com.example: INFO
     # Sleuth 日志级别
     org.springframework.cloud.sleuth: DEBUG
+    # Sentinel 日志级别（调试用）
+    com.alibaba.csp.sentinel: INFO
+    com.alibaba.cloud.sentinel: DEBUG

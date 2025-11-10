@@ -126,18 +126,6 @@
             <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
         </dependency>
         
-        <!-- Sentinel Gateway -->
-        <dependency>
-            <groupId>com.alibaba.cloud</groupId>
-            <artifactId>spring-cloud-alibaba-sentinel-gateway</artifactId>
-        </dependency>
-        
-        <!-- Sentinel Nacos 数据源 -->
-        <dependency>
-            <groupId>com.alibaba.csp</groupId>
-            <artifactId>sentinel-datasource-nacos</artifactId>
-        </dependency>
-        
         <!-- Spring Boot Actuator -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

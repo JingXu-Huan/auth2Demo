@@ -84,21 +84,6 @@ spring:
       transport:
         dashboard: localhost:8858  # Sentinel 控制台地址
         port: 8720                 # 与控制台通信的端口（不同于 auth-server）
-      datasource:
-        # 流控规则数据源 (Nacos)
-        flow:
-          nacos:
-            server-addr: 154.219.109.125:8848
-            dataId: user-server-flow-rules
-            groupId: SENTINEL_GROUP
-            rule-type: flow
-        # 降级规则数据源 (Nacos)
-        degrade:
-          nacos:
-            server-addr: 154.219.109.125:8848
-            dataId: user-server-degrade-rules
-            groupId: SENTINEL_GROUP
-            rule-type: degrade
       filter:
         enabled: true
       web-context-unify: false

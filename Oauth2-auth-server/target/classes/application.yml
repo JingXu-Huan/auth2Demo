@@ -39,28 +39,7 @@ spring:
       transport:
         dashboard: localhost:8858  # Sentinel 控制台地址
         port: 8719                 # 与控制台通信的端口
-      datasource:
-        # 流控规则数据源 (Nacos)
-        flow:
-          nacos:
-            server-addr: 154.219.109.125:8848
-            dataId: oauth2-auth-server-flow-rules
-            groupId: SENTINEL_GROUP
-            rule-type: flow
-        # 降级规则数据源 (Nacos)
-        degrade:
-          nacos:
-            server-addr: 154.219.109.125:8848
-            dataId: oauth2-auth-server-degrade-rules
-            groupId: SENTINEL_GROUP
-            rule-type: degrade
-        # 系统规则数据源 (Nacos)
-        system:
-          nacos:
-            server-addr: 154.219.109.125:8848
-            dataId: oauth2-auth-server-system-rules
-            groupId: SENTINEL_GROUP
-            rule-type: system
+        heartbeat-interval-ms: 5000  # 心跳间隔 5 秒
       # Sentinel 过滤器配置
       filter:
         enabled: true
@@ -96,6 +75,9 @@ logging:
     com.example: INFO
     # Sleuth 日志级别
     org.springframework.cloud.sleuth: DEBUG
+    # Sentinel 日志级别（调试用）
+    com.alibaba.csp.sentinel: INFO
+    com.alibaba.cloud.sentinel: DEBUG
 
 # Gitee 第三方应用配置
 gitee:
