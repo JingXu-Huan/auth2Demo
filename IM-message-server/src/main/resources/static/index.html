@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IM Message Server - 测试页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select, textarea, button {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #6c757d;
+            cursor: not-allowed;
+        }
+        #messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #f8f9fa;
+            margin: 15px 0;
+        }
+        .message {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .message.sent {
+            background-color: #d4edda;
+            text-align: right;
+        }
+        .message.received {
+            background-color: #d1ecf1;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .status.connected {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status.disconnected {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IM Message Server 测试页面</h1>
+        
+        <div class="form-group">
+            <label for="userId">用户ID:</label>
+            <input type="text" id="userId" placeholder="输入您的用户ID" value="user1">
+        </div>
+        
+        <div class="form-group">
+            <button id="connectBtn" onclick="connect()">连接</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>断开连接</button>
+        </div>
+        
+        <div id="status" class="status disconnected">未连接</div>
+        
+        <div id="messages"></div>
+        
+        <div class="form-group">
+            <label for="receiverId">接收者ID:</label>
+            <input type="text" id="receiverId" placeholder="输入接收者ID" value="user2">
+        </div>
+        
+        <div class="form-group">
+            <label for="channelType">信道类型:</label>
+            <select id="channelType">
+                <option value="PRIVATE">单聊</option>
+                <option value="GROUP">群聊</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="contentType">内容类型:</label>
+            <select id="contentType">
+                <option value="TEXT">文本</option>
+                <option value="IMAGE">图片</option>
+                <option value="FILE">文件</option>
+                <option value="VIDEO">视频</option>
+                <option value="AUDIO">音频</option>
+                <option value="SYSTEM">系统</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="groupId">群组ID (群聊时填写):</label>
+            <input type="text" id="groupId" placeholder="群组ID">
+        </div>
+        
+        <div class="form-group">
+            <label for="messageContent">消息内容:</label>
+            <textarea id="messageContent" rows="3" placeholder="输入消息内容"></textarea>
+        </div>
+        
+        <div class="form-group">
+            <button id="sendBtn" onclick="sendMessage()" disabled>发送消息</button>
+        </div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let connected = false;
+
+        function connect() {
+            const userId = document.getElementById('userId').value.trim();
+            if (!userId) {
+                alert('请输入用户ID');
+                return;
+            }
+
+            const wsUrl = `ws://localhost:8002/ws/${userId}`;
+            websocket = new WebSocket(wsUrl);
+
+            websocket.onopen = function(event) {
+                connected = true;
+                updateStatus('已连接', true);
+                updateButtons();
+                addMessage('系统', '连接成功', 'system');
+            };
+
+            websocket.onmessage = function(event) {
+                const message = JSON.parse(event.data);
+                let displayContent = '';
+                
+                // 根据内容类型显示不同的内容
+                if (message.payload) {
+                    switch (message.contentType) {
+                        case 'TEXT':
+                            displayContent = message.payload.text || '文本消息';
+                            break;
+                        case 'IMAGE':
+                            displayContent = `[图片] ${message.payload.filename || message.payload.url}`;
+                            break;
+                        case 'FILE':
+                            displayContent = `[文件] ${message.payload.fileName || message.payload.url}`;
+                            break;
+                        case 'VIDEO':
+                            displayContent = `[视频] ${message.payload.url}`;
+                            break;
+                        case 'AUDIO':
+                            displayContent = `[音频] ${message.payload.url || '音频消息'}`;
+                            break;
+                        case 'SYSTEM':
+                            displayContent = `[系统消息] ${message.payload.text || '系统消息'}`;
+                            break;
+                        default:
+                            displayContent = JSON.stringify(message.payload);
+                    }
+                } else {
+                    displayContent = event.data;
+                }
+                
+                addMessage(message.senderId || '未知用户', displayContent, 'received');
+            };
+
+            websocket.onclose = function(event) {
+                connected = false;
+                updateStatus('连接已断开', false);
+                updateButtons();
+                addMessage('系统', '连接已断开', 'system');
+            };
+
+            websocket.onerror = function(error) {
+                console.error('WebSocket错误:', error);
+                addMessage('系统', '连接错误', 'error');
+            };
+        }
+
+        function disconnect() {
+            if (websocket) {
+                websocket.close();
+            }
+        }
+
+        function sendMessage() {
+            if (!connected || !websocket) {
+                alert('请先连接WebSocket');
+                return;
+            }
+
+            const receiverId = document.getElementById('receiverId').value.trim();
+            const channelType = document.getElementById('channelType').value;
+            const contentType = document.getElementById('contentType').value;
+            const groupId = document.getElementById('groupId').value.trim();
+            const content = document.getElementById('messageContent').value.trim();
+
+            if (!content) {
+                alert('请输入消息内容');
+                return;
+            }
+
+            if (channelType === 'PRIVATE' && !receiverId) {
+                alert('单聊消息请输入接收者ID');
+                return;
+            }
+
+            if (channelType === 'GROUP' && !groupId) {
+                alert('群聊消息请输入群组ID');
+                return;
+            }
+
+            // 根据内容类型创建不同的载体
+            let payload;
+            switch (contentType) {
+                case 'TEXT':
+                    payload = { text: content };
+                    break;
+                case 'IMAGE':
+                    payload = { 
+                        url: content, 
+                        filename: 'image.jpg', 
+                        sizeInBytes: 0 
+                    };
+                    break;
+                case 'FILE':
+                    payload = { 
+                        url: content, 
+                        fileName: 'file.txt', 
+                        sizeInBytes: 0,
+                        fileExtension: 'txt'
+                    };
+                    break;
+                case 'VIDEO':
+                    payload = { 
+                        url: content, 
+                        thumbnailUrl: '', 
+                        duration: 0,
+                        sizeInBytes: 0
+                    };
+                    break;
+                default:
+                    payload = { text: content };
+            }
+
+            const message = {
+                receiverId: channelType === 'PRIVATE' ? receiverId : null,
+                channelType: channelType,
+                contentType: contentType,
+                payload: payload,
+                groupId: channelType === 'GROUP' ? groupId : null
+            };
+
+            websocket.send(JSON.stringify(message));
+            addMessage('我', content, 'sent');
+            document.getElementById('messageContent').value = '';
+        }
+
+        function updateStatus(text, isConnected) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = text;
+            statusDiv.className = isConnected ? 'status connected' : 'status disconnected';
+        }
+
+        function updateButtons() {
+            document.getElementById('connectBtn').disabled = connected;
+            document.getElementById('disconnectBtn').disabled = !connected;
+            document.getElementById('sendBtn').disabled = !connected;
+        }
+
+        function addMessage(sender, content, type) {
+            const messagesDiv = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            messageDiv.innerHTML = `<strong>${sender}</strong> [${timestamp}]<br>${content}`;
+            
+            messagesDiv.appendChild(messageDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // 回车发送消息
+        document.getElementById('messageContent').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>

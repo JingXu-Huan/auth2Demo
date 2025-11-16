@@ -14,7 +14,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  */
 @SpringBootApplication
 @EnableDiscoveryClient
-@EnableAsync  // 启用异步支持（用于登录日志异步记录）
+@EnableAsync  
 @ComponentScan(basePackages = {"com.example.user", "com.example.common"})
 public class UserServerApplication {
     

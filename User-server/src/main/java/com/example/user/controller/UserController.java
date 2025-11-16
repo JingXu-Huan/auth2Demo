@@ -266,4 +266,6 @@ public class UserController {
             return ResponseEntity.ok(Result.error(500, "更新失败"));
         }
     }
+
+    
 }

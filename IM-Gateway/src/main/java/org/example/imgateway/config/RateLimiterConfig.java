@@ -19,8 +19,8 @@ public class RateLimiterConfig {
     /**
      * 基于IP的限流Key解析器（默认）
      * 用于防止单个IP过多连接
-     @Bean
      */
+    @Bean
     @Primary  // 设置为主要的KeyResolver
     public KeyResolver ipKeyResolver() {
         return exchange -> {

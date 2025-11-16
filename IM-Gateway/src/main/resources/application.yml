@@ -1,5 +1,5 @@
 server:
-  port: 8084
+  port: 9001
   # WebSocket连接配置
   netty:
     connection-timeout: 30s
@@ -17,10 +17,9 @@ spring:
       add-mappings: false
 
   # Redis配置（用于限流）
-  data:
-    redis:
-      host: 154.219.109.125
-      port: 6379
+  redis:
+    host: localhost
+    port: 6379
 
   # Default: dev profile
   cloud:
@@ -36,37 +35,67 @@ spring:
           max-frame-payload-length: 10485760  # 10MB
         connect-timeout: 10000
         response-timeout: 30s
-      # 全局过滤器配置
-      default-filters:
-        - name: RequestRateLimiter
-          args:
-            redis-rate-limiter.replenishRate: 100  # 每秒补充100个令牌
-            redis-rate-limiter.burstCapacity: 200  # 桶容量200
-            key-resolver: "#{@ipKeyResolver}"  # 基于IP限流
       # 负载均衡配置
       loadbalancer:
         use404: true
-      server:
-        webflux:
-          routes:
-            # WebSocket路由 - IM核心（负载均衡）
-            - id: chat-service-websocket
-              uri: lb://chat-service # 使用Nacos进行负载均衡
-              predicates:
-                - Path=/ws/**
-              metadata:
-                response-timeout: 600000  # WebSocket长连接超时10分钟
-                connect-timeout: 10000
-            # HTTP API路由 - 辅助功能（负载均衡）
-            - id: chat-service-api
-              uri: lb://chat-service # 使用Nacos进行负载均衡
-              predicates:
-                - Path=/chat/**
-              filters:
-                - StripPrefix=0
+      routes:
+        # WebSocket路由 - 直连到消息服务
+        - id: chat-service-websocket
+          uri: lb:ws://IM-message-server  # 使用Nacos进行负载均衡 (WebSocket)
+          predicates:
+            - Path=/ws/**
+          metadata:
+            response-timeout: 600000  # WebSocket长连接超时10分钟
+            connect-timeout: 10000
+        
+        # 公开聊天API路由
+        - id: chat-service-public-api
+          uri: lb://IM-message-server
+          predicates:
+            - Path=/v1/api/**
+          filters:
+            - StripPrefix=0
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 50
+                redis-rate-limiter.burstCapacity: 100
+                key-resolver: "#{@ipKeyResolver}"
+        
+        # 内部API路由 - 需要服务间认证
+        - id: chat-service-internal-api
+          uri: lb://IM-message-server
+          predicates:
+            - Path=/internal/**
+          filters:
+            - StripPrefix=0
+        
+        # 健康检查路由
+        - id: chat-service-health
+          uri: lb://IM-message-server
+          predicates:
+            - Path=/actuator/**
+          filters:
+            - StripPrefix=0
+        
+        # 网关自身健康检查
+        - id: gateway-health
+          uri: no://op
+          predicates:
+            - Path=/gateway/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                redis-rate-limiter.replenishRate: 10
+                redis-rate-limiter.burstCapacity: 20
+
+# 服务间认证配置
+service:
+  auth:
+    secret: "IM-message-server-secret-key-for-service-authentication-2025"
 
 # 日志配置
 logging:
   level:
     org.springframework.cloud.gateway: DEBUG
     reactor.netty: INFO
+    org.example.imgateway: DEBUG
