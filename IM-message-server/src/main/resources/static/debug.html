@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>在线用户数调试页面</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .result { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { padding: 10px 20px; margin: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1>在线用户数调试页面</h1>
+    
+    <button onclick="testAPI()">测试在线用户数API</button>
+    <button onclick="testWebSocket()">测试WebSocket连接</button>
+    <button onclick="clearResults()">清空结果</button>
+    
+    <div id="results"></div>
+
+    <script>
+        let websocket = null;
+        
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `result ${type}`;
+            resultDiv.innerHTML = `<strong>${new Date().toLocaleTimeString()}</strong>: ${message}`;
+            resultsDiv.appendChild(resultDiv);
+            resultsDiv.scrollTop = resultsDiv.scrollHeight;
+        }
+        
+        async function testAPI() {
+            try {
+                addResult('正在调用 /api/v1/chat/online-users API...');
+                
+                const response = await fetch('/api/v1/chat/online-users');
+                addResult(`API响应状态: ${response.status} ${response.statusText}`);
+                
+                const data = await response.json();
+                addResult(`API响应数据: <pre>${JSON.stringify(data, null, 2)}</pre>`, 'success');
+                
+            } catch (error) {
+                addResult(`API调用失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function testWebSocket() {
+            try {
+                const userId = 'debug-user-' + Math.random().toString(36).substr(2, 9);
+                addResult(`尝试建立WebSocket连接，用户ID: ${userId}`);
+                
+                const wsUrl = `ws://localhost:8002/ws/${userId}`;
+                websocket = new WebSocket(wsUrl);
+                
+                websocket.onopen = function(event) {
+                    addResult('WebSocket连接成功！', 'success');
+                    
+                    // 连接成功后测试API
+                    setTimeout(() => {
+                        testAPI();
+                    }, 1000);
+                };
+                
+                websocket.onclose = function(event) {
+                    addResult(`WebSocket连接关闭: ${event.code} ${event.reason}`);
+                };
+                
+                websocket.onerror = function(error) {
+                    addResult(`WebSocket连接错误: ${error}`, 'error');
+                };
+                
+            } catch (error) {
+                addResult(`WebSocket连接失败: ${error.message}`, 'error');
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+        
+        // 页面加载时自动测试API
+        window.addEventListener('load', function() {
+            addResult('页面加载完成，开始测试...');
+            testAPI();
+        });
+        
+        // 页面关闭时断开WebSocket
+        window.addEventListener('beforeunload', function() {
+            if (websocket) {
+                websocket.close();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IM聊天室 - 实时聊天</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chat-container {
+            width: 90%;
+            max-width: 800px;
+            height: 90vh;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .chat-header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .online-count {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .connection-status {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ff4757;
+            transition: background 0.3s;
+        }
+
+        .connection-status.connected {
+            background: #2ed573;
+        }
+
+        .user-setup {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .user-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .user-input-group input {
+            flex: 1;
+            padding: 10px 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .user-input-group input:focus {
+            border-color: #4facfe;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757 0%, #ff3838 100%);
+            color: white;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.own {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            max-width: 70%;
+            padding: 12px 18px;
+            border-radius: 20px;
+            word-wrap: break-word;
+            position: relative;
+        }
+
+        .message.own .message-bubble {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+
+        .message:not(.own) .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e9ecef;
+            border-bottom-left-radius: 5px;
+        }
+
+        .message-sender {
+            font-size: 12px;
+            margin-bottom: 5px;
+            opacity: 0.7;
+        }
+
+        .message.own .message-sender {
+            color: #666;
+        }
+
+        .message-time {
+            font-size: 11px;
+            opacity: 0.6;
+            margin-top: 5px;
+        }
+
+        .system-message {
+            text-align: center;
+            color: #666;
+            font-style: italic;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e9ecef;
+        }
+
+        .message-input-group {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 18px;
+            border: 2px solid #e9ecef;
+            border-radius: 25px;
+            outline: none;
+            resize: none;
+            min-height: 20px;
+            max-height: 100px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .message-input:focus {
+            border-color: #4facfe;
+        }
+
+        .send-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: all 0.3s;
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            padding: 10px 20px;
+            font-style: italic;
+            color: #666;
+            font-size: 14px;
+            min-height: 20px;
+        }
+
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 50%;
+            transition: background 0.3s;
+        }
+
+        .emoji-btn:hover {
+            background: #f0f0f0;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .chat-container {
+                width: 100%;
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .message-bubble {
+                max-width: 85%;
+            }
+        }
+
+        /* 滚动条样式 */
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .messages-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .messages-container::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <!-- 聊天头部 -->
+        <div class="chat-header">
+            <h1>🚀 IM聊天室</h1>
+            <div class="online-count">在线用户: <span id="onlineCount">0</span></div>
+            <div class="connection-status" id="connectionStatus"></div>
+        </div>
+
+        <!-- 用户设置区域 -->
+        <div class="user-setup" id="userSetup">
+            <div class="user-input-group">
+                <input type="text" id="usernameInput" placeholder="请输入您的昵称..." maxlength="20">
+                <button class="btn btn-primary" id="joinBtn" onclick="joinChat()">加入聊天</button>
+            </div>
+        </div>
+
+        <!-- 消息显示区域 -->
+        <div class="messages-container" id="messagesContainer">
+            <div class="system-message">欢迎来到IM聊天室！请输入昵称加入聊天 🎉</div>
+        </div>
+
+        <!-- 正在输入提示 -->
+        <div class="typing-indicator" id="typingIndicator"></div>
+
+        <!-- 消息输入区域 -->
+        <div class="input-area" id="inputArea" style="display: none;">
+            <div class="message-input-group">
+                <button class="emoji-btn" onclick="insertEmoji('😊')" title="添加表情">😊</button>
+                <textarea id="messageInput" class="message-input" placeholder="输入消息..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn" onclick="sendMessage()" disabled>
+                    <span>📤</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let websocket = null;
+        let currentUser = null;
+        let isConnected = false;
+        let typingTimer = null;
+        let isTyping = false;
+        let onlineCountTimer = null;
+
+        // 常用表情
+        const emojis = ['😊', '😂', '❤️', '👍', '👎', '😢', '😮', '😡', '🎉', '🔥'];
+
+        // 页面加载完成后的初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 回车发送消息
+            document.getElementById('messageInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                } else if (e.key === 'Enter' && e.shiftKey) {
+                    // Shift+Enter 换行
+                    return;
+                }
+            });
+
+            // 输入时触发正在输入状态
+            document.getElementById('messageInput').addEventListener('input', function() {
+                if (isConnected && !isTyping) {
+                    sendTypingStatus(true);
+                    isTyping = true;
+                }
+                
+                // 清除之前的定时器
+                clearTimeout(typingTimer);
+                
+                // 3秒后停止输入状态
+                typingTimer = setTimeout(() => {
+                    if (isTyping) {
+                        sendTypingStatus(false);
+                        isTyping = false;
+                    }
+                }, 3000);
+
+                // 启用/禁用发送按钮
+                const sendBtn = document.getElementById('sendBtn');
+                sendBtn.disabled = this.value.trim() === '';
+            });
+
+            // 用户名输入回车加入
+            document.getElementById('usernameInput').addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    joinChat();
+                }
+            });
+
+            // 自动调整输入框高度
+            document.getElementById('messageInput').addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+            });
+        });
+
+        // 加入聊天
+        function joinChat() {
+            const username = document.getElementById('usernameInput').value.trim();
+            if (!username) {
+                alert('请输入昵称！');
+                return;
+            }
+
+            if (username.length > 20) {
+                alert('昵称不能超过20个字符！');
+                return;
+            }
+
+            currentUser = username;
+            connectWebSocket();
+        }
+
+        // 连接WebSocket
+        function connectWebSocket() {
+            try {
+                const wsUrl = `ws://localhost:8002/ws/${encodeURIComponent(currentUser)}`;
+                websocket = new WebSocket(wsUrl);
+
+                websocket.onopen = function(event) {
+                    isConnected = true;
+                    updateConnectionStatus(true);
+                    document.getElementById('userSetup').style.display = 'none';
+                    document.getElementById('inputArea').style.display = 'block';
+                    
+                    addSystemMessage(`${currentUser} 加入了聊天室 🎉`);
+                    
+                    // 发送加入消息
+                    sendSystemMessage(`${currentUser} 加入了聊天室`);
+                    
+                    // 开始定期更新在线用户数
+                    startOnlineCountUpdater();
+                };
+
+                websocket.onmessage = function(event) {
+                    try {
+                        const message = JSON.parse(event.data);
+                        handleIncomingMessage(message);
+                    } catch (e) {
+                        console.error('解析消息失败:', e);
+                        addSystemMessage('收到无效消息格式');
+                    }
+                };
+
+                websocket.onclose = function(event) {
+                    isConnected = false;
+                    updateConnectionStatus(false);
+                    addSystemMessage('连接已断开，请刷新页面重新连接 😢');
+                    
+                    // 停止在线用户数更新
+                    stopOnlineCountUpdater();
+                };
+
+                websocket.onerror = function(error) {
+                    console.error('WebSocket错误:', error);
+                    addSystemMessage('连接出现错误，请检查网络 ⚠️');
+                };
+
+            } catch (error) {
+                console.error('连接失败:', error);
+                alert('连接失败，请检查服务器是否启动！');
+            }
+        }
+
+        // 发送消息
+        function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const content = messageInput.value.trim();
+            
+            if (!content || !isConnected) {
+                return;
+            }
+
+            // 停止输入状态
+            if (isTyping) {
+                sendTypingStatus(false);
+                isTyping = false;
+            }
+
+            const message = {
+                senderId: currentUser,
+                channelType: 'GROUP',
+                contentType: 'TEXT',
+                groupId: 'public-chat',
+                payload: {
+                    text: content
+                }
+            };
+
+            try {
+                websocket.send(JSON.stringify(message));
+                
+                // 显示自己的消息
+                addMessage(currentUser, content, true);
+                
+                // 清空输入框
+                messageInput.value = '';
+                messageInput.style.height = 'auto';
+                document.getElementById('sendBtn').disabled = true;
+                
+            } catch (error) {
+                console.error('发送消息失败:', error);
+                addSystemMessage('发送失败，请重试 ❌');
+            }
+        }
+
+        // 发送系统消息
+        function sendSystemMessage(content) {
+            if (!isConnected) return;
+
+            const message = {
+                senderId: 'SYSTEM',
+                channelType: 'GROUP',
+                contentType: 'SYSTEM',
+                groupId: 'public-chat',
+                payload: {
+                    text: content,
+                    timestamp: Date.now()
+                }
+            };
+
+            try {
+                websocket.send(JSON.stringify(message));
+            } catch (error) {
+                console.error('发送系统消息失败:', error);
+            }
+        }
+
+        // 发送正在输入状态
+        function sendTypingStatus(typing) {
+            if (!isConnected) return;
+
+            const message = {
+                senderId: currentUser,
+                channelType: 'GROUP',
+                contentType: 'SYSTEM',
+                groupId: 'public-chat',
+                payload: {
+                    type: 'typing',
+                    typing: typing,
+                    timestamp: Date.now()
+                }
+            };
+
+            try {
+                websocket.send(JSON.stringify(message));
+            } catch (error) {
+                console.error('发送输入状态失败:', error);
+            }
+        }
+
+        // 处理收到的消息
+        function handleIncomingMessage(message) {
+            if (message.senderId === currentUser) {
+                return; // 忽略自己发送的消息
+            }
+
+            if (message.contentType === 'SYSTEM') {
+                if (message.payload.type === 'typing') {
+                    handleTypingStatus(message.senderId, message.payload.typing);
+                } else {
+                    addSystemMessage(message.payload.text);
+                }
+            } else if (message.contentType === 'TEXT') {
+                const content = message.payload.text || '空消息';
+                addMessage(message.senderId, content, false);
+            }
+        }
+
+        // 处理输入状态
+        function handleTypingStatus(sender, typing) {
+            const typingIndicator = document.getElementById('typingIndicator');
+            
+            if (typing) {
+                typingIndicator.textContent = `${sender} 正在输入...`;
+            } else {
+                typingIndicator.textContent = '';
+            }
+        }
+
+        // 添加消息到界面
+        function addMessage(sender, content, isOwn) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${isOwn ? 'own' : ''}`;
+            
+            const time = new Date().toLocaleTimeString('zh-CN', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            
+            messageDiv.innerHTML = `
+                ${!isOwn ? `<div class="message-sender">${escapeHtml(sender)}</div>` : ''}
+                <div class="message-bubble">
+                    ${escapeHtml(content)}
+                    <div class="message-time">${time}</div>
+                </div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // 添加系统消息
+        function addSystemMessage(content) {
+            const messagesContainer = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'system-message';
+            messageDiv.textContent = content;
+            
+            messagesContainer.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // 滚动到底部
+        function scrollToBottom() {
+            const messagesContainer = document.getElementById('messagesContainer');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // 更新连接状态
+        function updateConnectionStatus(connected) {
+            const statusElement = document.getElementById('connectionStatus');
+            if (connected) {
+                statusElement.classList.add('connected');
+            } else {
+                statusElement.classList.remove('connected');
+            }
+        }
+
+        // 插入表情
+        function insertEmoji(emoji) {
+            const messageInput = document.getElementById('messageInput');
+            const cursorPos = messageInput.selectionStart;
+            const textBefore = messageInput.value.substring(0, cursorPos);
+            const textAfter = messageInput.value.substring(messageInput.selectionEnd);
+            
+            messageInput.value = textBefore + emoji + textAfter;
+            messageInput.focus();
+            messageInput.setSelectionRange(cursorPos + emoji.length, cursorPos + emoji.length);
+            
+            // 触发input事件以更新发送按钮状态
+            messageInput.dispatchEvent(new Event('input'));
+        }
+
+        // HTML转义
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // 开始在线用户数更新定时器
+        function startOnlineCountUpdater() {
+            // 立即更新一次
+            updateOnlineCount();
+            
+            // 每5秒更新一次
+            onlineCountTimer = setInterval(updateOnlineCount, 5000);
+        }
+
+        // 停止在线用户数更新定时器
+        function stopOnlineCountUpdater() {
+            if (onlineCountTimer) {
+                clearInterval(onlineCountTimer);
+                onlineCountTimer = null;
+            }
+        }
+
+        // 更新在线用户数
+        async function updateOnlineCount() {
+            try {
+                console.log('正在获取在线用户数...');
+                const response = await fetch('/api/v1/chat/online-users');
+                console.log('API响应状态:', response.status);
+                
+                const data = await response.json();
+                console.log('API响应数据:', data);
+                
+                if (data.success) {
+                    const count = data.count || 0;
+                    document.getElementById('onlineCount').textContent = count;
+                    console.log('更新在线用户数为:', count);
+                    
+                    // 如果有在线用户列表，也打印出来
+                    if (data.onlineUsers) {
+                        console.log('在线用户列表:', data.onlineUsers);
+                    }
+                } else {
+                    console.warn('获取在线用户数失败:', data.message);
+                    document.getElementById('onlineCount').textContent = '0';
+                }
+            } catch (error) {
+                console.error('更新在线用户数失败:', error);
+                // 如果API调用失败，显示0
+                document.getElementById('onlineCount').textContent = '0';
+            }
+        }
+
+        // 页面关闭时断开连接
+        window.addEventListener('beforeunload', function() {
+            if (websocket && isConnected) {
+                sendSystemMessage(`${currentUser} 离开了聊天室`);
+                websocket.close();
+            }
+            stopOnlineCountUpdater();
+        });
+    </script>
+</body>
+</html>

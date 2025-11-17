@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IM Message Server - 完整功能测试</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .card { background: white; margin: 20px 0; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea, button { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { background: #007bff; color: white; cursor: pointer; margin: 5px 0; }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .result { background: #f8f9fa; padding: 10px; border-radius: 4px; margin: 10px 0; max-height: 200px; overflow-y: auto; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .tabs { display: flex; border-bottom: 1px solid #ddd; }
+        .tab { padding: 10px 20px; cursor: pointer; border: none; background: none; }
+        .tab.active { background: #007bff; color: white; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>IM Message Server - 完整功能测试</h1>
+        
+        <!-- 基础配置 -->
+        <div class="card">
+            <h2>基础配置</h2>
+            <div class="grid">
+                <div class="form-group">
+                    <label>服务器地址:</label>
+                    <input type="text" id="serverUrl" value="http://localhost:8002">
+                </div>
+                <div class="form-group">
+                    <label>当前用户ID:</label>
+                    <input type="text" id="currentUserId" value="user1">
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能测试标签页 -->
+        <div class="card">
+            <div class="tabs">
+                <button class="tab active" onclick="showTab('basic')">基础消息</button>
+                <button class="tab" onclick="showTab('private')">单聊</button>
+                <button class="tab" onclick="showTab('group')">群聊</button>
+                <button class="tab" onclick="showTab('advanced')">高级功能</button>
+                <button class="tab" onclick="showTab('management')">消息管理</button>
+            </div>
+
+            <!-- 基础消息测试 -->
+            <div id="basic" class="tab-content active">
+                <h3>基础消息功能</h3>
+                <div class="grid">
+                    <div>
+                        <h4>发送通用消息</h4>
+                        <div class="form-group">
+                            <label>接收者ID:</label>
+                            <input type="text" id="basicReceiverId" value="user2">
+                        </div>
+                        <div class="form-group">
+                            <label>消息内容:</label>
+                            <textarea id="basicContent" rows="3">Hello World!</textarea>
+                        </div>
+                        <button onclick="sendBasicMessage()">发送消息</button>
+                        <div id="basicResult" class="result"></div>
+                    </div>
+                    <div>
+                        <h4>获取历史消息</h4>
+                        <div class="form-group">
+                            <label>会话ID:</label>
+                            <input type="text" id="conversationId" value="user1-user2">
+                        </div>
+                        <button onclick="getHistory()">获取历史</button>
+                        <div id="historyResult" class="result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 单聊测试 -->
+            <div id="private" class="tab-content">
+                <h3>单聊功能</h3>
+                <div class="grid">
+                    <div>
+                        <div class="form-group">
+                            <label>接收者ID:</label>
+                            <input type="text" id="privateReceiverId" value="user2">
+                        </div>
+                        <div class="form-group">
+                            <label>消息类型:</label>
+                            <select id="privateType">
+                                <option value="text">文本</option>
+                                <option value="image">图片</option>
+                                <option value="file">文件</option>
+                                <option value="video">视频</option>
+                                <option value="audio">音频</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>内容:</label>
+                            <textarea id="privateContent" rows="3">私聊消息内容</textarea>
+                        </div>
+                        <button onclick="sendPrivateMessage()">发送单聊消息</button>
+                    </div>
+                    <div>
+                        <div id="privateResult" class="result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 群聊测试 -->
+            <div id="group" class="tab-content">
+                <h3>群聊功能</h3>
+                <div class="grid">
+                    <div>
+                        <div class="form-group">
+                            <label>群组ID:</label>
+                            <input type="text" id="groupId" value="group1">
+                        </div>
+                        <div class="form-group">
+                            <label>消息类型:</label>
+                            <select id="groupType">
+                                <option value="text">文本</option>
+                                <option value="image">图片</option>
+                                <option value="file">文件</option>
+                                <option value="video">视频</option>
+                                <option value="audio">音频</option>
+                                <option value="system">系统消息</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>内容:</label>
+                            <textarea id="groupContent" rows="3">群聊消息内容</textarea>
+                        </div>
+                        <button onclick="sendGroupMessage()">发送群聊消息</button>
+                    </div>
+                    <div>
+                        <div id="groupResult" class="result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 高级功能测试 -->
+            <div id="advanced" class="tab-content">
+                <h3>高级功能</h3>
+                <div class="grid">
+                    <div>
+                        <h4>消息操作</h4>
+                        <div class="form-group">
+                            <label>消息ID:</label>
+                            <input type="text" id="messageId" placeholder="输入消息ID">
+                        </div>
+                        <button onclick="recallMessage()">撤回消息</button>
+                        <button onclick="ackRead()">标记已读</button>
+                        <button onclick="getReadDetail()">查看已读详情</button>
+                        
+                        <h4>正在输入</h4>
+                        <div class="form-group">
+                            <label>目标用户ID:</label>
+                            <input type="text" id="typingUserId" value="user2">
+                        </div>
+                        <button onclick="sendTyping(true)">开始输入</button>
+                        <button onclick="sendTyping(false)">停止输入</button>
+                    </div>
+                    <div>
+                        <div id="advancedResult" class="result"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 消息管理测试 -->
+            <div id="management" class="tab-content">
+                <h3>消息管理</h3>
+                <div class="grid">
+                    <div>
+                        <h4>收藏管理</h4>
+                        <div class="form-group">
+                            <label>消息ID:</label>
+                            <input type="text" id="favoriteMessageId">
+                        </div>
+                        <button onclick="addFavorite()">添加收藏</button>
+                        <button onclick="removeFavorite()">取消收藏</button>
+                        <button onclick="getFavorites()">获取收藏列表</button>
+                        
+                        <h4>置顶管理</h4>
+                        <div class="form-group">
+                            <label>会话ID:</label>
+                            <input type="text" id="pinConversationId" value="user1-user2">
+                        </div>
+                        <div class="form-group">
+                            <label>消息ID:</label>
+                            <input type="text" id="pinMessageId">
+                        </div>
+                        <button onclick="pinMessage()">置顶消息</button>
+                        <button onclick="unpinMessage()">取消置顶</button>
+                        <button onclick="getPinnedMessages()">获取置顶列表</button>
+                    </div>
+                    <div>
+                        <h4>搜索功能</h4>
+                        <div class="form-group">
+                            <label>关键词:</label>
+                            <input type="text" id="searchKeyword" value="hello">
+                        </div>
+                        <button onclick="globalSearch()">全局搜索</button>
+                        <div id="managementResult" class="result"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 健康检查 -->
+        <div class="card">
+            <h3>服务状态</h3>
+            <button onclick="healthCheck()">健康检查</button>
+            <button onclick="getOnlineUsers()">在线用户数</button>
+            <div id="healthResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        function getServerUrl() {
+            return document.getElementById('serverUrl').value;
+        }
+
+        function getCurrentUserId() {
+            return document.getElementById('currentUserId').value;
+        }
+
+        function showTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function apiCall(endpoint, method = 'GET', data = null) {
+            const url = getServerUrl() + endpoint;
+            const options = {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            };
+            
+            if (data) {
+                if (method === 'GET') {
+                    const params = new URLSearchParams(data);
+                    return fetch(url + '?' + params, { method: 'GET' });
+                } else {
+                    options.body = JSON.stringify(data);
+                }
+            }
+            
+            return fetch(url, options);
+        }
+
+        function displayResult(elementId, result) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = '<pre>' + JSON.stringify(result, null, 2) + '</pre>';
+            element.className = 'result ' + (result.success ? 'success' : 'error');
+        }
+
+        // 基础消息功能
+        async function sendBasicMessage() {
+            const data = {
+                senderId: getCurrentUserId(),
+                receiverId: document.getElementById('basicReceiverId').value,
+                channelType: 'PRIVATE',
+                contentType: 'TEXT',
+                payload: { text: document.getElementById('basicContent').value }
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/send', 'POST', data);
+                const result = await response.json();
+                displayResult('basicResult', result);
+            } catch (error) {
+                displayResult('basicResult', { success: false, message: error.message });
+            }
+        }
+
+        async function getHistory() {
+            const data = {
+                conversationId: document.getElementById('conversationId').value,
+                size: 10
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/history', 'GET', data);
+                const result = await response.json();
+                displayResult('historyResult', result);
+            } catch (error) {
+                displayResult('historyResult', { success: false, message: error.message });
+            }
+        }
+
+        // 单聊功能
+        async function sendPrivateMessage() {
+            const type = document.getElementById('privateType').value;
+            const content = document.getElementById('privateContent').value;
+            const receiverId = document.getElementById('privateReceiverId').value;
+            const senderId = getCurrentUserId();
+            
+            const data = new URLSearchParams({
+                senderId: senderId,
+                receiverId: receiverId,
+                text: content
+            });
+            
+            try {
+                const response = await fetch(getServerUrl() + `/api/v1/chat/private/send-${type}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                displayResult('privateResult', result);
+            } catch (error) {
+                displayResult('privateResult', { success: false, message: error.message });
+            }
+        }
+
+        // 群聊功能
+        async function sendGroupMessage() {
+            const type = document.getElementById('groupType').value;
+            const content = document.getElementById('groupContent').value;
+            const groupId = document.getElementById('groupId').value;
+            const senderId = getCurrentUserId();
+            
+            let endpoint = `/api/v1/chat/group/send-${type}`;
+            let data;
+            
+            if (type === 'system') {
+                data = new URLSearchParams({
+                    groupId: groupId,
+                    content: content
+                });
+            } else {
+                data = new URLSearchParams({
+                    senderId: senderId,
+                    groupId: groupId,
+                    text: content
+                });
+            }
+            
+            try {
+                const response = await fetch(getServerUrl() + endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                displayResult('groupResult', result);
+            } catch (error) {
+                displayResult('groupResult', { success: false, message: error.message });
+            }
+        }
+
+        // 高级功能
+        async function recallMessage() {
+            const messageId = document.getElementById('messageId').value;
+            const data = new URLSearchParams({ messageId: messageId });
+            
+            try {
+                const response = await fetch(getServerUrl() + '/api/v1/chat/recall', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                displayResult('advancedResult', result);
+            } catch (error) {
+                displayResult('advancedResult', { success: false, message: error.message });
+            }
+        }
+
+        async function ackRead() {
+            const messageId = document.getElementById('messageId').value;
+            const data = new URLSearchParams({ 
+                messageId: messageId,
+                userId: getCurrentUserId()
+            });
+            
+            try {
+                const response = await fetch(getServerUrl() + '/api/v1/chat/ack-read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: data
+                });
+                const result = await response.json();
+                displayResult('advancedResult', result);
+            } catch (error) {
+                displayResult('advancedResult', { success: false, message: error.message });
+            }
+        }
+
+        async function getReadDetail() {
+            const messageId = document.getElementById('messageId').value;
+            const data = { messageId: messageId };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/read/detail', 'GET', data);
+                const result = await response.json();
+                displayResult('advancedResult', result);
+            } catch (error) {
+                displayResult('advancedResult', { success: false, message: error.message });
+            }
+        }
+
+        async function sendTyping(isTyping) {
+            const data = {
+                fromUserId: getCurrentUserId(),
+                toUserId: document.getElementById('typingUserId').value,
+                conversationId: getCurrentUserId() + '-' + document.getElementById('typingUserId').value,
+                typing: isTyping
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/typing', 'POST', data);
+                const result = await response.json();
+                displayResult('advancedResult', result);
+            } catch (error) {
+                displayResult('advancedResult', { success: false, message: error.message });
+            }
+        }
+
+        // 消息管理功能
+        async function addFavorite() {
+            const data = {
+                userId: getCurrentUserId(),
+                messageId: document.getElementById('favoriteMessageId').value,
+                action: 'ADD'
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/favorite', 'POST', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function removeFavorite() {
+            const data = {
+                userId: getCurrentUserId(),
+                messageId: document.getElementById('favoriteMessageId').value,
+                action: 'REMOVE'
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/favorite', 'POST', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function getFavorites() {
+            const data = {
+                userId: getCurrentUserId(),
+                page: 1,
+                size: 10
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/favorites', 'GET', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function pinMessage() {
+            const data = {
+                userId: getCurrentUserId(),
+                conversationId: document.getElementById('pinConversationId').value,
+                messageId: document.getElementById('pinMessageId').value,
+                action: 'PIN'
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/pin', 'POST', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function unpinMessage() {
+            const data = {
+                userId: getCurrentUserId(),
+                conversationId: document.getElementById('pinConversationId').value,
+                messageId: document.getElementById('pinMessageId').value,
+                action: 'UNPIN'
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/pin', 'POST', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function getPinnedMessages() {
+            const data = {
+                userId: getCurrentUserId(),
+                conversationId: document.getElementById('pinConversationId').value
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/pins', 'GET', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        async function globalSearch() {
+            const data = {
+                userId: getCurrentUserId(),
+                keyword: document.getElementById('searchKeyword').value,
+                page: 1,
+                size: 10
+            };
+            
+            try {
+                const response = await apiCall('/api/v1/chat/search/global', 'GET', data);
+                const result = await response.json();
+                displayResult('managementResult', result);
+            } catch (error) {
+                displayResult('managementResult', { success: false, message: error.message });
+            }
+        }
+
+        // 健康检查
+        async function healthCheck() {
+            try {
+                const response = await apiCall('/api/v1/chat/health', 'GET');
+                const result = await response.json();
+                displayResult('healthResult', result);
+            } catch (error) {
+                displayResult('healthResult', { success: false, message: error.message });
+            }
+        }
+
+        async function getOnlineUsers() {
+            try {
+                const response = await apiCall('/api/v1/chat/online-users', 'GET');
+                const result = await response.json();
+                displayResult('healthResult', result);
+            } catch (error) {
+                displayResult('healthResult', { success: false, message: error.message });
+            }
+        }
+    </script>
+</body>
+</html>

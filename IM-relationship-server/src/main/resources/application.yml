@@ -1,0 +1,59 @@
+server:
+  port: 8003
+
+spring:
+  application:
+    name: IM-group-server
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: 12345678
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 154.219.109.125:8848
+        namespace: public
+        group: DEFAULT_GROUP
+      config:
+        import-check:
+          enabled: false
+    sentinel:
+      enabled: true
+      eager: true
+      transport:
+        dashboard: localhost:8858
+        port: 8721
+      filter:
+        enabled: true
+      web-context-unify: false
+
+# 服务间认证配置
+service:
+  auth:
+    secret: your_32_character_secret_key_here_12345
+
+# 监控配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    org.example.imgroupserver: DEBUG
+    org.springframework.web: DEBUG
+    org.springframework.security: DEBUG
+
+# Neo4j 配置
+# 数据库已在上面的 spring.neo4j 中配置
