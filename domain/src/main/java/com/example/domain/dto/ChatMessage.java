@@ -14,39 +14,42 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class ChatMessage {
 
+    private String messageId;
+
+    private String clientMsgId;
+
+    private String conversationId;
+
+    private Long seq;
+
+    private MessageStatus status;
+
+    private Long createdAt;
+
+    // 撤回时间戳（毫秒），仅在状态为 RECALLED 时有值
+    private Long recalledAt;
+
+    // 被回复的消息ID（用于消息引用）
+    private String replyToMessageId;
+
     /*
+
     发送方id
      */
+
     private String senderId;
-
-    /*
-
-    接收方id
-     */
-
     private String receiverId;
-
-    /*
-    群组id
-     */
 
     private String groupId;
 
-    /*
-    信道类型,主要为了区分群组和单发消息类型
-     */
     private ChannelType channelType;
 
-    /*
-    消息类型,区分文本,图像等等消息类型
-     */
     private ContentType contentType;
 
     /*
     消息的实际载体
      */
     private Object payload;
-
 
     /*
     信道枚举
@@ -66,6 +69,15 @@ public class ChatMessage {
         FILE,
         AUDIO,
         SYSTEM
+    }
+
+    public enum MessageStatus {
+        SENDING,
+        SENT,
+        DELIVERED,
+        READ,
+        FAILED,
+        RECALLED
     }
 
     /**

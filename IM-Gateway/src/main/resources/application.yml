@@ -52,9 +52,10 @@ spring:
         - id: chat-service-public-api
           uri: lb://IM-message-server
           predicates:
-            - Path=/v1/api/**
+            - Path=/api/v1/**,/v1/api/**
           filters:
             - StripPrefix=0
+            - RewritePath=/v1/api/(?<segment>.*),/api/v1/${segment}
             - name: RequestRateLimiter
               args:
                 redis-rate-limiter.replenishRate: 50

@@ -48,9 +48,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://101.42.157.163:5432/aio?currentSchema=public
-    username: user
-    password: 202430904JINGxu
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public
+    username: postgres
+    password: 271224
 
   redis:
     host: localhost
@@ -83,9 +83,9 @@ logging:
 gitee:
   oauth:
     # 应用ID（Client ID，在Gitee第三方应用中获取）
-    client-id: 
+    client-id: d1a2ac4fff8f727fb348850d48f7a78e53b9435199364635c87e93cec30ebbb3
     # 应用密钥（Client Secret）
-    client-secret: 
+    client-secret: 5131627b7d3f69838d9a155e78e8478b0779060551ff2da8c6615c885c5dbe4e
     # 授权回调地址（需要在Gitee应用中配置）
     redirect-uri: http://localhost:8080/oauth/gitee/callback
     # 授权页面URL

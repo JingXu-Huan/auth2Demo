@@ -3,6 +3,7 @@ package com.example.gateway;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.context.annotation.ComponentScan;
 
 
 /**
@@ -13,6 +14,13 @@ import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
  * 排除数据源自动配置，因为网关不需要数据库连接
  */
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
+@ComponentScan(
+    basePackages = {"com.example.gateway", "com.example.common"},
+    excludeFilters = @ComponentScan.Filter(
+        type = org.springframework.context.annotation.FilterType.REGEX,
+        pattern = "com\\.example\\.common\\.config\\.(Springfox.*|Csrf.*|WebMvc.*)"
+    )
+)
 public class GatewayApplication {
 
     public static void main(String[] args) {

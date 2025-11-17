@@ -50,4 +50,34 @@ public class WebSocketSessionManager {
             session.sendMessage(new org.springframework.web.socket.TextMessage(message));
         }
     }
+
+    /**
+     * 广播消息给所有在线用户
+     */
+    public void broadcastMessage(String message) {
+        sessions.forEach((userId, session) -> {
+            try {
+                if (session.isOpen()) {
+                    session.sendMessage(new org.springframework.web.socket.TextMessage(message));
+                }
+            } catch (IOException e) {
+                // 发送失败，移除无效会话
+                sessions.remove(userId);
+            }
+        });
+    }
+
+    /**
+     * 获取所有在线用户ID
+     */
+    public java.util.Set<String> getOnlineUsers() {
+        return sessions.keySet();
+    }
+
+    /**
+     * 获取在线用户数量
+     */
+    public int getOnlineUserCount() {
+        return sessions.size();
+    }
 }

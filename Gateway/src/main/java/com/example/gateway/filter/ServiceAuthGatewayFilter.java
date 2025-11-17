@@ -1,9 +1,7 @@
 package com.example.gateway.filter;
 
 import com.example.common.config.ServiceAuthConfig;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -27,17 +25,18 @@ import java.util.List;
 @Slf4j
 public class ServiceAuthGatewayFilter implements GlobalFilter, Ordered {
 
-    @Setter
-    private ServiceAuthConfig authConfig;
-    
+    private final ServiceAuthConfig authConfig;
+
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
-    
+
     // 需要添加服务认证的路径（内部接口）.
     private static final List<String> INTERNAL_API_PATTERNS = Arrays.asList(
         "/api/users/details/**",
-        "/api/users/internal/**"
+        "/api/users/internal/**",
+        "/api/v1/users/details/**",
+        "/api/v1/users/internal/**"
     );
-    
+
     //公开接口,比如登录接口,注册接口,确认注册接口,检查用户是否存在接口等等.
     private static final List<String> PUBLIC_API_PATTERNS = Arrays.asList(
         "/oauth/**",
@@ -49,11 +48,23 @@ public class ServiceAuthGatewayFilter implements GlobalFilter, Ordered {
         "/api/users/check-email",
         "/api/users/check-username",
         "/api/security/**",
+        "/api/v1/auth/**",
+        "/api/v1/users/register",
+        "/api/v1/users/confirm",
+        "/api/v1/users/exists/**",
+        "/api/v1/users/check-email",
+        "/api/v1/users/check-username",
+        "/api/v1/security/**",
         "/actuator/**",
         "/swagger**",
         "/v2/api-docs**",
         "/doc.html**"
     );
+
+    public ServiceAuthGatewayFilter(ServiceAuthConfig authConfig) {
+        this.authConfig = authConfig;
+        log.info("ServiceAuthGatewayFilter 初始化完成, authConfig 是否为空: {}", this.authConfig == null ? "null" : "非空");
+    }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {

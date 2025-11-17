@@ -59,6 +59,12 @@ public class EmailVerificationFilter implements GlobalFilter, Ordered {
         "/api/users/resend-verification", // 重发验证邮件
         "/api/security/**",    // 安全验证接口
         "/api/auth/**",        // 认证相关
+        "/api/v1/users/register",
+        "/api/v1/users/confirm",
+        "/api/v1/users/exists/email/**",
+        "/api/v1/users/resend-verification",
+        "/api/v1/security/**",
+        "/api/v1/auth/**",
         "/login.html",         // 登录页面
         "/static/**",          // 静态资源
         "/favicon.ico",        // 图标

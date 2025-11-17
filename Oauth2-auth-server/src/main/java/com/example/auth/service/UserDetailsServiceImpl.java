@@ -36,7 +36,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
         }
         
         // 2. 通过邮箱查询用户（只查询 provider='email' 的用户）
-        userDetails = userServiceClient.getUserDetailsByEmail(emailOrUsername);
+        userDetails = userServiceClient.getUserDetailsByEmail(emailOrUsername).getData();
         
         if (userDetails == null) {
             throw new UsernameNotFoundException("用户不存在: " + emailOrUsername);

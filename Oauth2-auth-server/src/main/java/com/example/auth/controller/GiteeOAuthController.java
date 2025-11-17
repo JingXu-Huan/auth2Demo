@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 
 import javax.servlet.http.HttpSession;
-import java.util.*;
+import java.util.UUID;
 
 /**
  * @author Junjie
@@ -43,9 +43,13 @@ public class GiteeOAuthController {
      */
     @ApiOperation(value = "跳转到 Gitee 授权页面")
     @GetMapping("/login")
-    public String login() {
-        String state = String.valueOf(System.currentTimeMillis());
+    public String login(HttpSession session) {
+        // 生成state用于防止CSRF攻击
+        String state = UUID.randomUUID().toString();
+        session.setAttribute("oauth_state", state);
+        
         String authUrl = giteeOAuthService.getAuthorizationUrl(state);
+        log.info("生成OAuth state: {}", state);
         log.info("重定向到 Gitee 授权页面: {}", authUrl);
         return "redirect:" + authUrl;
     }
@@ -65,7 +69,15 @@ public class GiteeOAuthController {
         try {
             log.info("收到 Gitee 回调: code={}, state={}", code, state);
             
-            // 1. 通过 code 获取 access_token
+            // 1. 验证state，防止CSRF攻击
+            String savedState = (String) session.getAttribute("oauth_state");
+            if (savedState == null || !savedState.equals(state)) {
+                log.error("State验证失败: saved={}, received={}", savedState, state);
+                throw new RuntimeException("State验证失败，可能存在CSRF攻击");
+            }
+            session.removeAttribute("oauth_state");
+            
+            // 2. 通过 code 获取 access_token
             String accessToken = giteeOAuthService.getAccessToken(code);
             log.info("获取到 access_token: {}", accessToken);
             
@@ -74,15 +86,37 @@ public class GiteeOAuthController {
             log.info("获取到 Gitee 用户信息: {}", giteeUser);
             
             // 3. 调用 User-server 创建或更新用户
-            // TODO: 实现真实的用户创建/更新逻辑
-            // Result<UserVO> result = userServiceClient.createOrUpdateOAuthUser("gitee", 
-            //     String.valueOf(giteeUser.getId()), giteeUser.getLogin(), giteeUser.getEmail(), giteeUser.getAvatarUrl());
+            // 直接调用 User-server（端口 8082）
+            String userServerUrl = "http://localhost:8082/api/v1/users/oauth/create-or-update";
+            org.springframework.web.client.RestTemplate restTemplate = new org.springframework.web.client.RestTemplate();
             
-            // 暂时模拟用户数据
+            String requestUrl = String.format("%s?provider=%s&providerUserId=%s&username=%s&email=%s&avatarUrl=%s",
+                userServerUrl,
+                "gitee",
+                String.valueOf(giteeUser.getId()),
+                giteeUser.getLogin(),
+                giteeUser.getEmail() != null ? giteeUser.getEmail() : "",
+                giteeUser.getAvatarUrl() != null ? giteeUser.getAvatarUrl() : ""
+            );
+            
+            Result<com.example.domain.dto.UserDetailsDTO> result = restTemplate.postForObject(
+                requestUrl,
+                null,
+                Result.class
+            );
+            
+            if (result == null || result.getCode() != 200 || result.getData() == null) {
+                throw new RuntimeException("创建或更新用户失败");
+            }
+            
+            // 从 result 中获取用户信息
+            @SuppressWarnings("unchecked")
+            java.util.Map<String, Object> userData = (java.util.Map<String, Object>) result.getData();
+            
             UserVO userVO = new UserVO();
-            userVO.setId(1L);
-            userVO.setUsername(giteeUser.getLogin());
-            userVO.setEmail(giteeUser.getEmail());
+            userVO.setId(((Number) userData.get("userId")).longValue());
+            userVO.setUsername((String) userData.get("username"));
+            userVO.setEmail((String) userData.get("email"));
             
             log.info("Gitee用户登录成功: userId={}, username={}", userVO.getId(), userVO.getUsername());
                 
@@ -90,16 +124,22 @@ public class GiteeOAuthController {
             session.setAttribute("user", userVO);
             session.setAttribute("loginType", "gitee");
             
-            // 5. 返回成功页面（使用内联HTML避免404）
-            mav.setViewName("gitee-success");
-            mav.addObject("username", userVO.getUsername());
-            mav.addObject("email", userVO.getEmail());
-            mav.addObject("message", "Gitee登录成功！");
+            // 5. 重定向到前端应用的OAuth回调页面，传递用户信息
+            // 使用URL参数传递，避免Session跨域问题
+            String redirectUrl = String.format(
+                "http://localhost:3000/oauth/callback?success=true&username=%s&email=%s&id=%d",
+                userVO.getUsername(),
+                userVO.getEmail() != null ? userVO.getEmail() : "",
+                userVO.getId()
+            );
+            log.info("重定向到前端: {}", redirectUrl);
+            mav.setViewName("redirect:" + redirectUrl);
             
         } catch (Exception e) {
             log.error("Gitee 登录失败", e);
-            mav.setViewName("gitee-error");
-            mav.addObject("error", e.getMessage());
+            // 重定向到前端，传递错误信息
+            String errorMsg = e.getMessage() != null ? e.getMessage() : "登录失败";
+            mav.setViewName("redirect:http://localhost:3000/oauth/callback?success=false&error=" + errorMsg);
         }
         
         return mav;

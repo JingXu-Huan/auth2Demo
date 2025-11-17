@@ -20,7 +20,7 @@ public class CorsGlobalConfiguration {
         CorsConfiguration config = new CorsConfiguration();
         
         // 允许的来源
-        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:5173"));
+        config.setAllowedOriginPatterns(Arrays.asList("http://localhost:3000", "http://localhost:5173", "*"));
         
         // 允许的请求方法
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));

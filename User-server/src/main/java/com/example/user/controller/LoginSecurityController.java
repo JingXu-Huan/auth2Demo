@@ -24,7 +24,7 @@ import java.util.Map;
 @Slf4j
 @Api(tags = "登录安全验证", description = "长时间未登录的安全验证管理")
 @RestController
-@RequestMapping("/api/security")
+@RequestMapping("/api/v1/security")
 public class LoginSecurityController {
     
     @Autowired

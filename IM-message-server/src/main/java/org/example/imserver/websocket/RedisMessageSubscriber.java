@@ -5,7 +5,6 @@ import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
 
 @Slf4j
 @Service
@@ -22,14 +21,22 @@ public class RedisMessageSubscriber {
         try {
             ChatMessage chatMessage = gson.fromJson(messageJson, ChatMessage.class);
             String receiverId=chatMessage.getReceiverId();
+            
+            log.info("准备推送消息给用户: receiverId={}, senderId={}", receiverId, chatMessage.getSenderId());
+            log.info("当前在线用户列表: {}", sessionManager.getOnlineUsers());
 
             if(receiverId!=null){
-                sessionManager.sendMessageToUser(receiverId,messageJson);
+                try {
+                    sessionManager.sendMessageToUser(receiverId,messageJson);
+                    log.info("消息成功推送给用户: {}", receiverId);
+                } catch (Exception e) {
+                    log.warn("用户不在线或推送失败: receiverId={}, error={}", receiverId, e.getMessage());
+                }
+            } else {
+                log.warn("receiverId为空，无法推送消息");
             }
-        } catch (IOException e) {
-            System.err.println("RedisPublisher发送消息失败:{} " + e.getMessage());
         } catch (Exception e) {
-            System.err.println("RedisPublisher错误:{} " + e.getMessage());
+            log.error("处理消息错误: {}", e.getMessage(), e);
         }
     }
 }

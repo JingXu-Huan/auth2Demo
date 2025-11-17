@@ -64,13 +64,15 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         http
-                .cors().disable()  // CORS 由网关统一处理
+                .cors()  // 启用 CORS（使用 CorsConfig 的配置）
+                .and()
                 // 启用 CSRF 保护，但对 OAuth2 端点和 API 端点禁用（因为使用 Token 认证）
                 .csrf()
                     .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
                     .ignoringAntMatchers(
                         "/oauth/**",           // OAuth2 端点
-                        "/api/auth/**",        // API 认证端点
+                        "/api/**",             // 所有 API 端点
+                        "/login",              // Spring Security 登录端点
                         "/doc.html",           // Swagger 文档
                         "/webjars/**",
                         "/swagger-resources/**",
@@ -80,10 +82,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                 // 允许访问 Knife4j 文档
                 .antMatchers("/doc.html", "/webjars/**", "/swagger-resources/**", "/v2/api-docs").permitAll()
-                .antMatchers("/oauth/**", "/login.html", "/api/auth/**").permitAll()
+                .antMatchers("/oauth/**", "/login.html", "/api/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .formLogin()
+                    .loginProcessingUrl("/login")         // 登录处理 URL
+                    .usernameParameter("username")         // 用户名参数名（邮箱）
+                    .passwordParameter("password")         // 密码参数名
                     .successHandler(loginSuccessHandler)  // 登录成功处理器
                     .failureHandler(loginFailureHandler)  // 登录失败处理器
                     .permitAll();

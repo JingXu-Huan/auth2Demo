@@ -93,6 +93,12 @@
             <artifactId>spring-boot-starter-cache</artifactId>
         </dependency>
 
+        <!-- MongoDB for chat message persistence -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-mongodb</artifactId>
+        </dependency>
+
         <!-- Sentinel -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>

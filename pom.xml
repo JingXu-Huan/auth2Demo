@@ -23,7 +23,7 @@
         <module>Gateway</module>
         <module>IM-Gateway</module>
         <module>IM-message-server</module>
-        <module>IM-group-server</module>
+        <module>IM-relationship-server</module>
         <module>IM-file-server</module>
         <module>IM-push-server</module>
         <module>IM-av-server</module>

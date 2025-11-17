@@ -51,19 +51,33 @@ public class AuthFilter implements GlobalFilter, Ordered {
         }
         
         // 放行公开的认证接口（邮箱检查、用户名检查等）
-        if (matcher.match("/api/auth/**", path)) {
+        if (matcher.match("/api/auth/**", path) || matcher.match("/api/v1/auth/**", path)) {
             return chain.filter(exchange);
         }
         
-        // 放行公开的用户服务接口（注册、邮箱验证、邮箱检查）
+        // 放行公开的用户服务接口（注册、邮箱验证、邮箱检查、用户名检查、登录相关）
         if (matcher.match("/api/users/register", path) || 
             matcher.match("/api/users/confirm", path) ||
-            matcher.match("/api/users/exists/email/**", path)) {
+            matcher.match("/api/users/exists/email/**", path) ||
+            matcher.match("/api/users/check-email", path) ||
+            matcher.match("/api/users/check-username", path) ||
+            matcher.match("/api/v1/users/register", path) ||
+            matcher.match("/api/v1/users/confirm", path) ||
+            matcher.match("/api/v1/users/exists/email/**", path) ||
+            matcher.match("/api/v1/users/check-email", path) ||
+            matcher.match("/api/v1/users/check-username", path) ||
+            matcher.match("/api/v1/users/details/email/**", path) ||
+            matcher.match("/api/v1/users/update-login-time", path)) {
+            return chain.filter(exchange);
+        }
+        
+        // 放行邮箱验证接口
+        if (matcher.match("/api/email/**", path) || matcher.match("/api/v1/email/**", path)) {
             return chain.filter(exchange);
         }
         
         // 放行安全验证接口（验证码发送和验证）
-        if (matcher.match("/api/security/**", path)) {
+        if (matcher.match("/api/security/**", path) || matcher.match("/api/v1/security/**", path)) {
             return chain.filter(exchange);
         }
 

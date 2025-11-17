@@ -33,9 +33,9 @@ spring:
           
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://101.42.157.163:5432/aio?currentSchema=public
-    username: user
-    password: 202430904JINGxu
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public
+    username: postgres
+    password: 271224
 
   # RabbitMQ 配置
   rabbitmq:

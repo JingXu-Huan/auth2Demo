@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @FeignClient(
     name = "user-server",
+    url = "http://localhost:8082",  // 直接指定 User-server 地址
     fallback = com.example.auth.fallback.UserServiceClientFallback.class
 )
 
@@ -26,36 +27,36 @@ public interface UserServiceClient {
     /**
      * 根据邮箱获取用户详情（用于登录认证）
      */
-    @GetMapping("/api/users/details/email/{email}")
-    UserDetailsDTO getUserDetailsByEmail(@PathVariable("email") String email);
+    @GetMapping("/api/v1/users/details/email/{email}")
+    Result<UserDetailsDTO> getUserDetailsByEmail(@PathVariable("email") String email);
     
     /**
      * 根据用户名获取用户详情
      */
-    @GetMapping("/api/users/details/username/{username}")
-    UserDetailsDTO getUserDetailsByUsername(@PathVariable("username") String username);
+    @GetMapping("/api/v1/users/details/username/{username}")
+    Result<UserDetailsDTO> getUserDetailsByUsername(@PathVariable("username") String username);
     
     /**
      * 检查邮箱是否存在
      */
-    @GetMapping("/api/users/check-email")
+    @GetMapping("/api/v1/users/check-email")
     Result<Boolean> checkEmailExists(@RequestParam("email") String email);
     
     /**
      * 检查用户名是否存在
      */
-    @GetMapping("/api/users/check-username")
+    @GetMapping("/api/v1/users/check-username")
     Result<Boolean> checkUsernameExists(@RequestParam("username") String username);
     
     /**
      * 根据用户ID获取用户信息
      */
-    @GetMapping("/api/users/{userId}")
+    @GetMapping("/api/v1/users/{userId}")
     Result<UserVO> getUserById(@PathVariable("userId") Long userId);
     
     /**
      * 更新用户最后登录时间
      */
-    @PostMapping("/api/users/update-login-time")
+    @PostMapping("/api/v1/users/update-login-time")
     void updateLastLoginTime(@RequestParam("email") String email);
 }

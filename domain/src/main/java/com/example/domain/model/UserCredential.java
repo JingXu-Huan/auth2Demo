@@ -45,7 +45,30 @@ public class UserCredential {
     private String passwordHash;
     
     /**
+     * 访问令牌 (第三方登录时使用)
+     */
+    @JsonIgnore
+    private String accessToken;
+    
+    /**
+     * 刷新令牌 (第三方登录时使用)
+     */
+    @JsonIgnore
+    private String refreshToken;
+    
+    /**
+     * 令牌过期时间
+     */
+    @JsonIgnore
+    private LocalDateTime tokenExpiry;
+    
+    /**
      * 创建时间
      */
     private LocalDateTime createdAt;
+    
+    /**
+     * 更新时间
+     */
+    private LocalDateTime updatedAt;
 }

@@ -25,10 +25,10 @@ public interface UserMapper extends BaseMapper<User> {
      * 只查询 provider='email' 的用户
      */
     @Select("SELECT u.id as userId, u.username, u.email, u.email_verified as emailVerified, " +
-            "uc.password_hash as passwordHash, uc.provider " +
+            "uc.password_hash as passwordHash, COALESCE(uc.provider, 'email') as provider " +
             "FROM users u " +
-            "LEFT JOIN user_credentials uc ON u.id = uc.user_id " +
-            "WHERE u.email = #{email} AND uc.provider = 'email'")
+            "LEFT JOIN user_credentials uc ON u.id = uc.user_id AND uc.provider = 'email' " +
+            "WHERE u.email = #{email}")
     UserDetailsDTO getUserDetailsByEmail(@Param("email") String email);
     
     /**
@@ -38,11 +38,17 @@ public interface UserMapper extends BaseMapper<User> {
      * 根据用户名获取用户详情
      */
     @Select("SELECT u.id as userId, u.username, u.email, u.email_verified as emailVerified, " +
-            "uc.password_hash as passwordHash, uc.provider " +
+            "uc.password_hash as passwordHash, COALESCE(uc.provider, 'email') as provider " +
             "FROM users u " +
-            "LEFT JOIN user_credentials uc ON u.id = uc.user_id " +
+            "LEFT JOIN user_credentials uc ON u.id = uc.user_id AND uc.provider = 'email' " +
             "WHERE u.username = #{username}")
     UserDetailsDTO getUserDetailsByUsername(@Param("username") String username);
+    
+    /**
+     * 根据邮箱获取用户（不含凭证信息）
+     */
+    @Select("SELECT * FROM users WHERE email = #{email}")
+    User getUserByEmail(@Param("email") String email);
     
     /**
      * @author Junjie

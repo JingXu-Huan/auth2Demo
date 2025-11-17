@@ -49,64 +49,41 @@ spring:
       routes:
         # ========== 公开接口（不需要认证） ==========
         
-        # 授权服务器路由
-        # OAuth2 登录和认证接口
+        # OAuth2认证服务路由
         - id: auth-server
           uri: http://localhost:8080
           predicates:
-            - Path=/oauth/**,/login.html,/api/auth/**
+            - Path=/api/v1/auth/**,/api/oauth/**,/oauth/**
           filters:
             - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 用户注册路由
-        - id: user-register
-          uri: http://localhost:8082
-          predicates:
-            - Path=/api/users/register
-          filters:
-            - StripPrefix=0
-        
-        # 邮箱验证路由
-        - id: user-confirm
-          uri: http://localhost:8082
-          predicates:
-            - Path=/api/users/confirm
-          filters:
-            - StripPrefix=0
-        
-        # 邮箱存在性检查路由
-        - id: user-email-check
-          uri: http://localhost:8082
-          predicates:
-            - Path=/api/users/exists/email/**
-          filters:
-            - StripPrefix=0
-        
-        # 安全验证接口
-        - id: security-verification
-          uri: http://localhost:8082
-          predicates:
-            - Path=/api/security/**
-          filters:
-            - StripPrefix=0
-        
-        # ========== 受保护接口（需要认证） ==========
-        
-        # 用户服务受保护路由
+        # 用户服务路由
         - id: user-server
           uri: http://localhost:8082
           predicates:
-            - Path=/api/**
+            - Path=/api/v1/users/**,/api/v1/email/**,/api/v1/security/**
           filters:
-            - TokenRelay
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 资源服务器路由
-        - id: resource-server
-          uri: http://localhost:8081
+        # 消息服务路由
+        - id: message-server
+          uri: http://localhost:8002
           predicates:
-            - Path=/resource/**
+            - Path=/api/v1/chat/**
           filters:
-            - TokenRelay
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        
+        # 群组和好友服务路由  
+        - id: relationship-server
+          uri: http://localhost:8003
+          predicates:
+            - Path=/api/v1/groups/**,/api/v1/friends/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
 
 # CORS 配置已完全移至 CorsConfig.java 类中处理
 

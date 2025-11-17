@@ -20,15 +20,15 @@ import org.springframework.stereotype.Component;
 public class UserServiceClientFallback implements UserServiceClient {
     
     @Override
-    public UserDetailsDTO getUserDetailsByEmail(String email) {
+    public Result<UserDetailsDTO> getUserDetailsByEmail(String email) {
         log.error("调用 User-server 失败，触发降级: getUserDetailsByEmail({})", email);
-        return null;
+        return Result.error(500, "用户服务暂时不可用");
     }
     
     @Override
-    public UserDetailsDTO getUserDetailsByUsername(String username) {
+    public Result<UserDetailsDTO> getUserDetailsByUsername(String username) {
         log.error("调用 User-server 失败，触发降级: getUserDetailsByUsername({})", username);
-        return null;
+        return Result.error(500, "用户服务暂时不可用");
     }
     
     @Override

@@ -27,9 +27,27 @@ public class User {
     
     private String email;
     
+    private String phone;
+    
+    private String nickname;
+    
     private Boolean emailVerified;
     
+    private Boolean phoneVerified;
+    
     private String avatarUrl;
+    
+    private String signature;
+    
+    private String gender;
+    
+    private java.sql.Date birthday;
+    
+    private String location;
+    
+    private String status;
+    
+    private String lastLoginIp;
     
     private LocalDateTime createdAt;
     

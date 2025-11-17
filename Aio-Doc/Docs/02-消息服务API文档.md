@@ -516,6 +516,234 @@ GET /api/v1/messages/unread/count
 
 ---
 
+## 当前实现的 REST 消息接口（IM-message-server）
+
+> 本小节描述当前代码中已实现的基于 HTTP 的消息发送与历史查询接口，主要由 `IM-message-server` 提供，并通过 `IM-Gateway` 对外暴露。
+
+### 0.1 服务信息（当前实现）
+
+- **对外访问网关**: IM-Gateway  
+- **网关端口**: 9001  
+- **推荐前缀**: `http://localhost:9001/api/v1/...`  
+- **内部服务端口**: IM-message-server `8002`
+
+当前 REST 接口主要分为三类：
+
+1. 单聊消息发送接口：`/api/v1/privateChat/...`
+2. 群聊消息发送接口：`/api/v1/groupChat/...`
+3. 通用消息接口：`/api/v1/chat/...`（历史消息、状态更新等）
+
+所有接口的成功响应结构统一为：
+
+```json
+{
+  "success": true,
+  "message": "说明文本",
+  "data": { ... }  // 具体数据，通常是 ChatMessage 或列表
+}
+```
+
+### 0.2 ChatMessage 数据模型（REST）
+
+当前 REST 接口返回的消息对象统一为 `ChatMessage`，字段含义如下：
+
+```typescript
+interface ChatMessage {
+  messageId: string;          // 服务器生成的消息唯一ID（UUID）
+  clientMsgId?: string;       // 客户端生成的消息ID，用于幂等与重试
+  conversationId?: string;    // 会话ID：单聊 userA-userB，群聊 GROUP:<groupId>
+  seq?: number;               // 会话内消息序号（预留）
+  status: 'SENT' | 'DELIVERED' | 'READ'; // 消息状态
+  createdAt: number;          // 消息创建时间，毫秒时间戳
+
+  senderId: string;           // 发送方ID
+  receiverId?: string;        // 接收方ID（单聊）
+  groupId?: string;           // 群组ID（群聊）
+
+  channelType: 'PRIVATE' | 'GROUP'; // 信道类型
+  contentType: 'TEXT' | 'IMAGE' | 'VIDEO' | 'FILE' | 'AUDIO' | 'SYSTEM';
+
+  // 实际载体内容，不同 contentType 对应不同结构
+  payload: any;
+}
+```
+
+服务端会在处理消息时自动补充：
+
+- `messageId`：如果客户端未提供，则生成 UUID
+- `conversationId`：
+  - 单聊：按 `userId` 字典序拼接，如：`user1-user2`
+  - 群聊：`GROUP:<groupId>`
+- `status`：默认 `SENT`
+- `createdAt`：默认当前时间戳
+
+### 0.3 单聊 REST 接口示例
+
+#### 0.3.1 发送单聊文本消息
+
+- **URL**: `/api/v1/privateChat/send-text`  
+- **Method**: `POST`  
+- **认证**: 需要通过网关的 JWT 鉴权  
+- **功能**: 发送一对一文本消息
+
+**请求参数（query 或 form）**
+
+| 参数       | 类型   | 必填 | 说明           |
+|------------|--------|------|----------------|
+| senderId   | string | 是   | 发送方用户ID   |
+| receiverId | string | 是   | 接收方用户ID   |
+| text       | string | 是   | 文本内容       |
+
+**响应示例（成功）**
+
+```json
+{
+  "success": true,
+  "message": "文本消息发送成功",
+  "data": {
+    "messageId": "8f92c3b0-...",
+    "clientMsgId": null,
+    "conversationId": "user1-user2",
+    "status": "SENT",
+    "createdAt": 1731800000000,
+    "senderId": "user1",
+    "receiverId": "user2",
+    "channelType": "PRIVATE",
+    "contentType": "TEXT",
+    "payload": {
+      "text": "你好，在吗？"
+    }
+  }
+}
+```
+
+#### 0.3.2 发送单聊图片/文件/视频/音频
+
+对应的 URL 如下（均为 `POST`）：
+
+- 图片：`/api/v1/privateChat/send-image`
+- 文件：`/api/v1/privateChat/send-file`
+- 视频：`/api/v1/privateChat/send-video`
+- 音频：`/api/v1/privateChat/send-audio`
+
+参数形式与代码一致，一般为：`senderId`、`receiverId` 以及具体资源的 `url/filename/sizeInBytes/...`，返回 `data` 字段同样为 `ChatMessage`，其中 `contentType` 分别为 `IMAGE`、`FILE`、`VIDEO`、`AUDIO`。
+
+### 0.4 群聊 REST 接口示例
+
+#### 0.4.1 发送群聊文本消息
+
+- **URL**: `/api/v1/groupChat/send-group-text`  
+- **Method**: `POST`  
+- **功能**: 在指定群组中发送文本消息
+
+**请求参数**
+
+| 参数     | 类型   | 必填 | 说明       |
+|----------|--------|------|------------|
+| senderId | string | 是   | 发送方ID   |
+| groupId  | string | 是   | 群组ID     |
+| text     | string | 是   | 文本内容   |
+
+**响应结构** 同样为 `{ success, message, data: ChatMessage }`，其中：
+
+- `channelType = "GROUP"`
+- `groupId` 为群ID
+- `conversationId = "GROUP:<groupId>"`
+
+#### 0.4.2 其他群聊多媒体接口
+
+- 图片：`/api/v1/groupChat/send-group-image`
+- 文件：`/api/v1/groupChat/send-group-file`
+- 视频：`/api/v1/groupChat/send-group-video`
+- 音频：`/api/v1/groupChat/send-group-audio`
+- 系统通知：`/api/v1/groupChat/send-group-system`
+
+请求参数与返回结构与单聊类似，只是使用 `groupId` 作为会话维度。
+
+### 0.5 历史消息查询（REST）
+
+- **URL**: `/api/v1/chat/history`  
+- **Method**: `GET`  
+- **功能**: 按会话查询历史消息，支持基于 `createdAt` 的游标分页
+
+**请求参数**
+
+| 参数           | 类型   | 必填 | 说明                                       |
+|----------------|--------|------|--------------------------------------------|
+| conversationId | string | 是   | 会话ID：单聊 `userA-userB`，群聊 `GROUP:xxx` |
+| cursor         | long   | 否   | 上一页最后一条消息的 `createdAt`，用于翻页 |
+| size           | int    | 否   | 每页数量，默认 50                         |
+
+**响应示例**
+
+```json
+{
+  "success": true,
+  "message": "获取历史消息成功",
+  "data": [
+    {
+      "messageId": "8f92c3b0-...",
+      "conversationId": "user1-user2",
+      "status": "READ",
+      "createdAt": 1731799000000,
+      "senderId": "user1",
+      "receiverId": "user2",
+      "channelType": "PRIVATE",
+      "contentType": "TEXT",
+      "payload": { "text": "你好" }
+    }
+  ],
+  "nextCursor": 1731799000000
+}
+```
+
+- `data` 为按时间倒序查询的消息列表（服务端内部为 `createdAt desc`），前端可以按需要再排序展示。
+- `nextCursor` 为下一次翻页请求的 `cursor`，为空表示没有更多。
+
+### 0.6 消息状态更新（已送达 / 已读）
+
+当前版本提供两个简单的消息状态更新接口，用于驱动 `status = DELIVERED / READ`：
+
+#### 0.6.1 标记消息已送达
+
+- **URL**: `/api/v1/chat/ack-delivered`  
+- **Method**: `POST`  
+- **功能**: 将指定消息状态更新为 `DELIVERED`
+
+**请求参数**
+
+| 参数      | 类型   | 必填 | 说明       |
+|-----------|--------|------|------------|
+| messageId | string | 是   | 消息唯一ID |
+
+**响应示例**
+
+```json
+{
+  "success": true,
+  "message": "更新消息状态为 DELIVERED 成功",
+  "data": {
+    "messageId": "8f92c3b0-...",
+    "status": "DELIVERED",
+    "createdAt": 1731799000000,
+    "senderId": "user1",
+    "receiverId": "user2"
+  }
+}
+```
+
+#### 0.6.2 标记消息已读
+
+- **URL**: `/api/v1/chat/ack-read`  
+- **Method**: `POST`  
+- **功能**: 将指定消息状态更新为 `READ`
+
+请求参数与响应结构与 `ack-delivered` 类似，只是最终状态为 `READ`。
+
+> 说明：本节接口是当前代码中已经实现、可直接在 Web 端调用的 REST 能力；前文中关于“撤回、转发、未读统计”等接口仍为设计蓝图，后续实现时可以参考本节的 `ChatMessage` 模型与状态流转设计。
+
+---
+
 ## 消息类型
 
 | 类型 | 说明 | Content格式 |

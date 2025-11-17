@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.validation.Valid;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotBlank;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -32,7 +31,7 @@ import java.util.Map;
 @Slf4j
 @Api(tags = "用户管理", description = "用户信息管理接口")
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/v1/users")
 @Validated
 public class UserController {
     
@@ -150,15 +149,29 @@ public class UserController {
      */
     @ApiOperation(value = "根据邮箱获取用户详情", notes = "用于OAuth2认证服务器调用")
     @GetMapping("/details/email/{email}")
-    public com.example.domain.dto.UserDetailsDTO getUserDetailsByEmail(
+    public ResponseEntity<Result<com.example.domain.dto.UserDetailsDTO>> getUserDetailsByEmail(
             @ApiParam(value = "邮箱地址", required = true)
             @PathVariable String email) {
         
+        log.info("Controller收到请求: 获取用户详情, email={}", email);
+        
         try {
-            return userService.getUserDetailsByEmail(email);
-        } catch (Exception e) {
-            log.error("获取用户详情失败: email={}", email, e);
-            return null;
+            log.info("调用Service层查询用户");
+            com.example.domain.dto.UserDetailsDTO userDetails = userService.getUserDetailsByEmail(email);
+            log.info("Service层返回: userDetails={}", userDetails != null ? "存在" : "null");
+            
+            if (userDetails == null) {
+                log.warn("用户不存在: email={}", email);
+                return ResponseEntity.ok(Result.error(404, "用户不存在或未注册"));
+            }
+            
+            log.info("获取用户详情成功: email={}, userId={}", email, userDetails.getUserId());
+            return ResponseEntity.ok(Result.success(userDetails));
+            
+        } catch (Throwable t) {
+            log.error("获取用户详情异常: email={}, 异常类型={}, 错误信息={}", 
+                     email, t.getClass().getName(), t.getMessage(), t);
+            return ResponseEntity.ok(Result.error(500, "获取用户详情失败: " + t.getMessage()));
         }
     }
     
@@ -247,6 +260,42 @@ public class UserController {
     }
     
     /**
+     * 创建或更新第三方 OAuth 用户
+     * 此接口由 OAuth2-auth-server 在第三方登录成功后调用
+     */
+    @ApiOperation(value = "创建或更新OAuth用户", notes = "第三方登录时创建或更新用户信息")
+    @PostMapping("/oauth/create-or-update")
+    public ResponseEntity<Result<com.example.domain.dto.UserDetailsDTO>> createOrUpdateOAuthUser(
+            @ApiParam(value = "OAuth提供商", required = true) @RequestParam String provider,
+            @ApiParam(value = "提供商用户ID", required = true) @RequestParam String providerUserId,
+            @ApiParam(value = "用户名", required = true) @RequestParam String username,
+            @ApiParam(value = "邮箱") @RequestParam(required = false) String email,
+            @ApiParam(value = "头像URL") @RequestParam(required = false) String avatarUrl) {
+        
+        try {
+            log.info("创建或更新OAuth用户: provider={}, providerUserId={}, username={}, email={}", 
+                    provider, providerUserId, username, email);
+            
+            User user = userService.createOrUpdateOAuthUser(provider, providerUserId, username, email, avatarUrl);
+            
+            com.example.domain.dto.UserDetailsDTO userDetails = new com.example.domain.dto.UserDetailsDTO();
+            userDetails.setUserId(user.getId());
+            userDetails.setUsername(user.getUsername());
+            userDetails.setEmail(user.getEmail());
+            userDetails.setDisplayName(user.getDisplayName());
+            userDetails.setAvatarUrl(user.getAvatarUrl());
+            userDetails.setProvider(provider);
+            
+            log.info("OAuth用户创建或更新成功: userId={}, username={}", user.getId(), user.getUsername());
+            return ResponseEntity.ok(Result.success("操作成功", userDetails));
+            
+        } catch (Exception e) {
+            log.error("创建或更新OAuth用户失败", e);
+            return ResponseEntity.ok(Result.error(500, "操作失败: " + e.getMessage()));
+        }
+    }
+    
+    /**
      * 更新用户最后登录时间
      * 此接口由 OAuth2-auth-server 在用户登录成功后调用
      */
@@ -266,6 +315,41 @@ public class UserController {
             return ResponseEntity.ok(Result.error(500, "更新失败"));
         }
     }
-
     
+    /**
+     * 搜索用户（通过邮箱或手机号）
+     */
+    @ApiOperation(value = "搜索用户", notes = "通过邮箱或手机号搜索用户")
+    @GetMapping("/search")
+    public ResponseEntity<Result<UserVO>> searchUser(
+            @ApiParam(value = "搜索类型：email 或 phone", required = true)
+            @RequestParam String searchType,
+            @ApiParam(value = "搜索关键词", required = true)
+            @RequestParam String keyword) {
+        
+        try {
+            User user = null;
+            
+            if ("email".equals(searchType)) {
+                user = userService.getUserByEmail(keyword);
+            } else if ("phone".equals(searchType)) {
+                // TODO: 手机号搜索待实现
+                return ResponseEntity.ok(Result.error(400, "手机号搜索功能待实现"));
+            } else {
+                return ResponseEntity.ok(Result.error(400, "不支持的搜索类型"));
+            }
+            
+            if (user == null) {
+                return ResponseEntity.ok(Result.error(404, "未找到用户"));
+            }
+            
+            UserVO userVO = UserConverter.toVO(user);
+            log.info("搜索用户成功: searchType={}, keyword={}, userId={}", searchType, keyword, user.getId());
+            return ResponseEntity.ok(Result.success("搜索成功", userVO));
+            
+        } catch (Exception e) {
+            log.error("搜索用户失败: searchType={}, keyword={}", searchType, keyword, e);
+            return ResponseEntity.ok(Result.error(500, "搜索失败"));
+        }
+    }
 }

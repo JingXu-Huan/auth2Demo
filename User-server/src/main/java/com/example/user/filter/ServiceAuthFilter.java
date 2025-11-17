@@ -39,10 +39,17 @@ public class ServiceAuthFilter extends OncePerRequestFilter {
     // 公开接口，不需要服务认证
     private static final List<String> PUBLIC_API_PATTERNS = Arrays.asList(
         "/api/users/register",
-        "/api/users/confirm",
-        "/api/users/exists/",
-        "/api/users/check-email",
-        "/api/users/check-username",
+        "/api/v1/users/register",
+        "/api/v1/users/confirm",
+        "/api/v1/users/exists/",
+        "/api/v1/users/check-email",
+        "/api/v1/users/check-email",
+        "/api/v1/users/check-username",
+        "/api/v1/users/check-username",
+        "/api/v1/users/details/email/",
+        "/api/v1/users/update-login-time",
+        "/api/v1/email/",
+        "/api/v1/security/",
         "/actuator/",
         "/swagger",
         "/v2/api-docs",
@@ -63,13 +70,17 @@ public class ServiceAuthFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         
         String requestURI = request.getRequestURI();
+        log.info("ServiceAuthFilter 处理请求: URI={}", requestURI);
         
         // 检查是否是公开接口
         boolean isPublicApi = PUBLIC_API_PATTERNS.stream()
             .anyMatch(requestURI::contains);
         
+        log.info("是否公开接口: {}, URI={}", isPublicApi, requestURI);
+        
         if (isPublicApi) {
             // 公开接口，直接放行
+            log.info("公开接口放行: URI={}", requestURI);
             filterChain.doFilter(request, response);
             return;
         }

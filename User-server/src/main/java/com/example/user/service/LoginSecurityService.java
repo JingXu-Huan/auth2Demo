@@ -48,7 +48,7 @@ public class LoginSecurityService {
         try {
             // 1. 检查是否已经通过了安全验证（15分钟内有效）
             String verifiedKey = SECURITY_VERIFIED_PREFIX + email;
-            if (Boolean.TRUE.equals(redisTemplate.hasKey(verifiedKey))) {
+            if (redisTemplate.hasKey(verifiedKey)) {
                 log.info("用户已通过安全验证（15分钟内）: email={}", email);
                 return false;
             }

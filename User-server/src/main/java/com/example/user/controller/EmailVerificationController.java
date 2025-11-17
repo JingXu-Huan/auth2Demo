@@ -24,7 +24,7 @@ import java.util.Map;
 @Slf4j
 @Api(tags = "邮箱验证", description = "邮箱验证码管理")
 @RestController
-@RequestMapping("/api/email")
+@RequestMapping("/api/v1/email")
 public class EmailVerificationController {
     
     @Autowired

@@ -10,12 +10,12 @@
     <file url="file://$PROJECT_DIR$/IM-av-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-file-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-file-server/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/IM-group-server/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/IM-group-server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-message-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-message-server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-push-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-push-server/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IM-relationship-server/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/IM-relationship-server/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/IM-search-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Oauth2-auth-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/Oauth2-auth-server/src/main/java/com/example/auth/service/GiteeOAuthService.java" charset="UTF-8" />

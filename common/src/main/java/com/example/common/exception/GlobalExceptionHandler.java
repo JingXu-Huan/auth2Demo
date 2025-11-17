@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.stream.Collectors;
 
 /**
@@ -109,6 +110,36 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(Result.error(500, "服务器内部错误，请联系管理员"));
+    }
+    
+    /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-17
+     * 处理实体未找到异常（JPA）
+     */
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity<Result<Void>> handleEntityNotFoundException(EntityNotFoundException ex) {
+        log.warn("实体未找到: {}", ex.getMessage());
+        
+        return ResponseEntity
+                .status(HttpStatus.NOT_FOUND)
+                .body(Result.error(404, ex.getMessage()));
+    }
+    
+    /**
+     * @author Junjie
+     * @version 1.0.0
+     * @date 2025-11-17
+     * 处理运行时异常
+     */
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<Result<Void>> handleRuntimeException(RuntimeException ex) {
+        log.error("运行时异常: {}", ex.getMessage(), ex);
+        
+        return ResponseEntity
+                .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Result.error(500, ex.getMessage()));
     }
     
     /**

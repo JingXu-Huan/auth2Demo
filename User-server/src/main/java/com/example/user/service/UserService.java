@@ -52,14 +52,36 @@ public class UserService {
      * @date 2025-11-06
      * 根据邮箱获取用户详情（用于登录认证）
      */
-    @Cacheable(value = "userDetails", key = "#email")
     public UserDetailsDTO getUserDetailsByEmail(String email) {
         try {
+            log.info("开始查询用户详情: email={}", email);
+            
+            // 调试：先查用户
+            User user = userMapper.getUserByEmail(email);
+            if (user == null) {
+                log.warn("用户不存在: email={}", email);
+                return null;
+            }
+            log.info("找到用户: userId={}, email={}", user.getId(), email);
+            
+            // 调试：查询凭证
+            UserCredential credential = userCredentialMapper.findByUserIdAndProvider(user.getId(), "email");
+            if (credential == null) {
+                log.warn("用户凭证不存在: userId={}, provider=email", user.getId());
+            } else {
+                log.info("找到用户凭证: credentialId={}, userId={}, provider={}, passwordHash={}", 
+                    credential.getId(), credential.getUserId(), credential.getProvider(),
+                    credential.getPasswordHash() != null ? "存在(长度:" + credential.getPasswordHash().length() + ")" : "NULL");
+            }
+            
+            // 正常查询
             UserDetailsDTO userDetails = userMapper.getUserDetailsByEmail(email);
             if (userDetails != null) {
-                log.info("查询用户详情成功: email={}", email);
+                log.info("查询用户详情成功: userId={}, passwordHash={}", 
+                    userDetails.getUserId(),
+                    userDetails.getPasswordHash() != null ? "存在(长度:" + userDetails.getPasswordHash().length() + ")" : "NULL");
             } else {
-                log.warn("用户不存在: email={}", email);
+                log.warn("getUserDetailsByEmail 返回 null: email={}", email);
             }
             return userDetails;
         } catch (Exception e) {
@@ -176,14 +198,19 @@ public class UserService {
             log.info("用户创建成功: userId={}, username={}, email={}", user.getId(), username, email);
             
             // 3. 创建用户凭证（密码）
+            log.info("准备创建用户凭证: userId={}, provider=email", user.getId());
             UserCredential credential = new UserCredential();
             credential.setUserId(user.getId());
             credential.setProvider("email");
-            credential.setPasswordHash(passwordEncoder.encode(password));
+            String encodedPassword = passwordEncoder.encode(password);
+            credential.setPasswordHash(encodedPassword);
             credential.setCreatedAt(LocalDateTime.now());
             
-            userCredentialMapper.insert(credential);
-            log.info("用户凭证创建成功: userId={}", user.getId());
+            log.info("密码已加密: userId={}, passwordHashLength={}", user.getId(), encodedPassword != null ? encodedPassword.length() : 0);
+            
+            int insertRows = userCredentialMapper.insert(credential);
+            log.info("用户凭证创建成功: userId={}, insertRows={}, credentialId={}", 
+                user.getId(), insertRows, credential.getId());
             
             // 4. 发送欢迎邮件（异步）
             sendWelcomeEmail(email, username);
@@ -333,5 +360,12 @@ public class UserService {
         } catch (Exception e) {
             log.error("发送欢迎邮件失败: email={}", email, e);
         }
+    }
+    
+    /**
+     * 根据邮箱获取用户
+     */
+    public User getUserByEmail(String email) {
+        return userMapper.getUserByEmail(email);
     }
 }

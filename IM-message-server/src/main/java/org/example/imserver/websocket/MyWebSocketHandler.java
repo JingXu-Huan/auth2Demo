@@ -44,9 +44,15 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
             sessionManager.addSession(userId, session);
-            //加入Redis统计在线人数
-            redisTemplate.opsForSet().add(ONLINE_USERS_KEY, userId);
-            log.info("ID为:{}的用户建立连接!", userId);
+            
+            // 暂时注释Redis操作，避免连接失败
+            try {
+                redisTemplate.opsForSet().add(ONLINE_USERS_KEY, userId);
+            } catch (Exception redisError) {
+                log.warn("Redis操作失败，但WebSocket连接正常: {}", redisError.getMessage());
+            }
+            
+            log.info("ID为:{}的用户建立连接! 当前在线用户数: {}", userId, sessionManager.getOnlineUserCount());
         } catch (Exception e) {
             log.error("建立WebSocket连接时发生异常: {}", e.getMessage(), e);
             session.close(CloseStatus.SERVER_ERROR.withReason("Connection error"));
@@ -72,8 +78,25 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             }
             
             chatMessage.setSenderId(userId);
-            chatService.handleMessage(chatMessage);
-            log.debug("处理用户{}的消息", userId);
+            
+            // 如果是群聊消息，直接广播给所有在线用户
+            if (ChatMessage.ChannelType.GROUP.equals(chatMessage.getChannelType())) {
+                // 广播给所有在线用户（除了发送者）
+                sessionManager.getOnlineUsers().forEach(onlineUserId -> {
+                    if (!onlineUserId.equals(userId)) {
+                        try {
+                            sessionManager.sendMessageToUser(onlineUserId, message.getPayload());
+                        } catch (Exception e) {
+                            log.warn("向用户{}发送消息失败: {}", onlineUserId, e.getMessage());
+                        }
+                    }
+                });
+                log.debug("广播群聊消息，发送者: {}", userId);
+            } else {
+                // 单聊消息，使用原有逻辑
+                chatService.handleMessage(chatMessage);
+                log.debug("处理用户{}的单聊消息", userId);
+            }
         } catch (Exception e) {
             log.error("处理WebSocket消息时发生异常: {}", e.getMessage(), e);
         }
@@ -88,9 +111,15 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         if(userId!=null)
         {
             sessionManager.removeSession(userId);
-            //Redis减少在线人数
-            redisTemplate.opsForSet().remove(ONLINE_USERS_KEY, userId);
-            log.info("ID为:{}的用户断开连接!",userId);
+            
+            // 暂时注释Redis操作，避免连接失败
+            try {
+                redisTemplate.opsForSet().remove(ONLINE_USERS_KEY, userId);
+            } catch (Exception redisError) {
+                log.warn("Redis操作失败: {}", redisError.getMessage());
+            }
+            
+            log.info("ID为:{}的用户断开连接! 当前在线用户数: {}", userId, sessionManager.getOnlineUserCount());
         }
     }
 

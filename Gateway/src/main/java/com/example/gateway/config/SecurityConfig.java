@@ -23,7 +23,7 @@ public class SecurityConfig {
                 .pathMatchers("/api/auth/**").permitAll()
                 // 公开的用户服务接口（注册、邮箱验证）
                 .pathMatchers("/api/users/register").permitAll()
-                .pathMatchers("/api/users/confirm").permitAll()
+                .pathMatchers("/api/v1/users/**").permitAll()
                 // 其他所有路径都允许（由后端服务自己控制权限）
                 .anyExchange().permitAll()
             );

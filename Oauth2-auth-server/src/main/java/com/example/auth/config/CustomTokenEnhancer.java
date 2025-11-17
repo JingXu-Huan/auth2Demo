@@ -34,7 +34,7 @@ public class CustomTokenEnhancer implements TokenEnhancer {
         
         try {
             // 通过 Feign 调用 User-server 获取用户详细信息
-            UserDetailsDTO userDetails = userServiceClient.getUserDetailsByEmail(email);
+            UserDetailsDTO userDetails = userServiceClient.getUserDetailsByEmail(email).getData();
             
             if (userDetails != null) {
                 // 添加用户ID

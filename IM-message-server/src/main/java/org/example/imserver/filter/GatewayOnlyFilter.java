@@ -29,6 +29,9 @@ public class GatewayOnlyFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        // 暂时允许所有直接访问，用于测试
+        log.debug("允许直接访问: {}", request.getRequestURI());
+        
         String requestPath = request.getRequestURI();
         String gatewayHeader = request.getHeader("X-Gateway-Service");
 

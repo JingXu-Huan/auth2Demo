@@ -5,6 +5,7 @@ import com.example.domain.vo.Result;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,11 +18,12 @@ import java.util.Map;
  * @version 1.0.0
  * @date 2025-11-06
  * 认证相关接口控制器
- * 提供用户注册、登录前的检查等功能
+ * 提供用户注册、登录前的检查、JWT 登录等功能
  */
+@Slf4j
 @Api(tags = "认证管理", description = "用户认证相关接口控制器")
 @RestController
-@RequestMapping("/api/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthController {
 
     @Autowired
@@ -70,4 +72,6 @@ public class AuthController {
             return ResponseEntity.ok(response);
         }
     }
+    
+    // 注意：JWT 用户名密码登录已废弃，统一使用 OAuth2 登录（Gitee）
 }
