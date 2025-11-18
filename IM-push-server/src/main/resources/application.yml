@@ -1,0 +1,44 @@
+server:
+  port: 8084
+
+spring:
+  application:
+    name: im-push-server
+  
+  # RabbitMQ 配置
+  rabbitmq:
+    host: 154.219.109.125
+    port: 5672
+    username: guest
+    password: guest
+    listener:
+      simple:
+        acknowledge-mode: auto
+        retry:
+          enabled: true
+          initial-interval: 3000
+          max-attempts: 3
+
+  # Redis 配置（保留用于其他用途，如缓存）
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 3000ms
+
+# Feign 配置
+feign:
+  group-service:
+    url: http://localhost:8003
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+logging:
+  level:
+    org.example.mpushservice: DEBUG
+    org.springframework.amqp: DEBUG
+    org.springframework.web.socket: DEBUG
