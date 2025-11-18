@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
@@ -23,6 +24,12 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     @Bean
+    public WebSecurityCustomizer webSecurityCustomizer() {
+        return (web) -> web.ignoring()
+                .antMatchers("/ws/**");
+    }
+
+    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             // 禁用CSRF，因为这是一个API服务
@@ -38,13 +45,16 @@ public class SecurityConfig {
             
             // 配置授权规则
             .authorizeHttpRequests(authz -> authz
-                // 允许所有请求（暂时简化，后续可以细化）
+                // 允许所有请求（包括 WebSocket）
                 .anyRequest().permitAll()
             )
             
             // 禁用默认的登录页面
             .formLogin(form -> form.disable())
-            .httpBasic(basic -> basic.disable());
+            .httpBasic(basic -> basic.disable())
+            
+            // 禁用帧选项以支持 WebSocket
+            .headers(headers -> headers.frameOptions(frame -> frame.disable()));
 
         return http.build();
     }

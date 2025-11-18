@@ -62,22 +62,27 @@ public class ChatService {
      */
     public void handleMessage(ChatMessage chatMessage) {
         try {
+            log.info("开始处理消息: senderId={}, receiverId={}, channelType={}, contentType={}", 
+                chatMessage.getSenderId(), chatMessage.getReceiverId(), 
+                chatMessage.getChannelType(), chatMessage.getContentType());
+            
             // 验证消息
             validateMessage(chatMessage);
             enrichMessage(chatMessage);
             persistMessage(chatMessage);
+            
+            log.info("消息已持久化: messageId={}, conversationId={}", 
+                chatMessage.getMessageId(), chatMessage.getConversationId());
 
             if (chatMessage.getChannelType() == ChatMessage.ChannelType.PRIVATE) {
                 // 2. 单聊：直接发布
                 // Redis 订阅者会处理投递
+                log.info("发布单聊消息到 Redis: senderId={}, receiverId={}", 
+                    chatMessage.getSenderId(), chatMessage.getReceiverId());
                 publisher.publish(chatMessage);
 
-                log.debug("单聊消息发送 {} to {}",
+                log.info("单聊消息已发布到 Redis: {} to {}",
                     chatMessage.getSenderId(), chatMessage.getReceiverId());
-
-            } else if (chatMessage.getChannelType() == ChatMessage.ChannelType.GROUP) {
-                // 3. 群聊：执行 "Fan-out"（扇出）
-                handleGroupMessage(chatMessage);
             }
         } catch (Exception e) {
             log.error("处理消息失败: {}", e.getMessage(), e);

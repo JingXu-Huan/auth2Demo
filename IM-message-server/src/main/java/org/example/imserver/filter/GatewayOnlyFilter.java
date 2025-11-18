@@ -22,7 +22,8 @@ public class GatewayOnlyFilter extends OncePerRequestFilter {
             "/actuator",    
             "/index.html",
             "/static",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/ws"           // 允许 WebSocket 握手直接通过（包括来自网关的 /ws/{userId}）
     );
 
     @Override

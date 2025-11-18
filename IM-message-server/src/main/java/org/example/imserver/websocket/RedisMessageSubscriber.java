@@ -26,11 +26,16 @@ public class RedisMessageSubscriber {
             log.info("当前在线用户列表: {}", sessionManager.getOnlineUsers());
 
             if(receiverId!=null){
-                try {
-                    sessionManager.sendMessageToUser(receiverId,messageJson);
-                    log.info("消息成功推送给用户: {}", receiverId);
-                } catch (Exception e) {
-                    log.warn("用户不在线或推送失败: receiverId={}, error={}", receiverId, e.getMessage());
+                // 检查用户是否在线
+                if (sessionManager.getOnlineUsers().contains(receiverId)) {
+                    try {
+                        sessionManager.sendMessageToUser(receiverId,messageJson);
+                        log.info("消息成功推送给用户: {}", receiverId);
+                    } catch (Exception e) {
+                        log.error("推送消息失败: receiverId={}, error={}", receiverId, e.getMessage());
+                    }
+                } else {
+                    log.warn("用户不在线，无法推送消息: receiverId={}", receiverId);
                 }
             } else {
                 log.warn("receiverId为空，无法推送消息");

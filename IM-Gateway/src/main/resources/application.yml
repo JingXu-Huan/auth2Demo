@@ -25,7 +25,7 @@ spring:
   cloud:
     nacos:
       discovery:
-        enabled: true  # 默认启用Nacos
+        enabled: false  # 暂时禁用Nacos，使用直连
         server-addr: 154.219.109.125:8848
         namespace: public
     gateway:
@@ -41,9 +41,11 @@ spring:
       routes:
         # WebSocket路由 - 直连到消息服务
         - id: chat-service-websocket
-          uri: lb:ws://IM-message-server  # 使用Nacos进行负载均衡 (WebSocket)
+          uri: ws://localhost:8002  # 直接指向 IM-message-server 地址
           predicates:
             - Path=/ws/**
+          filters:
+            - StripPrefix=0
           metadata:
             response-timeout: 600000  # WebSocket长连接超时10分钟
             connect-timeout: 10000

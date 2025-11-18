@@ -2,6 +2,7 @@ package org.example.imserver.websocket;
 
 import com.example.domain.dto.ChatMessage;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 import lombok.extern.slf4j.Slf4j;
 import org.example.imserver.service.ChatService;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -71,7 +72,23 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                 return;
             }
             
-            ChatMessage chatMessage = gson.fromJson(message.getPayload(), ChatMessage.class);
+            String payload = message.getPayload();
+
+            // 优先处理心跳消息 {"type":"ping"}
+            try {
+                JsonObject json = gson.fromJson(payload, JsonObject.class);
+                if (json != null && json.has("type")) {
+                    String type = json.get("type").getAsString();
+                    if ("ping".equalsIgnoreCase(type)) {
+                        log.debug("收到心跳消息, userId={}", userId);
+                        return;
+                    }
+                }
+            } catch (Exception ignore) {
+                // 非 JSON 或解析失败，继续按聊天消息处理
+            }
+
+            ChatMessage chatMessage = gson.fromJson(payload, ChatMessage.class);
             if (chatMessage == null) {
                 log.warn("收到无效的消息格式，用户ID: {}", userId);
                 return;

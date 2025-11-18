@@ -536,8 +536,9 @@ public class ChatController {
     @PostMapping("/typing")
     public ResponseEntity<Map<String, Object>> sendTyping(@RequestBody TypingIndicatorRequest request) {
         try {
-            chatService.sendTypingIndicator(request.getFromUserId(), request.getToUserId(), 
-                                          request.getConversationId(), request.getTyping());
+            boolean typing = Boolean.TRUE.equals(request.getTyping());
+            chatService.sendTypingIndicator(request.getFromUserId(), request.getToUserId(),
+                                          request.getConversationId(), typing);
             Map<String, Object> response = new HashMap<>();
             response.put("success", true);
             response.put("message", "发送 typing 信令成功");
