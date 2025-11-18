@@ -14,10 +14,18 @@ import org.example.imgroupserver.mapper.GroupNodeMapper;
 import org.example.imgroupserver.mapper.UserNodeMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.example.imgroupserver.util.SystemEventPublisher;
 
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+
+/*
+  @author Junjie
+  @version 1.0
+  @date 2025-11-18
+  Neo4j群组服务,其主要功能为创建群组,删除群组,管理群组等等.
+ */
 
 @Slf4j
 @Service
@@ -27,6 +35,7 @@ public class Neo4jGroupService {
     private final GroupNodeMapper groupMapper;
     private final UserNodeMapper userMapper;
     private final UserServiceClient userServiceClient;
+    private final SystemEventPublisher eventPublisher;
 
     @Transactional
     public GroupNode createGroup(CreateGroupRequest request) {
@@ -104,6 +113,14 @@ public class Neo4jGroupService {
         if (!groupMapper.findByGroupId(groupId).isPresent()) {
             throw new NoSuchElementException("群组不存在: " + groupId);
         }
+
+        // 发送群解散事件通知
+        try {
+            eventPublisher.publishGroupDisbandedEvent(groupId);
+        } catch (Exception e) {
+            log.error("发送群解散事件失败", e);
+        }
+
         groupMapper.deleteGroupAndRelationships(groupId);
     }
 
@@ -136,6 +153,38 @@ public class Neo4jGroupService {
 
         Long currentMemberCount = groupMapper.countMembers(groupId);
 
+        // 发送系统事件通知
+        if (addedCount > 0) {
+            try {
+                // 获取新添加成员的信息
+                List<Map<String, Object>> addedMembersList = new ArrayList<>();
+                for (Long userId : request.getUserIds()) {
+                    if (!failedUsers.contains(userId)) {
+                        UserNode user = userMapper.findByUserId(userId).orElse(null);
+                        if (user != null) {
+                            Map<String, Object> memberInfo = new HashMap<>();
+                            memberInfo.put("user_id", userId.toString());
+                            memberInfo.put("name", user.getNickname() != null ? user.getNickname() : "用户" + userId);
+                            addedMembersList.add(memberInfo);
+                        }
+                    }
+                }
+
+                // 获取邀请人信息
+                String operatorName = "管理员";
+                if (request.getInviterId() != null) {
+                    UserNode inviter = userMapper.findByUserId(request.getInviterId()).orElse(null);
+                    if (inviter != null) {
+                        operatorName = inviter.getNickname() != null ? inviter.getNickname() : "用户" + request.getInviterId();
+                    }
+                }
+
+                eventPublisher.publishMemberAddedEvent(groupId, operatorName, addedMembersList);
+            } catch (Exception e) {
+                log.error("发送成员添加事件失败", e);
+            }
+        }
+
         Map<String, Object> result = new HashMap<>();
         result.put("groupId", groupId);
         result.put("addedCount", addedCount);
@@ -157,6 +206,22 @@ public class Neo4jGroupService {
 
         groupMapper.removeMember(groupId, userId);
         Long count = groupMapper.countMembers(groupId);
+
+        // 发送系统事件通知（被踢出）
+        try {
+            UserNode removedUser = userMapper.findByUserId(userId).orElse(null);
+            if (removedUser != null) {
+                List<Map<String, Object>> removedMembersList = new ArrayList<>();
+                Map<String, Object> memberInfo = new HashMap<>();
+                memberInfo.put("user_id", userId.toString());
+                memberInfo.put("name", removedUser.getNickname() != null ? removedUser.getNickname() : "用户" + userId);
+                removedMembersList.add(memberInfo);
+
+                eventPublisher.publishMemberRemovedEvent(groupId, "管理员", removedMembersList);
+            }
+        } catch (Exception e) {
+            log.error("发送成员移除事件失败", e);
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("groupId", groupId);
@@ -322,6 +387,26 @@ public class Neo4jGroupService {
 
         groupMapper.removeMember(groupId, userId);
         Long count = groupMapper.countMembers(groupId);
+
+        // 发送系统事件通知（成员主动退出）
+        try {
+            UserNode leftUser = userMapper.findByUserId(userId).orElse(null);
+            if (leftUser != null) {
+                List<Map<String, Object>> leftMembersList = new ArrayList<>();
+                Map<String, Object> memberInfo = new HashMap<>();
+                memberInfo.put("user_id", userId.toString());
+                memberInfo.put("name", leftUser.getNickname() != null ? leftUser.getNickname() : "用户" + userId);
+                leftMembersList.add(memberInfo);
+
+                // 使用 member_removed 事件类型，但操作者是自己
+                String operatorName = leftUser.getNickname() != null ? leftUser.getNickname() : "用户" + userId;
+                
+                // 发送成员移除事件，标记为主动退出
+                eventPublisher.publishMemberRemovedEvent(groupId, operatorName, leftMembersList, true);
+            }
+        } catch (Exception e) {
+            log.error("发送成员退出事件失败", e);
+        }
 
         Map<String, Object> result = new HashMap<>();
         result.put("groupId", groupId);

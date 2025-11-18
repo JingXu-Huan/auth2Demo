@@ -39,9 +39,9 @@ spring:
       loadbalancer:
         use404: true
       routes:
-        # WebSocket路由 - 直连到消息服务
-        - id: chat-service-websocket
-          uri: ws://localhost:8002  # 直接指向 IM-message-server 地址
+        # WebSocket路由 - 直连到推送服务
+        - id: push-service-websocket
+          uri: ws://localhost:8084  # 直接指向 IM-push-server 地址
           predicates:
             - Path=/ws/**
           filters:

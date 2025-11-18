@@ -72,6 +72,12 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- RabbitMQ for event publishing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
         <!-- Common module (service auth, tracing utils, etc.) -->
         <dependency>
             <groupId>com.example</groupId>
@@ -113,6 +119,10 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
         </dependency>
     </dependencies>
 

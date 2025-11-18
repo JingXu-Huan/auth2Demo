@@ -25,7 +25,9 @@ class WebSocketService {
     this.isConnecting = true
 
     // 通过 IM-Gateway 连接 (端口 9001)
-    const wsUrl = `ws://localhost:9001/ws/${userId}`
+    // 使用环境变量支持局域网访问
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:9001'
+    const wsUrl = `${wsBaseUrl}/ws/${userId}`
     console.log('正在建立 WebSocket 连接 (通过网关):', wsUrl)
 
     try {

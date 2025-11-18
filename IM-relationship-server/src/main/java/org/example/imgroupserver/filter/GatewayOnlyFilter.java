@@ -22,26 +22,33 @@ public class GatewayOnlyFilter extends OncePerRequestFilter {
             "/actuator",    
             "/index.html",
             "/static",
-            "/favicon.ico"
+            "/favicon.ico",
+            "/api/v1/groups"  // 允许服务间调用群组接口
     );
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        // 暂时允许所有直接访问，用于测试
-        log.debug("允许直接访问: {}", request.getRequestURI());
-        
         String requestPath = request.getRequestURI();
         String gatewayHeader = request.getHeader("X-Gateway-Service");
+        String internalServiceHeader = request.getHeader("X-Internal-Service");
 
+        // 允许直接访问的路径
         if (isAllowedDirectPath(requestPath)) {
+            log.debug("允许直接访问: {}", requestPath);
             filterChain.doFilter(request, response);
             return;
         }
 
+        // 允许来自网关的请求
         boolean fromGateway = "IM-Gateway".equals(gatewayHeader);
-        if (!fromGateway) {
+        // 允许来自内部服务的请求（如 IM-push-server）
+        boolean fromInternalService = "IM-push-server".equals(internalServiceHeader);
+        
+        if (!fromGateway && !fromInternalService) {
+            log.warn("拒绝直接访问: {}, gatewayHeader={}, internalServiceHeader={}", 
+                requestPath, gatewayHeader, internalServiceHeader);
             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write("{\"error\":\"Direct access not allowed\",\"message\":\"Please access through gateway\",\"code\":403}");

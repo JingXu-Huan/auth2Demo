@@ -207,6 +207,7 @@ import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { chatAPI, groupAPI, friendAPI } from '../api'
 import websocketService from '../utils/websocket'
+import chatDb from '../db/chatDb'
 import { 
   Search, 
   Phone, 
@@ -240,14 +241,48 @@ const inviteLoading = ref(false)
 // 会话数据（从接口加载）
 const conversations = ref([])
 
+const loadMessagesFromLocal = async (conversationId) => {
+  try {
+    return await chatDb.messages
+      .where('conversationId')
+      .equals(conversationId)
+      .sortBy('createdAt')
+  } catch (error) {
+    console.error('从本地加载消息失败:', error)
+    return []
+  }
+}
+
+const saveMessagesToLocal = async (messageList) => {
+  try {
+    if (!messageList || !messageList.length) return
+    await chatDb.messages.bulkPut(messageList)
+  } catch (error) {
+    console.error('保存消息到本地失败:', error)
+  }
+}
+
 // 加载会话列表
 const loadConversations = async () => {
   try {
     if (!userStore.user || !userStore.user.id) return
-    
-    // 加载用户的群组列表
+
+    // 1. 优先从本地 IndexedDB 加载会话列表
+    try {
+      const localConversations = await chatDb.conversations.toArray()
+      if (localConversations && localConversations.length > 0) {
+        conversations.value = localConversations.sort(
+          (a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0)
+        )
+        return
+      }
+    } catch (e) {
+      console.error('从本地加载会话列表失败:', e)
+    }
+
+    // 2. 本地没有记录时，从后端加载群聊列表作为初始化数据
     const groupResponse = await groupAPI.getUserGroups(userStore.user.id, { page: 1, size: 50 })
-    
+
     if (groupResponse.data && groupResponse.data.groups) {
       const groupConversations = groupResponse.data.groups.map(group => ({
         id: group.groupId,
@@ -257,10 +292,19 @@ const loadConversations = async () => {
         memberCount: group.memberCount,
         lastMessage: '',
         lastMessageTime: new Date(group.createdAt).getTime(),
-        unreadCount: 0
+        unreadCount: 0,
+        conversationId: `GROUP:${group.groupId}`,
+        isPinned: false
       }))
-      
+
       conversations.value = groupConversations
+
+      // 同步到本地会话表
+      try {
+        await chatDb.conversations.bulkPut(groupConversations)
+      } catch (e) {
+        console.error('保存群聊会话到本地失败:', e)
+      }
     }
   } catch (error) {
     console.error('加载会话列表失败:', error)
@@ -296,12 +340,32 @@ const buildConversationId = (conversation) => {
   return null
 }
 
+// 保存会话到本地 IndexedDB
+const saveConversationToLocal = async (conversation) => {
+  try {
+    const conversationId = buildConversationId(conversation)
+    if (!conversationId) return
+
+    await chatDb.conversations.put({
+      ...conversation,
+      conversationId,
+      lastMessageTime: conversation.lastMessageTime || Date.now(),
+      isPinned: conversation.isPinned || false
+    })
+  } catch (error) {
+    console.error('保存会话到本地失败:', error)
+  }
+}
+
 // 选择会话
 const selectConversation = async (conversation) => {
   selectedConversation.value = conversation
   
   // 清除未读数
   conversation.unreadCount = 0
+  saveConversationToLocal(conversation).catch(err => {
+    console.error('更新本地会话未读数失败:', err)
+  })
   
   // 加载消息历史
   await loadMessages(conversation)
@@ -316,17 +380,23 @@ const loadMessages = async (conversation) => {
       return
     }
 
-    // 调用实际API获取历史消息
+    const localList = await loadMessagesFromLocal(conversationId)
+    if (localList.length > 0) {
+      messages.value = localList
+      nextTick(() => {
+        scrollToBottom()
+      })
+      return
+    }
+
     const res = await chatAPI.getChatHistory({
       conversationId: conversationId,
       size: 50
     })
-    
-    // 后端返回：{ nextCursor, data: [...], success, message }
+
     const rawList = Array.isArray(res?.data) ? res.data : []
-    
-    // 转换消息格式并按时间升序排列（最早的在上面）
-    messages.value = rawList
+
+    const normalized = rawList
       .map(msg => {
         const contentType = (msg.contentType || 'TEXT').toUpperCase()
         let content = ''
@@ -368,12 +438,15 @@ const loadMessages = async (conversation) => {
         
         return {
           id: msg.messageId,
+          messageId: msg.messageId,
+          conversationId,
           senderId: msg.senderId,
           senderName: msg.senderName || `用户${msg.senderId}`,
           senderAvatar: '',
           type: contentType.toLowerCase(),
           content: content,
           timestamp: msg.createdAt,
+          createdAt: msg.createdAt,
           systemType,
           groupId,
           groupName,
@@ -381,9 +454,11 @@ const loadMessages = async (conversation) => {
           inviterName
         }
       })
-      .sort((a, b) => a.timestamp - b.timestamp) // 按时间升序排列
-    
-    
+      .sort((a, b) => a.timestamp - b.timestamp)
+
+    messages.value = normalized
+    await saveMessagesToLocal(normalized)
+
     nextTick(() => {
       scrollToBottom()
     })
@@ -403,14 +478,25 @@ const handleSendMessage = async () => {
     return
   }
 
+  const conversationId = buildConversationId(selectedConversation.value)
+  if (!conversationId) {
+    ElMessage.error('会话ID生成失败')
+    return
+  }
+
+  const now = Date.now()
   const newMessage = {
-    id: Date.now(),
+    id: now,
+    messageId: null,
+    conversationId,
     senderId: userStore.user.id,
     senderName: userStore.user.nickname,
     senderAvatar: userStore.user.avatar,
     type: 'text',
     content: messageInput.value.trim(),
-    timestamp: Date.now()
+    timestamp: now,
+    createdAt: now,
+    status: 'sending'
   }
 
   
@@ -420,6 +506,11 @@ const handleSendMessage = async () => {
   selectedConversation.value.lastMessage = messageInput.value.trim()
   selectedConversation.value.lastMessageTime = Date.now()
 
+   // 同步会话摘要到本地
+  saveConversationToLocal(selectedConversation.value).catch(error => {
+    console.error('更新本地会话失败:', error)
+  })
+
   messageInput.value = ''
 
   nextTick(() => {
@@ -427,14 +518,8 @@ const handleSendMessage = async () => {
   })
 
   try {
-    const conversationId = buildConversationId(selectedConversation.value)
-    if (!conversationId) {
-      throw new Error('会话ID生成失败')
-    }
-
     const channelType = selectedConversation.value.type === 'private' ? 'PRIVATE' : 'GROUP'
 
-    // 调用API发送消息，字段与后端 ChatMessage 对齐
     const response = await chatAPI.sendMessage({
       senderId: String(userStore.user.id),
       receiverId: channelType === 'PRIVATE' ? String(selectedConversation.value.id) : null,
@@ -445,11 +530,26 @@ const handleSendMessage = async () => {
       payload: { text: newMessage.content }
     })
 
-    if (response.success) {
+    if (response.success && response.data) {
+      const serverMsg = response.data
+      const createdAt = serverMsg.createdAt || newMessage.createdAt
+      newMessage.id = serverMsg.messageId
+      newMessage.messageId = serverMsg.messageId
+      newMessage.timestamp = createdAt
+      newMessage.createdAt = createdAt
+      newMessage.status = 'sent'
+
+      await chatDb.messages.put({
+        ...newMessage
+      })
+
       console.log('消息发送成功')
+    } else {
+      newMessage.status = 'failed'
     }
   } catch (error) {
     console.error('发送消息失败:', error)
+    newMessage.status = 'failed'
     ElMessage.error('发送消息失败')
   }
 }
@@ -684,6 +784,11 @@ const initFromRoute = async () => {
     if (existingIndex === -1) {
       conversations.value.unshift(friendConversation)
     }
+
+    // 持久化好友会话到本地
+    saveConversationToLocal(friendConversation).catch(error => {
+      console.error('保存好友会话到本地失败:', error)
+    })
     
     // 选中该会话
     selectedConversation.value = friendConversation
@@ -731,6 +836,11 @@ const initFromRoute = async () => {
           
           // 添加到会话列表顶部
           conversations.value.unshift(groupConversation)
+
+          // 持久化群聊会话到本地
+          saveConversationToLocal(groupConversation).catch(error => {
+            console.error('保存群聊会话到本地失败:', error)
+          })
         }
         
         // 选中该会话
@@ -757,10 +867,187 @@ watch(
   { deep: true }
 )
 
+// 处理系统事件（群成员变更、被踢出等）
+const handleSystemEvent = async (data) => {
+  console.log('handleSystemEvent 被调用，完整数据:', JSON.stringify(data, null, 2))
+  
+  const eventType = data.payload?.eventType
+  const eventData = data.payload?.data || {}
+  
+  console.log('收到系统事件:', eventType, eventData)
+  
+  if (!eventType) {
+    console.error('系统事件缺少 eventType:', data)
+    return
+  }
+
+  // 创建通知
+  const notification = {
+    timestamp: data.createdAt || Date.now(),
+    isRead: 0,
+    eventType,
+    conversationId: data.conversationId,
+    title: '',
+    message: '',
+    data: eventData
+  }
+
+  // 根据事件类型设置通知内容
+  switch (eventType) {
+    case 'member_added':
+      notification.title = '新成员加入'
+      notification.message = `${eventData.operatorName || '管理员'} 邀请 ${eventData.targetUsers?.map(u => u.name).join('、') || '新成员'} 加入了群聊`
+      break
+    
+    case 'member_removed':
+      // 检查是否是自己被移出或主动退出
+      const isMyself = eventData.targetUsers?.some(u => String(u.user_id) === String(userStore.user?.id))
+      
+      if (isMyself) {
+        // 自己退出或被踢出群聊
+        if (eventData.isVoluntary) {
+          // 主动退出
+          notification.title = '您已退出群聊'
+          notification.message = '您已成功退出该群聊'
+        } else {
+          // 被踢出
+          notification.title = '您已被移出群聊'
+          notification.message = `您已被 ${eventData.operatorName || '管理员'} 移出群聊`
+        }
+        
+        // 从会话列表中移除该群聊
+        const index = conversations.value.findIndex(c => 
+          buildConversationId(c) === data.conversationId
+        )
+        if (index !== -1) {
+          conversations.value.splice(index, 1)
+          console.log('已从会话列表移除群聊:', data.conversationId)
+        }
+        
+        // 如果当前正在查看这个群聊，清空消息
+        if (selectedConversation.value?.conversationId === data.conversationId) {
+          selectedConversation.value = null
+          messages.value = []
+        }
+        
+        // 如果是被踢出，弹窗提示
+        if (!eventData.isVoluntary) {
+          ElMessageBox.alert('您已被移出该群聊', '提示', {
+            confirmButtonText: '确定'
+          })
+        }
+      } else {
+        // 其他成员被移出或主动退出
+        if (eventData.isVoluntary) {
+          notification.title = '成员退出群聊'
+          notification.message = `${eventData.targetUsers?.map(u => u.name).join('、') || '成员'} 退出了群聊`
+        } else {
+          notification.title = '成员被移出'
+          notification.message = `${eventData.targetUsers?.map(u => u.name).join('、') || '成员'} 被移出群聊`
+        }
+      }
+      break
+    
+    case 'kicked_out':
+      // 保留兼容性，但现在统一使用 member_removed
+      notification.title = '成员变更'
+      notification.message = `群成员发生变更`
+      break
+    
+    case 'group_disbanded':
+      notification.title = '群聊已解散'
+      notification.message = `群聊已被解散`
+      
+      // 弹窗提示
+      ElMessageBox.alert('该群聊已被解散', '提示', {
+        confirmButtonText: '确定',
+        callback: () => {
+          // 跳转回消息列表
+          if (selectedConversation.value?.conversationId === data.conversationId) {
+            selectedConversation.value = null
+            messages.value = []
+          }
+          // 从会话列表中移除
+          const index = conversations.value.findIndex(c => 
+            buildConversationId(c) === data.conversationId
+          )
+          if (index !== -1) {
+            conversations.value.splice(index, 1)
+          }
+        }
+      })
+      break
+  }
+
+  // 保存通知到本地
+  try {
+    await chatDb.notifications.add(notification)
+    console.log('系统事件通知已保存')
+  } catch (error) {
+    console.error('保存系统事件通知失败:', error)
+  }
+
+  // 在聊天记录中插入灰条提示
+  if (data.conversationId) {
+    const systemMessage = {
+      id: `system_${Date.now()}`,
+      messageId: data.messageId || `system_${Date.now()}`,
+      conversationId: data.conversationId,
+      senderId: 'system',
+      senderName: '系统',
+      type: 'system',
+      content: notification.message,
+      timestamp: data.createdAt || Date.now(),
+      createdAt: data.createdAt || Date.now(),
+      systemType: 'event',
+      eventType
+    }
+
+    // 保存到本地消息表
+    await chatDb.messages.put(systemMessage).catch(err => {
+      console.error('保存系统消息失败:', err)
+    })
+
+    // 如果是当前会话，显示在聊天记录中
+    if (selectedConversation.value) {
+      const currentConversationId = buildConversationId(selectedConversation.value)
+      if (currentConversationId === data.conversationId) {
+        messages.value.push(systemMessage)
+        nextTick(() => {
+          scrollToBottom()
+        })
+      }
+    }
+
+    // 更新会话的最后一条消息
+    const conversation = conversations.value.find(c => {
+      const convId = buildConversationId(c)
+      return convId === data.conversationId
+    })
+    if (conversation) {
+      conversation.lastMessage = notification.message
+      conversation.lastMessageTime = systemMessage.timestamp
+      await saveConversationToLocal(conversation).catch(err => {
+        console.error('更新会话失败:', err)
+      })
+    }
+  }
+}
+
 // WebSocket 消息处理器
-const handleWebSocketMessage = (data) => {
+const handleWebSocketMessage = async (data) => {
   console.log('收到新消息:', data)
+  console.log('消息详情 - contentType:', data.contentType, 'payload:', data.payload)
   const contentType = (data.contentType || 'TEXT').toUpperCase()
+
+  // 处理系统事件通知（群成员变更、被踢出等）
+  if (contentType === 'SYSTEM' && data.payload && data.payload.type === 'EVENT') {
+    console.log('识别为系统事件，准备处理')
+    await handleSystemEvent(data)
+    return
+  } else if (contentType === 'SYSTEM') {
+    console.log('SYSTEM 消息但不是 EVENT 类型:', data.payload)
+  }
 
   // 处理 typing 信令（SYSTEM 类型，payload.type = TYPING），不当作普通消息渲染
   if (contentType === 'SYSTEM' && data.payload && data.payload.type === 'TYPING') {
@@ -809,21 +1096,28 @@ const handleWebSocketMessage = (data) => {
       }
     }
 
-    // 添加到消息列表
+    const createdAt = data.createdAt || Date.now()
     const newMessage = {
       id: data.messageId,
+      messageId: data.messageId,
+      conversationId: data.conversationId,
       senderId: data.senderId,
       senderName: data.senderName || `用户${data.senderId}`,
       senderAvatar: '',
       type: contentType.toLowerCase(),
       content,
-      timestamp: data.createdAt || Date.now(),
+      timestamp: createdAt,
+      createdAt,
       systemType,
       groupId,
       groupName,
       inviterId,
       inviterName
     }
+
+    chatDb.messages.put(newMessage).catch(error => {
+      console.error('保存消息到本地失败:', error)
+    })
 
     // 如果是当前会话的消息，添加到消息列表
     if (selectedConversation.value) {
@@ -848,6 +1142,11 @@ const handleWebSocketMessage = (data) => {
       if (selectedConversation.value?.id !== conversation.id) {
         conversation.unreadCount = (conversation.unreadCount || 0) + 1
       }
+
+      // 同步会话到本地
+      saveConversationToLocal(conversation).catch(error => {
+        console.error('更新本地会话失败:', error)
+      })
     }
   }
 }

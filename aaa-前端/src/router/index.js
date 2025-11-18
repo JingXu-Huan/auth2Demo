@@ -40,6 +40,12 @@ const routes = [
         meta: { title: '通讯录', icon: 'User' }
       },
       {
+        path: 'notifications',
+        name: 'Notifications',
+        component: () => import('../views/Notifications.vue'),
+        meta: { title: '通知', icon: 'Bell' }
+      },
+      {
         path: 'groups',
         name: 'Groups',
         component: () => import('../views/Groups.vue'),

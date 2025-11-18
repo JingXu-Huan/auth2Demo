@@ -18,6 +18,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
+ * @author Junjie
+ * @version 1.0
+ * @date 25-11-18
  * 好友服务
  */
 @Slf4j

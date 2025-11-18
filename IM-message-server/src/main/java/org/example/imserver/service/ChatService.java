@@ -15,6 +15,7 @@ import org.example.imserver.mapper.FavoriteMessageMapper;
 import org.example.imserver.mapper.MessageReadReceiptMapper;
 import org.example.imserver.mapper.PinnedMessageMapper;
 import org.example.imserver.websocket.RedisMessagePublisher;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -37,19 +38,22 @@ import java.util.stream.Collectors;
 public class ChatService {
 
     private final RedisMessagePublisher publisher;
+    private final RabbitTemplate rabbitTemplate;
     private final ChatMessageMapper chatMessageMapper;
     private final DeletedMessageMapper deletedMessageMapper;
     private final FavoriteMessageMapper favoriteMessageMapper;
     private final PinnedMessageMapper pinnedMessageMapper;
     private final MessageReadReceiptMapper messageReadReceiptMapper;
 
-    public ChatService(RedisMessagePublisher publisher, 
+    public ChatService(RedisMessagePublisher publisher,
+                      RabbitTemplate rabbitTemplate,
                       ChatMessageMapper chatMessageMapper,
                       DeletedMessageMapper deletedMessageMapper,
                       FavoriteMessageMapper favoriteMessageMapper,
                       PinnedMessageMapper pinnedMessageMapper,
                       MessageReadReceiptMapper messageReadReceiptMapper) {
         this.publisher = publisher;
+        this.rabbitTemplate = rabbitTemplate;
         this.chatMessageMapper = chatMessageMapper;
         this.deletedMessageMapper = deletedMessageMapper;
         this.favoriteMessageMapper = favoriteMessageMapper;
@@ -74,15 +78,27 @@ public class ChatService {
             log.info("消息已持久化: messageId={}, conversationId={}", 
                 chatMessage.getMessageId(), chatMessage.getConversationId());
 
+            // 发布消息到 RabbitMQ，由 IM-push-server 推送
             if (chatMessage.getChannelType() == ChatMessage.ChannelType.PRIVATE) {
-                // 2. 单聊：直接发布
-                // Redis 订阅者会处理投递
-                log.info("发布单聊消息到 Redis: senderId={}, receiverId={}", 
+                log.info("发布单聊消息到 MQ: senderId={}, receiverId={}", 
                     chatMessage.getSenderId(), chatMessage.getReceiverId());
-                publisher.publish(chatMessage);
-
-                log.info("单聊消息已发布到 Redis: {} to {}",
+                rabbitTemplate.convertAndSend(
+                    org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
+                    org.example.imserver.config.ChatRabbitConfig.PRIVATE_MESSAGE_ROUTING_KEY,
+                    chatMessage
+                );
+                log.info("单聊消息已发布到 MQ: {} to {}",
                     chatMessage.getSenderId(), chatMessage.getReceiverId());
+            } else if (chatMessage.getChannelType() == ChatMessage.ChannelType.GROUP) {
+                log.info("发布群聊消息到 MQ: senderId={}, groupId={}",
+                    chatMessage.getSenderId(), chatMessage.getGroupId());
+                rabbitTemplate.convertAndSend(
+                    org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
+                    org.example.imserver.config.ChatRabbitConfig.GROUP_MESSAGE_ROUTING_KEY,
+                    chatMessage
+                );
+                log.info("群聊消息已发布到 MQ: senderId={}, groupId={}",
+                    chatMessage.getSenderId(), chatMessage.getGroupId());
             }
         } catch (Exception e) {
             log.error("处理消息失败: {}", e.getMessage(), e);

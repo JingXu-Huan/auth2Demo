@@ -16,10 +16,10 @@ export default defineConfig({
   ],
   server: {
     port: 3000,
-    host: '0.0.0.0',
+    host: '0.0.0.0',  // 允许局域网访问
     proxy: {
       '/api': {
-        target: 'http://localhost:9000',
+        target: process.env.VITE_API_BASE_URL || 'http://localhost:9000',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '/api')

@@ -14,7 +14,17 @@
           :class="['nav-item', { active: $route.path.includes(item.path) }]"
           @click="navigateTo(item.path)"
         >
-          <el-icon class="nav-icon">
+          <el-badge 
+            v-if="item.showBadge && unreadNotificationCount > 0" 
+            :value="unreadNotificationCount" 
+            :max="99"
+            class="nav-badge"
+          >
+            <el-icon class="nav-icon">
+              <component :is="item.icon" />
+            </el-icon>
+          </el-badge>
+          <el-icon v-else class="nav-icon">
             <component :is="item.icon" />
           </el-icon>
           <span class="nav-text">{{ item.title }}</span>
@@ -74,9 +84,10 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '../stores/user'
+import chatDb from '../db/chatDb'
 import { 
   ChatDotRound, 
   User, 
@@ -89,11 +100,28 @@ import {
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const unreadNotificationCount = ref(0)
+
+// 加载未读通知数
+const loadUnreadCount = async () => {
+  try {
+    const count = await chatDb.notifications.where('isRead').equals(0).count()
+    unreadNotificationCount.value = count
+  } catch (error) {
+    console.error('加载未读通知数失败:', error)
+  }
+}
+
+onMounted(() => {
+  loadUnreadCount()
+  // 每30秒刷新一次未读数
+  setInterval(loadUnreadCount, 30000)
+})
 
 const menuItems = [
   { path: 'messages', title: '消息', icon: 'ChatDotRound' },
-  { path: 'contacts', title: '通讯录', icon: 'User' }
-  // 群聊功能已整合到通讯录中
+  { path: 'contacts', title: '通讯录', icon: 'User' },
+  { path: 'notifications', title: '通知', icon: 'Bell', showBadge: true }
 ]
 
 const currentPageTitle = computed(() => {

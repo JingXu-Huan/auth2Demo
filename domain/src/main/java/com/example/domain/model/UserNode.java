@@ -32,4 +32,5 @@ public class UserNode {
     // 用户的好友关系
     @Relationship(type = "FRIEND_OF", direction = Relationship.Direction.OUTGOING)
     private Set<FriendOfRelationship> friends = new HashSet<>();
+
 }

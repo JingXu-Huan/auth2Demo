@@ -44,7 +44,9 @@ export const authAPI = {
     params.append('username', email);  // Spring Security 默认字段名是 username
     params.append('password', password);
     
-    const response = await axios.post('http://localhost:8080/login', params, {
+    // 使用环境变量或当前域名的网关地址
+    const authBaseUrl = import.meta.env.VITE_AUTH_BASE_URL || 'http://localhost:8080';
+    const response = await axios.post(`${authBaseUrl}/login`, params, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
       },
