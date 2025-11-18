@@ -108,7 +108,8 @@ export const userAPI = {
   updateLastLoginTime: (email) => api.post('/v1/users/update-login-time', null, { params: { email } })
 }
 
-// 聊天相关API
+// 聊天相关API - 使用独立的 chat.js 模块
+// 为了向后兼容，保留这些方法，但建议使用 chatMessageAPI
 export const chatAPI = {
   // 发送消息
   sendMessage: (data) => api.post('/v1/chat/send', data),
@@ -143,6 +144,10 @@ export const chatAPI = {
   // 获取在线用户数
   getOnlineUsers: () => api.get('/v1/chat/online-users')
 }
+
+// 导入新的模块化 API
+export { chatMessageAPI } from './chat'
+export { groupServiceAPI, friendServiceAPI } from './group'
 
 // 组织架构服务API (8011端口)
 export const organizationAPI = {

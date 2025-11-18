@@ -3,7 +3,7 @@ package org.example.imgroupserver.controller;
 import com.example.domain.vo.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.imgroupserver.dto.GroupMemberDTO;
+import com.example.domain.dto.GroupMemberDTO;
 import org.example.imgroupserver.service.Neo4jGroupService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

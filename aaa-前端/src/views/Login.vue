@@ -1,13 +1,23 @@
 <template>
   <div class="login-container">
     <div class="login-box">
-      <div class="logo-section">
-        <h2>AIO</h2>
-        <p>企业级即时通讯解决方案</p>
+      <div class="login-left">
+        <div class="welcome-graphic">
+          <div
+            ref="lottieContainer"
+            class="welcome-lottie"
+          ></div>
+        </div>
       </div>
-      
-      <!-- 登录表单 -->
-      <el-form v-if="!showRegister" :model="loginForm" :rules="loginRules" ref="loginFormRef" label-width="0" @submit.prevent>
+
+      <div class="login-right">
+        <div class="logo-section">
+          <h2>AIO</h2>
+          <p>企业级即时通讯解决方案</p>
+        </div>
+        
+        <!-- 登录表单 -->
+        <el-form v-if="!showRegister" :model="loginForm" :rules="loginRules" ref="loginFormRef" label-width="0" @submit.prevent>
         <!-- 步骤1: 输入邮箱 -->
         <template v-if="loginStep === 1">
           <el-form-item prop="email">
@@ -164,16 +174,19 @@
           <el-button type="text" @click="showRegister = false">立即登录</el-button>
         </div>
       </el-form>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '../stores/user'
 import { userAPI, authAPI } from '../api'
+import lottie from 'lottie-web'
+import coolAnimationData from '../asserts/酷.json'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -187,6 +200,28 @@ const countdown = ref(0)
 const showSecurityVerification = ref(false)
 const securityEmail = ref('')
 const loginStep = ref(1) // 登录步骤：1=输入邮箱，2=输入密码
+
+const lottieContainer = ref(null)
+let lottieInstance = null
+
+onMounted(() => {
+  if (lottieContainer.value) {
+    lottieInstance = lottie.loadAnimation({
+      container: lottieContainer.value,
+      renderer: 'svg',
+      loop: true,
+      autoplay: true,
+      animationData: coolAnimationData
+    })
+  }
+})
+
+onBeforeUnmount(() => {
+  if (lottieInstance) {
+    lottieInstance.destroy()
+    lottieInstance = null
+  }
+})
 
 // 登录表单
 const loginForm = reactive({
@@ -512,18 +547,104 @@ const handleRegister = async () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(circle at 0 0, #67b5ff 0%, #3b82f6 35%, #1d4ed8 80%);
   padding: 20px;
 }
 
 .login-box {
   width: 100%;
-  max-width: 400px;
-  padding: 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 960px;
+  min-height: 520px;
+  display: flex;
+  background: #ffffff;
+  border-radius: 24px;
+  box-shadow: 0 24px 60px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
   backdrop-filter: blur(10px);
+}
+
+.login-left {
+  flex: 1.1;
+  padding: 40px 32px;
+  background: linear-gradient(145deg, #2563eb 0%, #4f46e5 45%, #7c3aed 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  color: #ffffff;
+}
+
+.login-left::before,
+.login-left::after {
+  content: '';
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  filter: blur(0.5px);
+}
+
+.login-left::before {
+  width: 220px;
+  height: 220px;
+  top: 8%;
+  left: -40px;
+}
+
+.login-left::after {
+  width: 280px;
+  height: 280px;
+  bottom: -60px;
+  right: -40px;
+}
+
+.welcome-graphic {
+  position: relative;
+  z-index: 1;
+  max-width: 320px;
+  text-align: center;
+}
+
+.welcome-lottie {
+  width: 360px;
+  height: 360px;
+  margin: 0 auto;
+}
+
+.welcome-image {
+  width: 140px;
+  height: 140px;
+  object-fit: contain;
+  margin: 0 auto 20px;
+  display: block;
+}
+
+.welcome-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 24px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1d4ed8;
+  font-weight: 600;
+  margin-bottom: 20px;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+}
+
+.welcome-text {
+  margin: 0;
+  font-size: 18px;
+  line-height: 1.6;
+  color: rgba(241, 245, 249, 0.96);
+}
+
+.login-right {
+  flex: 1;
+  padding: 40px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  background: #ffffff;
 }
 
 .logo-section {
@@ -638,16 +759,17 @@ const handleRegister = async () => {
 /* 响应式设计 */
 @media (max-width: 480px) {
   .login-box {
-    padding: 30px 20px;
+    flex-direction: column;
+    max-width: 420px;
+    min-height: auto;
   }
-  
-  .logo {
-    font-size: 40px;
-    padding: 12px;
+
+  .login-left {
+    padding: 24px 20px 12px;
   }
-  
-  .logo-section h2 {
-    font-size: 20px;
+
+  .login-right {
+    padding: 32px 20px 24px;
   }
 }
 </style>

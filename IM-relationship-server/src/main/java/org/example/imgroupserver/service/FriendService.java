@@ -224,7 +224,7 @@ public class FriendService {
     /**
      * 确保用户节点存在
      */
-    private void ensureUserNodeExists(Long userId) {
+    public void ensureUserNodeExists(Long userId) {
         Long count = userMapper.countByUserId(userId);
         
         UserNode user = null;

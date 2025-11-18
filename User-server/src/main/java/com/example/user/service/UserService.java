@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.domain.dto.UserDetailsDTO;
 import com.example.domain.model.User;
 import com.example.domain.model.UserCredential;
+import com.example.user.feign.RelationshipUserClient;
 import com.example.user.mapper.UserCredentialMapper;
 import com.example.user.mapper.UserMapper;
 import com.example.user.validator.PasswordValidator;
@@ -45,6 +46,9 @@ public class UserService {
     
     @Autowired
     private PasswordValidator passwordValidator;
+    
+    @Autowired
+    private RelationshipUserClient relationshipUserClient;
     
     /**
      * @author Junjie
@@ -214,6 +218,14 @@ public class UserService {
             
             // 4. 发送欢迎邮件（异步）
             sendWelcomeEmail(email, username);
+
+            // 5. 在 Neo4j 中初始化用户节点（关系服务）
+            try {
+                relationshipUserClient.ensureUserNode(user.getId());
+                log.info("已通知关系服务在 Neo4j 中初始化用户节点: userId={}", user.getId());
+            } catch (Exception e) {
+                log.warn("通知关系服务初始化 Neo4j 用户节点失败: userId={}", user.getId(), e);
+            }
             
             return user;
             
@@ -242,7 +254,14 @@ public class UserService {
                 existingUser.setEmail(email);
                 existingUser.setUpdatedAt(LocalDateTime.now());
                 userMapper.updateById(existingUser);
-                
+
+                try {
+                    relationshipUserClient.ensureUserNode(existingUser.getId());
+                    log.info("已通知关系服务在 Neo4j 中初始化用户节点(第三方用户-更新): userId={}", existingUser.getId());
+                } catch (Exception e) {
+                    log.warn("通知关系服务初始化 Neo4j 用户节点失败(第三方用户-更新): userId={}", existingUser.getId(), e);
+                }
+
                 log.info("更新第三方用户: userId={}, provider={}", existingUser.getId(), provider);
                 return existingUser;
             }
@@ -267,7 +286,14 @@ public class UserService {
             
             userCredentialMapper.insert(credential);
             log.info("创建第三方凭证: userId={}, provider={}", user.getId(), provider);
-            
+
+            try {
+                relationshipUserClient.ensureUserNode(user.getId());
+                log.info("已通知关系服务在 Neo4j 中初始化用户节点(第三方用户-创建): userId={}", user.getId());
+            } catch (Exception e) {
+                log.warn("通知关系服务初始化 Neo4j 用户节点失败(第三方用户-创建): userId={}", user.getId(), e);
+            }
+
             return user;
             
         } catch (Exception e) {

@@ -8,7 +8,7 @@ import com.example.domain.model.UserNode;
 import com.example.domain.vo.Result;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.imgroupserver.dto.GroupMemberDTO;
+import com.example.domain.dto.GroupMemberDTO;
 import org.example.imgroupserver.feign.UserServiceClient;
 import org.example.imgroupserver.mapper.GroupNodeMapper;
 import org.example.imgroupserver.mapper.UserNodeMapper;

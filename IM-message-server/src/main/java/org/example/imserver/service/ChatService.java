@@ -1,9 +1,14 @@
 package org.example.imserver.service;
 
 import com.example.domain.dto.ChatMessage;
+import com.example.domain.dto.ChatMessageWithRecipients;
+import com.example.domain.vo.Result;
 import lombok.extern.slf4j.Slf4j;
 import com.example.domain.dto.ForwardMessageRequest;
 import org.example.imserver.exception.ChatException;
+import org.example.imserver.feign.ConversationServiceClient;
+import org.example.imserver.feign.GroupServiceClient;
+
 import com.example.domain.model.ChatMessageDocument;
 import com.example.domain.model.DeletedMessageDocument;
 import com.example.domain.model.FavoriteMessageDocument;
@@ -44,6 +49,8 @@ public class ChatService {
     private final FavoriteMessageMapper favoriteMessageMapper;
     private final PinnedMessageMapper pinnedMessageMapper;
     private final MessageReadReceiptMapper messageReadReceiptMapper;
+    private final GroupServiceClient groupServiceClient;
+    private final ConversationServiceClient conversationServiceClient;
 
     public ChatService(RedisMessagePublisher publisher,
                       RabbitTemplate rabbitTemplate,
@@ -51,7 +58,9 @@ public class ChatService {
                       DeletedMessageMapper deletedMessageMapper,
                       FavoriteMessageMapper favoriteMessageMapper,
                       PinnedMessageMapper pinnedMessageMapper,
-                      MessageReadReceiptMapper messageReadReceiptMapper) {
+                      MessageReadReceiptMapper messageReadReceiptMapper,
+                      GroupServiceClient groupServiceClient,
+                      ConversationServiceClient conversationServiceClient) {
         this.publisher = publisher;
         this.rabbitTemplate = rabbitTemplate;
         this.chatMessageMapper = chatMessageMapper;
@@ -59,6 +68,8 @@ public class ChatService {
         this.favoriteMessageMapper = favoriteMessageMapper;
         this.pinnedMessageMapper = pinnedMessageMapper;
         this.messageReadReceiptMapper = messageReadReceiptMapper;
+        this.groupServiceClient = groupServiceClient;
+        this.conversationServiceClient = conversationServiceClient;
     }
 
     /**
@@ -82,23 +93,41 @@ public class ChatService {
             if (chatMessage.getChannelType() == ChatMessage.ChannelType.PRIVATE) {
                 log.info("发布单聊消息到 MQ: senderId={}, receiverId={}", 
                     chatMessage.getSenderId(), chatMessage.getReceiverId());
+
+                // 单聊也使用 ChatMessageWithRecipients，recipientIds 仅包含接收者
+                java.util.List<String> recipientIds = java.util.Collections.singletonList(chatMessage.getReceiverId());
+                ChatMessageWithRecipients messageWithRecipients = new ChatMessageWithRecipients(
+                    chatMessage,
+                    recipientIds
+                );
+
                 rabbitTemplate.convertAndSend(
                     org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
                     org.example.imserver.config.ChatRabbitConfig.PRIVATE_MESSAGE_ROUTING_KEY,
-                    chatMessage
+                    messageWithRecipients
                 );
                 log.info("单聊消息已发布到 MQ: {} to {}",
                     chatMessage.getSenderId(), chatMessage.getReceiverId());
             } else if (chatMessage.getChannelType() == ChatMessage.ChannelType.GROUP) {
                 log.info("发布群聊消息到 MQ: senderId={}, groupId={}",
                     chatMessage.getSenderId(), chatMessage.getGroupId());
+                
+                // 查询群成员列表
+                List<String> recipientIds = getGroupMemberIds(chatMessage.getGroupId());
+                
+                // 使用 ChatMessageWithRecipients 携带受众列表
+                ChatMessageWithRecipients messageWithRecipients = new ChatMessageWithRecipients(
+                    chatMessage,
+                    recipientIds
+                );
+                
                 rabbitTemplate.convertAndSend(
                     org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
                     org.example.imserver.config.ChatRabbitConfig.GROUP_MESSAGE_ROUTING_KEY,
-                    chatMessage
+                    messageWithRecipients
                 );
-                log.info("群聊消息已发布到 MQ: senderId={}, groupId={}",
-                    chatMessage.getSenderId(), chatMessage.getGroupId());
+                log.info("群聊消息已发布到 MQ: senderId={}, groupId={}, recipientCount={}",
+                    chatMessage.getSenderId(), chatMessage.getGroupId(), recipientIds.size());
             }
         } catch (Exception e) {
             log.error("处理消息失败: {}", e.getMessage(), e);
@@ -196,7 +225,63 @@ public class ChatService {
         document.setStatus(ChatMessage.MessageStatus.RECALLED);
         document.setRecalledAt(now);
         chatMessageMapper.save(document);
-        return fromDocument(document);
+        ChatMessage recalledMessage = fromDocument(document);
+
+        try {
+            if (recalledMessage.getChannelType() == ChatMessage.ChannelType.PRIVATE) {
+                ChatMessage recallNotice = new ChatMessage();
+                recallNotice.setMessageId(UUID.randomUUID().toString());
+                recallNotice.setSenderId(recalledMessage.getSenderId());
+                recallNotice.setReceiverId(recalledMessage.getReceiverId());
+                recallNotice.setConversationId(recalledMessage.getConversationId());
+                recallNotice.setChannelType(ChatMessage.ChannelType.PRIVATE);
+                recallNotice.setContentType(ChatMessage.ContentType.SYSTEM);
+                recallNotice.setCreatedAt(System.currentTimeMillis());
+
+                Map<String, Object> payload = new HashMap<>();
+                payload.put("type", "RECALL");
+                payload.put("conversationId", recalledMessage.getConversationId());
+                payload.put("messageId", recalledMessage.getMessageId());
+                recallNotice.setPayload(payload);
+
+                rabbitTemplate.convertAndSend(
+                    org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
+                    org.example.imserver.config.ChatRabbitConfig.PRIVATE_MESSAGE_ROUTING_KEY,
+                    recallNotice
+                );
+            } else if (recalledMessage.getChannelType() == ChatMessage.ChannelType.GROUP) {
+                List<String> recipientIds = getGroupMemberIds(recalledMessage.getGroupId());
+                if (recipientIds != null && !recipientIds.isEmpty()) {
+                    ChatMessage recallNotice = new ChatMessage();
+                    recallNotice.setMessageId(UUID.randomUUID().toString());
+                    recallNotice.setSenderId(recalledMessage.getSenderId());
+                    recallNotice.setGroupId(recalledMessage.getGroupId());
+                    recallNotice.setConversationId(recalledMessage.getConversationId());
+                    recallNotice.setChannelType(ChatMessage.ChannelType.GROUP);
+                    recallNotice.setContentType(ChatMessage.ContentType.SYSTEM);
+                    recallNotice.setCreatedAt(System.currentTimeMillis());
+
+                    Map<String, Object> payload = new HashMap<>();
+                    payload.put("type", "RECALL");
+                    payload.put("conversationId", recalledMessage.getConversationId());
+                    payload.put("messageId", recalledMessage.getMessageId());
+                    recallNotice.setPayload(payload);
+
+                    ChatMessageWithRecipients withRecipients =
+                            new ChatMessageWithRecipients(recallNotice, recipientIds);
+
+                    rabbitTemplate.convertAndSend(
+                            org.example.imserver.config.ChatRabbitConfig.CHAT_EXCHANGE,
+                            org.example.imserver.config.ChatRabbitConfig.GROUP_MESSAGE_ROUTING_KEY,
+                            withRecipients
+                    );
+                }
+            }
+        } catch (Exception e) {
+            log.error("发送撤回通知失败: messageId={}", messageId, e);
+        }
+
+        return recalledMessage;
     }
 
     /**
@@ -471,11 +556,41 @@ public class ChatService {
 
         if (message.getConversationId() == null || message.getConversationId().trim().isEmpty()) {
             if (message.getChannelType() == ChatMessage.ChannelType.PRIVATE) {
-                String conversationId = buildPrivateConversationId(message.getSenderId(), message.getReceiverId());
+                String senderId = message.getSenderId();
+                String receiverId = message.getReceiverId();
+                String conversationId = null;
+
+                try {
+                    Long userAId = Long.parseLong(senderId);
+                    Long userBId = Long.parseLong(receiverId);
+                    Result<java.util.Map<String, Object>> result = conversationServiceClient
+                            .createOrGetP2PConversation(userAId, userBId);
+                    if (result != null && result.getData() != null) {
+                        Object cid = result.getData().get("conversationId");
+                        if (cid != null) {
+                            conversationId = cid.toString();
+                        }
+                    }
+                } catch (Exception e) {
+                    log.warn("通过关系服务创建/获取单聊会话失败, 使用本地规则生成 conversationId: senderId={}, receiverId={}, error={}",
+                            senderId, receiverId, e.getMessage());
+                }
+
+                if (conversationId == null || conversationId.trim().isEmpty()) {
+                    conversationId = buildPrivateConversationId(senderId, receiverId);
+                }
                 message.setConversationId(conversationId);
             } else if (message.getChannelType() == ChatMessage.ChannelType.GROUP) {
                 if (message.getGroupId() != null) {
-                    message.setConversationId("GROUP:" + message.getGroupId());
+                    String conversationId = "GROUP:" + message.getGroupId();
+                    message.setConversationId(conversationId);
+
+                    try {
+                        conversationServiceClient.createOrGetGroupConversation(message.getGroupId());
+                    } catch (Exception e) {
+                        log.warn("通过关系服务创建/获取群聊会话失败: groupId={}, error={}",
+                                message.getGroupId(), e.getMessage());
+                    }
                 }
             }
         }
@@ -493,6 +608,42 @@ public class ChatService {
             return senderId + "-" + receiverId;
         } else {
             return receiverId + "-" + senderId;
+        }
+    }
+
+    /**
+     * 获取群成员ID列表
+     * @param groupId 群组ID
+     * @return 群成员ID列表
+     */
+    private List<String> getGroupMemberIds(String groupId) {
+        try {
+            log.info("查询群成员列表: groupId={}", groupId);
+            Result<Map<String, Object>> result = groupServiceClient.getGroupMembers(groupId, 1, 1000);
+            
+            if (result != null && result.getData() != null) {
+                Map<String, Object> data = result.getData();
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> members = (List<Map<String, Object>>) data.get("members");
+                
+                if (members != null && !members.isEmpty()) {
+                    List<String> memberIds = new ArrayList<>();
+                    for (Map<String, Object> member : members) {
+                        Object userIdObj = member.get("userId");
+                        if (userIdObj != null) {
+                            memberIds.add(userIdObj.toString());
+                        }
+                    }
+                    log.info("查询到 {} 个群成员", memberIds.size());
+                    return memberIds;
+                }
+            }
+            
+            log.warn("群成员列表为空: groupId={}", groupId);
+            return new ArrayList<>();
+        } catch (Exception e) {
+            log.error("查询群成员失败: groupId={}", groupId, e);
+            return new ArrayList<>();
         }
     }
 

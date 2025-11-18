@@ -43,8 +43,11 @@ public class GatewayOnlyFilter extends OncePerRequestFilter {
 
         // 允许来自网关的请求
         boolean fromGateway = "IM-Gateway".equals(gatewayHeader);
-        // 允许来自内部服务的请求（如 IM-push-server）
-        boolean fromInternalService = "IM-push-server".equals(internalServiceHeader);
+        // 允许来自内部服务的请求（如 IM-push-server、IM-message-server、User-server 等）
+        boolean fromInternalService =
+                "IM-push-server".equals(internalServiceHeader) ||
+                "IM-message-server".equals(internalServiceHeader) ||
+                "User-server".equals(internalServiceHeader);
         
         if (!fromGateway && !fromInternalService) {
             log.warn("拒绝直接访问: {}, gatewayHeader={}, internalServiceHeader={}", 

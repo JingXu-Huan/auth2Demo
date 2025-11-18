@@ -3,6 +3,7 @@ package com.example.user;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.scheduling.annotation.EnableAsync;
 
@@ -15,6 +16,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
 @SpringBootApplication
 @EnableDiscoveryClient
 @EnableAsync  
+@EnableFeignClients(basePackages = "com.example.user.feign")
 @ComponentScan(basePackages = {"com.example.user", "com.example.common"})
 public class UserServerApplication {
     

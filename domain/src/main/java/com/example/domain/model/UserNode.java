@@ -33,4 +33,8 @@ public class UserNode {
     @Relationship(type = "FRIEND_OF", direction = Relationship.Direction.OUTGOING)
     private Set<FriendOfRelationship> friends = new HashSet<>();
 
+    // 用户参与的会话（单聊 / 群聊统一抽象）
+    @Relationship(type = "IN_CHAT")
+    private Set<InChatRelationship> conversations = new HashSet<>();
+
 }

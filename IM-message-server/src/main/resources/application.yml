@@ -80,9 +80,21 @@ service:
   auth:
     secret: "IM-message-server-secret-key-for-service-authentication-2025"
 
+# Feign 配置
+feign:
+  group-service:
+    url: http://localhost:8003
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
 # 日志配置
 logging:
   level:
     org.example.imserver: INFO
     org.springframework.web.socket: DEBUG
     org.springframework.security: DEBUG
+    org.example.imserver.feign: DEBUG
