@@ -76,11 +76,11 @@ spring:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 群组和好友服务路由  
+        # 群组、好友、组织架构服务路由  
         - id: relationship-server
           uri: http://localhost:8003
           predicates:
-            - Path=/api/v1/groups/**,/api/v1/friends/**
+            - Path=/api/v1/groups/**,/api/v1/friends/**,/api/v1/organization/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway

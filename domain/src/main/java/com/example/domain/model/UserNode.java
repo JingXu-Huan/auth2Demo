@@ -28,6 +28,10 @@ public class UserNode {
     // 用户加入的群组
     @Relationship(type = "MEMBER_OF")
     private Set<MemberOfRelationship> groups = new HashSet<>();
+
+    // 用户所属的部门（组织架构）
+    @Relationship(type = "BELONGS_TO_DEPT")
+    private Set<DepartmentMemberRelationship> departments = new HashSet<>();
     
     // 用户的好友关系
     @Relationship(type = "FRIEND_OF", direction = Relationship.Direction.OUTGOING)

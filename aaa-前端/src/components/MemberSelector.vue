@@ -301,9 +301,33 @@ const handleSearch = () => {
     f.nickname.toLowerCase().includes(keyword)
   )
 
-  // 搜索组织架构（需要递归）
-  searchResults.org = []
-  // TODO: 实现组织架构搜索
+  // 搜索组织架构成员（递归遍历 orgTree，只匹配 type === 'user' 的节点）
+  const result = []
+
+  const traverse = (nodes = []) => {
+    nodes.forEach(node => {
+      if (node.type === 'user') {
+        const name = (node.name || '').toLowerCase()
+        const dept = (node.department || '').toLowerCase()
+        const pos = (node.position || '').toLowerCase()
+        if (name.includes(keyword) || dept.includes(keyword) || pos.includes(keyword)) {
+          result.push({
+            id: node.id,
+            name: node.name,
+            avatar: node.avatar,
+            department: node.department,
+            position: node.position
+          })
+        }
+      }
+      if (node.children && node.children.length > 0) {
+        traverse(node.children)
+      }
+    })
+  }
+
+  traverse(props.orgTree || [])
+  searchResults.org = result
 }
 
 // 组织架构导航
@@ -323,8 +347,63 @@ const enterDepartment = (dept) => {
 }
 
 const loadDepartmentContent = () => {
-  // TODO: 根据 currentPath 加载部门内容
+  const tree = props.orgTree || []
+
+  // 确定当前节点：根（显示所有根部门及其直属成员）或当前选中部门
+  let nodes = []
+  if (currentPath.value.length === 0) {
+    nodes = tree
+  } else {
+    const currentDept = currentPath.value[currentPath.value.length - 1]
+    nodes = currentDept.children || []
+  }
+
+  // 子部门：type 不是 'user' 的都视为部门节点（org/dept）
+  const depts = []
+  const members = []
+
+  nodes.forEach(node => {
+    if (node.type === 'user') {
+      members.push({
+        id: node.id,
+        name: node.name,
+        avatar: node.avatar,
+        position: node.position
+      })
+    } else {
+      depts.push({
+        id: node.id,
+        name: node.name,
+        children: node.children || []
+      })
+    }
+  })
+
+  currentDepartments.value = depts
+  currentMembers.value = members
 }
+
+// 当 orgTree 变化或弹窗打开时，初始化组织架构视图
+watch(
+  () => props.orgTree,
+  () => {
+    if (props.orgTree && props.orgTree.length && activeTab.value === 'org') {
+      currentPath.value = []
+      loadDepartmentContent()
+    }
+  },
+  { deep: true }
+)
+
+watch(
+  () => props.visible,
+  (val) => {
+    if (val && props.orgTree && props.orgTree.length) {
+      currentPath.value = []
+      loadDepartmentContent()
+    }
+  }
+)
 
 // 进入群组
 const enterGroup = async (group) => {

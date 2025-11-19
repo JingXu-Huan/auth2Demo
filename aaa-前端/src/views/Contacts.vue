@@ -1159,12 +1159,21 @@ const selectedSourceGroup = ref(null)
 const sourceGroupMembers = ref([])
 const orgCheckedKeys = ref([])
 const orgTreeData = computed(() => {
-  // TODO: 将 organizationMembers 转换为树形结构
-  return []
+  // 将后端返回的 organizationTree 转换为 a-tree 可用的 treeData
+  const transform = (nodes = []) => {
+    return nodes.map(node => ({
+      key: node.id,
+      title: node.name,
+      avatar: node.avatar,
+      children: node.children && node.children.length ? transform(node.children) : []
+    }))
+  }
+  return transform(organizationTree.value)
 })
 
 // 组织相关
-const hasOrganization = computed(() => organizationMembers.value.length > 0)
+// 是否已有组织：只要后端返回了组织架构树，就认为已经有组织
+const hasOrganization = computed(() => organizationTree.value.length > 0)
 const currentOrganization = ref(null)
 const showCreateOrgDialog = ref(false)
 const showJoinOrgDialog = ref(false)
@@ -1402,7 +1411,7 @@ const loadFriends = async () => {
 // 加载组织架构
 const loadOrganization = async () => {
   try {
-    const response = await organizationAPI.getOrganizationTree()
+    const response = await organizationAPI.getDepartmentTree()
     if (response && response.data) {
       organizationTree.value = response.data
       // 将树形结构展开为列表
@@ -1410,6 +1419,167 @@ const loadOrganization = async () => {
     }
   } catch (error) {
     console.error('加载组织架构失败:', error)
+  }
+}
+
+// 创建组织（通过创建一个根部门来承载组织信息）
+const handleCreateOrganization = async () => {
+  if (!createOrgForm.name || !createOrgForm.name.trim()) {
+    ElMessage.warning('请输入组织名称')
+    return
+  }
+
+  if (!userStore.user || !userStore.user.id) {
+    ElMessage.error('用户信息缺失，请重新登录')
+    return
+  }
+
+  try {
+    creatingOrg.value = true
+
+    const payload = {
+      orgId: 'default_org',
+      name: createOrgForm.name.trim(),
+      parentDeptId: null,
+      sortOrder: 0,
+      leaderUserId: userStore.user.id
+    }
+
+    const res = await organizationAPI.createDepartment(payload)
+
+    if (res && res.code === 200) {
+      ElMessage.success('组织创建成功')
+
+      // 根据后端返回的部门信息，初始化当前组织基本信息
+      const dept = res.data || {}
+      currentOrganization.value = {
+        id: dept.deptId || dept.orgId || 'default_org',
+        name: dept.name || createOrgForm.name,
+        logo: createOrgForm.logo,
+        industry: createOrgForm.industry,
+        scale: createOrgForm.scale
+      }
+
+      showCreateOrgDialog.value = false
+
+      // 重新加载组织架构
+      await loadOrganization()
+    } else {
+      ElMessage.error(res?.message || '创建组织失败')
+    }
+  } catch (error) {
+    console.error('创建组织失败:', error)
+    ElMessage.error('创建组织失败')
+  } finally {
+    creatingOrg.value = false
+  }
+}
+
+const handleSearchOrg = async () => {
+  if (!orgSearchKeyword.value || !orgSearchKeyword.value.trim()) {
+    ElMessage.warning('请输入组织ID或加入链接')
+    return
+  }
+
+  try {
+    searchingOrg.value = true
+    orgSearchResult.value = null
+
+    let code = orgSearchKeyword.value.trim()
+
+    try {
+      const url = new URL(code)
+      const segments = url.pathname.split('/')
+      const last = segments[segments.length - 1]
+      if (last) {
+        code = last
+      }
+    } catch (e) {
+      if (code.includes('/')) {
+        code = code.substring(code.lastIndexOf('/') + 1)
+      }
+    }
+
+    const res = await organizationAPI.getDepartment(code)
+    if (res && res.code === 200 && res.data) {
+      const dept = res.data
+      orgSearchResult.value = {
+        id: dept.deptId,
+        deptId: dept.deptId,
+        name: dept.name,
+        logo: null,
+        industry: dept.orgId || '组织',
+        scale: dept.fullPathName || ''
+      }
+    } else {
+      ElMessage.warning(res?.message || '未找到该组织')
+    }
+  } catch (error) {
+    console.error('搜索组织失败:', error)
+    ElMessage.error('搜索组织失败')
+  } finally {
+    searchingOrg.value = false
+  }
+}
+
+const handleApplyJoin = async () => {
+  if (!orgSearchResult.value || !orgSearchResult.value.deptId) {
+    ElMessage.warning('请先搜索并选择要加入的组织')
+    return
+  }
+
+  if (!userStore.user || !userStore.user.id) {
+    ElMessage.error('用户信息缺失，请重新登录')
+    return
+  }
+
+  try {
+    const payload = {
+      userIds: [userStore.user.id],
+      primaryDepartment: true,
+      title: '成员'
+    }
+
+    const res = await organizationAPI.addDepartmentMember(orgSearchResult.value.deptId, payload)
+
+    if (res && res.code === 200) {
+      ElMessage.success('已加入组织')
+      showJoinOrgDialog.value = false
+
+      await loadOrganization()
+      activeCategory.value = 'organization'
+      selectedKeys.value = ['organization']
+    } else {
+      ElMessage.error(res?.message || '加入组织失败')
+    }
+  } catch (error) {
+    console.error('加入组织失败:', error)
+    ElMessage.error('加入组织失败')
+  }
+}
+
+const handleAcceptInvite = async (invite) => {
+  console.log('accept org invite:', invite)
+  ElMessage.info('暂不支持处理组织邀请，请使用搜索加入功能')
+}
+
+const handleRejectInvite = async (invite) => {
+  pendingInvites.value = pendingInvites.value.filter(item => item.id !== invite.id)
+  ElMessage.success('已忽略该邀请')
+}
+
+const handleCopyOrgLink = async () => {
+  if (!orgInviteLink.value) {
+    ElMessage.warning('请先创建组织')
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(orgInviteLink.value)
+    ElMessage.success('组织邀请链接已复制到剪贴板')
+  } catch (error) {
+    console.error('复制组织邀请链接失败:', error)
+    ElMessage.error('复制失败，请手动复制')
   }
 }
 
@@ -2029,7 +2199,45 @@ const enterSourceGroup = async (group) => {
 // 处理组织架构勾选
 const handleOrgCheck = (checkedKeys, e) => {
   orgCheckedKeys.value = checkedKeys
-  // TODO: 将勾选的组织成员添加到 selectedMembers
+
+  if (!Array.isArray(checkedKeys) || !organizationTree.value || organizationTree.value.length === 0) {
+    return
+  }
+
+  const keySet = new Set(checkedKeys.map(k => String(k)))
+
+  const collectCheckedMembers = (nodes) => {
+    const result = []
+    const traverse = (list) => {
+      list.forEach(node => {
+        if (node.type === 'user' && keySet.has(String(node.id))) {
+          result.push(node)
+        }
+        if (node.children && node.children.length > 0) {
+          traverse(node.children)
+        }
+      })
+    }
+    traverse(nodes)
+    return result
+  }
+
+  const checkedMembers = collectCheckedMembers(organizationTree.value)
+
+  checkedMembers.forEach(member => {
+    const userIdNum = Number(member.id)
+    if (!Number.isNaN(userIdNum)) {
+      if (!selectedMembers.has(userIdNum)) {
+        selectedMembers.set(userIdNum, {
+          userId: userIdNum,
+          nickname: member.name,
+          avatar: member.avatar,
+          department: member.department,
+          email: member.email
+        })
+      }
+    }
+  })
 }
 
 // 创建群组 - 打开弹窗

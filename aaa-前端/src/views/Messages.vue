@@ -388,7 +388,7 @@
     v-model:visible="showInviteDialog"
     :friends-list="inviteCandidates"
     :groups-list="[]"
-    :org-tree="[]"
+    :org-tree="orgTree"
     @confirm="handleMembersSelected"
   />
 
@@ -666,7 +666,7 @@ import {
   CloseCircleOutlined
 } from '@ant-design/icons-vue'
 import { useUserStore } from '../stores/user'
-import { chatAPI, chatMessageAPI, groupAPI, friendAPI } from '../api'
+import { chatAPI, chatMessageAPI, groupAPI, friendAPI, organizationAPI } from '../api'
 import websocketService from '../utils/websocket'
 import chatDb from '../db/chatDb'
 import { Document } from '@element-plus/icons-vue'
@@ -850,6 +850,8 @@ const showInviteDialog = ref(false)
 const inviteCandidates = ref([])            // 可邀请的好友列表
 const selectedInviteFriendIds = ref([])     // 选中的好友 userId 列表
 const inviteLoading = ref(false)
+// 组织架构树，用于从组织中选择成员
+const orgTree = ref([])
 
 // 群组设置相关状态
 const showMoreMenu = ref(false)
@@ -1420,6 +1422,15 @@ const openInviteDialog = async () => {
     const memberIdSet = new Set(memberIds.map(id => String(id)))
     inviteCandidates.value = friends.filter(f => !memberIdSet.has(String(f.userId)))
     selectedInviteFriendIds.value = []
+
+    try {
+      const orgRes = await organizationAPI.getDepartmentTree()
+      orgTree.value = orgRes && orgRes.data ? orgRes.data : []
+    } catch (e) {
+      console.error('加载组织架构失败:', e)
+      orgTree.value = []
+    }
+
     showInviteDialog.value = true
   } catch (error) {
     console.error('加载可邀请好友失败:', error)
