@@ -28,6 +28,7 @@
         <module>IM-push-server</module>
         <module>IM-av-server</module>
         <module>IM-search-server</module>
+        <module>Async-server</module>
     </modules>
     <!-- 版本管理 -->
     <properties>

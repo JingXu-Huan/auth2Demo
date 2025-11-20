@@ -30,7 +30,7 @@ public class UserNode {
     private Set<MemberOfRelationship> groups = new HashSet<>();
 
     // 用户所属的部门（组织架构）
-    @Relationship(type = "BELONGS_TO_DEPT")
+    @Relationship(type = "BELONGS_TO")
     private Set<DepartmentMemberRelationship> departments = new HashSet<>();
     
     // 用户的好友关系

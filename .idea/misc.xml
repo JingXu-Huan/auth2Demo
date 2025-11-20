@@ -17,6 +17,7 @@
         <option value="$PROJECT_DIR$/m-push-service/pom.xml" />
         <option value="$PROJECT_DIR$/IM-search-service/pom.xml" />
         <option value="$PROJECT_DIR$/IM-av-service/pom.xml" />
+        <option value="$PROJECT_DIR$/Asyc-server/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">

@@ -10,7 +10,6 @@ import org.springframework.data.neo4j.repository.config.EnableNeo4jRepositories;
 @SpringBootApplication(exclude = {DataSourceAutoConfiguration.class})
 @EnableDiscoveryClient
 @EnableFeignClients
-@EnableNeo4jRepositories(basePackages = "org.example.imgroupserver.mapper")
 public class ImGroupServerApplication {
 
     public static void main(String[] args) {
