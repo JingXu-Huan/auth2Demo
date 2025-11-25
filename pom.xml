@@ -21,33 +21,99 @@
         <module>User-server</module>
         <module>Email-server</module>
         <module>Gateway</module>
-        <module>IM-Gateway</module>
+        <module>IM-file-server</module>
+        <module>IM-gateway-netty</module>
         <module>IM-message-server</module>
         <module>IM-relationship-server</module>
-        <module>IM-file-server</module>
         <module>IM-push-server</module>
         <module>IM-av-server</module>
         <module>IM-search-server</module>
         <module>Async-server</module>
+        <module>collab-service</module>
+        <module>admin-service</module>
+        <module>job-service</module>
+        <module>org-service</module>
     </modules>
     <!-- 版本管理 -->
     <properties>
-        <java.version>1.8</java.version>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <!-- Java -->
+        <java.version>21</java.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <spring-boot.version>2.7.18</spring-boot.version>
-        <spring-cloud.version>2021.0.8</spring-cloud.version>
-        <spring-cloud-alibaba.version>2021.0.5.0</spring-cloud-alibaba.version>
-        <spring-security-oauth2.version>2.3.4.RELEASE</spring-security-oauth2.version>
-        <spring-security-jwt.version>1.1.1.RELEASE</spring-security-jwt.version>
+        
+        <!-- Spring Boot 3.2.x & Spring Cloud 2023.0.x -->
+        <spring-boot.version>3.2.5</spring-boot.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <spring-cloud-alibaba.version>2023.0.1.2</spring-cloud-alibaba.version>
+        
+        <!-- 数据库 -->
         <mybatis-plus.version>3.5.5</mybatis-plus.version>
+        <mybatis-spring.version>3.0.3</mybatis-spring.version>
         <postgresql.version>42.7.1</postgresql.version>
-        <springfox.version>3.0.0</springfox.version>
-        <knife4j.version>3.0.3</knife4j.version>
+        
+        <!-- API文档 -->
+        <knife4j.version>4.4.0</knife4j.version>
+        
+        <!-- 安全/JWT -->
         <jjwt.version>0.12.5</jjwt.version>
-        <validation-api.version>2.0.1.Final</validation-api.version>
-        <sleuth.version>3.1.9</sleuth.version>
+        
+        <!-- 链路追踪 -->
+        <micrometer-tracing.version>1.2.4</micrometer-tracing.version>
+        
+        <!-- 消息队列 -->
+        <rocketmq.version>2.3.0</rocketmq.version>
+        
+        <!-- 搜索引擎 -->
+        <elasticsearch.version>8.15.0</elasticsearch.version>
+        
+        <!-- 文档解析 -->
+        <tika.version>2.9.2</tika.version>
+        
+        <!-- AI/LLM -->
+        <langchain4j.version>0.33.0</langchain4j.version>
+        
+        <!-- 工具库 -->
+        <hutool.version>5.8.22</hutool.version>
+        <guava.version>33.0.0-jre</guava.version>
+        
+        <!-- Netty -->
+        <netty.version>4.1.109.Final</netty.version>
+        
+        <!-- Protobuf -->
+        <protobuf.version>3.25.1</protobuf.version>
+        
+        <!-- MinIO -->
+        <minio.version>8.5.7</minio.version>
+        
+        <!-- 任务调度 -->
+        <xxl-job.version>2.4.0</xxl-job.version>
+        <quartz.version>2.5.1</quartz.version>
+        
+        <!-- JSON -->
+        <fastjson.version>1.2.83</fastjson.version>
+        
+        <!-- JWT (旧版本兼容) -->
+        <jjwt-old.version>0.11.5</jjwt-old.version>
+        
+        <!-- 序列化 -->
+        <protostuff.version>3.0.0</protostuff.version>
+        <kryo.version>0.6.1</kryo.version>
+        <objenesis.version>3.3</objenesis.version>
+        
+        <!-- Jakarta -->
+        <jakarta.persistence.version>3.1.0</jakarta.persistence.version>
+        <jakarta.validation.version>3.0.2</jakarta.validation.version>
+        
+        <!-- API文档 -->
+        <springdoc.version>2.3.0</springdoc.version>
+        <springfox.version>3.0.0</springfox.version>
+        
+        <!-- Excel -->
+        <easyexcel.version>3.3.3</easyexcel.version>
+        
+        <!-- 拼音 -->
+        <pinyin4j.version>2.5.1</pinyin4j.version>
     </properties>
 
     <!-- 依赖管理 -->
@@ -71,13 +137,6 @@
                 <scope>import</scope>
             </dependency>
 
-            <!-- Spring Security OAuth2 -->
-            <dependency>
-                <groupId>org.springframework.security.oauth</groupId>
-                <artifactId>spring-security-oauth2</artifactId>
-                <version>${spring-security-oauth2.version}</version>
-            </dependency>
-
             <!-- Spring Cloud Alibaba -->
             <dependency>
                 <groupId>com.alibaba.cloud</groupId>
@@ -94,6 +153,13 @@
                 <version>${mybatis-plus.version}</version>
             </dependency>
             
+            <!-- MyBatis Spring (覆盖 mybatis-plus 引入的旧版本，解决 Spring Boot 3.2+ 兼容问题) -->
+            <dependency>
+                <groupId>org.mybatis</groupId>
+                <artifactId>mybatis-spring</artifactId>
+                <version>${mybatis-spring.version}</version>
+            </dependency>
+            
             <!-- PostgreSQL -->
             <dependency>
                 <groupId>org.postgresql</groupId>
@@ -101,46 +167,211 @@
                 <version>${postgresql.version}</version>
             </dependency>
             
-            <!-- Springfox Swagger -->
-            <dependency>
-                <groupId>io.springfox</groupId>
-                <artifactId>springfox-swagger2</artifactId>
-                <version>${springfox.version}</version>
-            </dependency>
-            
-            <!-- JWT -->
+            <!-- JWT (jjwt-api + jjwt-impl + jjwt-jackson) -->
             <dependency>
                 <groupId>io.jsonwebtoken</groupId>
-                <artifactId>jjwt</artifactId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
                 <version>${jjwt.version}</version>
             </dependency>
             
-            <!-- Spring Security JWT -->
-            <dependency>
-                <groupId>org.springframework.security</groupId>
-                <artifactId>spring-security-jwt</artifactId>
-                <version>${spring-security-jwt.version}</version>
-            </dependency>
-            
-            <!-- Knife4j -->
+            <!-- Knife4j 4.x for Spring Boot 3 -->
             <dependency>
                 <groupId>com.github.xiaoymin</groupId>
-                <artifactId>knife4j-spring-boot-starter</artifactId>
+                <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
                 <version>${knife4j.version}</version>
             </dependency>
             
-            <!-- Spring Cloud Sleuth -->
+            <!-- Micrometer Tracing (替代 Spring Cloud Sleuth) -->
             <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-starter-sleuth</artifactId>
-                <version>${sleuth.version}</version>
+                <groupId>io.micrometer</groupId>
+                <artifactId>micrometer-tracing-bom</artifactId>
+                <version>${micrometer-tracing.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
             
-            <!-- Zipkin Client -->
+            <!-- RocketMQ -->
             <dependency>
-                <groupId>org.springframework.cloud</groupId>
-                <artifactId>spring-cloud-sleuth-zipkin</artifactId>
-                <version>${sleuth.version}</version>
+                <groupId>org.apache.rocketmq</groupId>
+                <artifactId>rocketmq-spring-boot-starter</artifactId>
+                <version>${rocketmq.version}</version>
+            </dependency>
+            
+            <!-- Elasticsearch -->
+            <dependency>
+                <groupId>co.elastic.clients</groupId>
+                <artifactId>elasticsearch-java</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.elasticsearch.client</groupId>
+                <artifactId>elasticsearch-rest-client</artifactId>
+                <version>${elasticsearch.version}</version>
+            </dependency>
+            
+            <!-- Apache Tika -->
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-core</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.tika</groupId>
+                <artifactId>tika-parsers-standard-package</artifactId>
+                <version>${tika.version}</version>
+            </dependency>
+            
+            <!-- LangChain4j -->
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j</artifactId>
+                <version>${langchain4j.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-open-ai</artifactId>
+                <version>${langchain4j.version}</version>
+            </dependency>
+            
+            <!-- Hutool -->
+            <dependency>
+                <groupId>cn.hutool</groupId>
+                <artifactId>hutool-all</artifactId>
+                <version>${hutool.version}</version>
+            </dependency>
+            
+            <!-- Guava -->
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            
+            <!-- Protobuf -->
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            
+            <!-- MinIO -->
+            <dependency>
+                <groupId>io.minio</groupId>
+                <artifactId>minio</artifactId>
+                <version>${minio.version}</version>
+            </dependency>
+            
+            <!-- XXL-Job -->
+            <dependency>
+                <groupId>com.xuxueli</groupId>
+                <artifactId>xxl-job-core</artifactId>
+                <version>${xxl-job.version}</version>
+            </dependency>
+            
+            <!-- Quartz -->
+            <dependency>
+                <groupId>org.quartz-scheduler</groupId>
+                <artifactId>quartz</artifactId>
+                <version>${quartz.version}</version>
+            </dependency>
+            
+            <!-- Fastjson -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>fastjson</artifactId>
+                <version>${fastjson.version}</version>
+            </dependency>
+            
+            <!-- Netty -->
+            <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-all</artifactId>
+                <version>${netty.version}</version>
+            </dependency>
+            
+            <!-- JJWT 旧版本 (部分模块使用) -->
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt</artifactId>
+                <version>${jjwt-old.version}</version>
+            </dependency>
+            
+            <!-- Protostuff -->
+            <dependency>
+                <groupId>io.protostuff</groupId>
+                <artifactId>protostuff-core</artifactId>
+                <version>${protostuff.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.protostuff</groupId>
+                <artifactId>protostuff-runtime</artifactId>
+                <version>${protostuff.version}</version>
+            </dependency>
+            
+            <!-- Kryo -->
+            <dependency>
+                <groupId>de.javakaffee</groupId>
+                <artifactId>kryo-serializers</artifactId>
+                <version>${kryo.version}</version>
+            </dependency>
+            
+            <!-- Objenesis -->
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>${objenesis.version}</version>
+            </dependency>
+            
+            <!-- Jakarta Persistence -->
+            <dependency>
+                <groupId>jakarta.persistence</groupId>
+                <artifactId>jakarta.persistence-api</artifactId>
+                <version>${jakarta.persistence.version}</version>
+            </dependency>
+            
+            <!-- Jakarta Validation -->
+            <dependency>
+                <groupId>jakarta.validation</groupId>
+                <artifactId>jakarta.validation-api</artifactId>
+                <version>${jakarta.validation.version}</version>
+            </dependency>
+            
+            <!-- SpringDoc OpenAPI -->
+            <dependency>
+                <groupId>org.springdoc</groupId>
+                <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+                <version>${springdoc.version}</version>
+            </dependency>
+            
+            <!-- Springfox (旧版swagger，部分模块使用) -->
+            <dependency>
+                <groupId>io.springfox</groupId>
+                <artifactId>springfox-boot-starter</artifactId>
+                <version>${springfox.version}</version>
+            </dependency>
+            
+            <!-- EasyExcel -->
+            <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>easyexcel</artifactId>
+                <version>${easyexcel.version}</version>
+            </dependency>
+            
+            <!-- Pinyin4j -->
+            <dependency>
+                <groupId>com.belerweb</groupId>
+                <artifactId>pinyin4j</artifactId>
+                <version>${pinyin4j.version}</version>
             </dependency>
             
             <!-- Common Module -->
@@ -149,11 +380,32 @@
                 <artifactId>common</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            
+            <!-- Domain Module -->
+            <dependency>
+                <groupId>com.example</groupId>
+                <artifactId>domain</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <!-- 构建配置 -->
     <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.13.0</version>
+                    <configuration>
+                        <source>${java.version}</source>
+                        <target>${java.version}</target>
+                        <encoding>${project.build.sourceEncoding}</encoding>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>

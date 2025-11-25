@@ -59,4 +59,16 @@ public interface UserServiceClient {
      */
     @PostMapping("/api/v1/users/update-login-time")
     void updateLastLoginTime(@RequestParam("email") String email);
+    
+    /**
+     * 创建或更新OAuth用户（Gitee、GitHub等第三方登录）
+     */
+    @PostMapping("/api/v1/users/oauth/create-or-update")
+    Result<UserDetailsDTO> createOrUpdateOAuthUser(
+        @RequestParam("provider") String provider,
+        @RequestParam("providerUserId") String providerUserId,
+        @RequestParam("username") String username,
+        @RequestParam("email") String email,
+        @RequestParam("avatarUrl") String avatarUrl
+    );
 }

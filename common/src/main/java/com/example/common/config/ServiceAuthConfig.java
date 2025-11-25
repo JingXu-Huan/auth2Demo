@@ -4,6 +4,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 
 import javax.crypto.SecretKey;
@@ -19,6 +21,8 @@ import java.util.Date;
  */
 @Configuration
 @Slf4j
+@ConditionalOnClass(name = "io.jsonwebtoken.Jwts")
+@ConditionalOnProperty(name = "service.auth.secret")
 public class ServiceAuthConfig {
     
     @Value("${service.auth.secret}")

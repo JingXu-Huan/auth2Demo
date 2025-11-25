@@ -1,55 +1,46 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '../views/Login.vue'
-import Layout from '../layout/Layout.vue'
 
 const routes = [
   {
-    path: '/',
-    redirect: '/im'
-  },
-  {
     path: '/login',
     name: 'Login',
-    component: Login
+    component: () => import('../views/Login.vue'),
+    meta: { guest: true }
   },
   {
-    path: '/test',
-    name: 'Test',
-    component: () => import('../views/Test.vue')
+    path: '/register',
+    name: 'Register',
+    component: () => import('../views/Register.vue'),
+    meta: { guest: true }
   },
   {
-    path: '/oauth/callback',
-    name: 'OAuthCallback',
-    component: () => import('../views/OAuthCallback.vue')
-  },
-  {
-    path: '/im',
-    component: Layout,
-    redirect: '/im/messages',
+    path: '/',
+    component: () => import('../views/Layout.vue'),
+    redirect: '/chat',
     children: [
       {
-        path: 'messages',
-        name: 'Messages',
-        component: () => import('../views/Messages.vue'),
-        meta: { title: '消息', icon: 'ChatDotRound' }
+        path: 'chat',
+        name: 'Chat',
+        component: () => import('../views/Chat.vue'),
+        meta: { title: '消息' }
       },
       {
         path: 'contacts',
         name: 'Contacts',
         component: () => import('../views/Contacts.vue'),
-        meta: { title: '通讯录', icon: 'User' }
+        meta: { title: '通讯录' }
       },
       {
-        path: 'notifications',
-        name: 'Notifications',
-        component: () => import('../views/Notifications.vue'),
-        meta: { title: '通知', icon: 'Bell' }
+        path: 'documents',
+        name: 'Documents',
+        component: () => import('../views/Documents.vue'),
+        meta: { title: '云文档' }
       },
       {
-        path: 'groups',
-        name: 'Groups',
-        component: () => import('../views/Groups.vue'),
-        meta: { title: '群聊', icon: 'UserFilled' }
+        path: 'settings',
+        name: 'Settings',
+        component: () => import('../views/Settings.vue'),
+        meta: { title: '设置' }
       }
     ]
   }
@@ -64,18 +55,15 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
   
-  // 不需要登录的页面
-  const publicPages = ['/login', '/test', '/oauth/callback']
-  
-  if (publicPages.includes(to.path)) {
-    // 如果是登录页且已登录，跳转到主页
-    if (to.path === '/login' && token) {
-      next('/im')
+  if (to.meta.guest) {
+    // 访客页面（登录/注册），已登录则跳转首页
+    if (token) {
+      next('/')
     } else {
       next()
     }
   } else {
-    // 其他页面需要登录
+    // 需要登录的页面
     if (token) {
       next()
     } else {

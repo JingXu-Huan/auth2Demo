@@ -3,15 +3,15 @@ package com.example.user.controller;
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.example.domain.dto.ApiResponse;
 import com.example.user.service.EmailVerificationService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**
@@ -22,7 +22,7 @@ import java.util.Map;
  * 提供邮箱验证码发送和验证功能
  */
 @Slf4j
-@Api(tags = "邮箱验证", description = "邮箱验证码管理")
+@Tag(name = "API")
 @RestController
 @RequestMapping("/api/v1/email")
 public class EmailVerificationController {
@@ -36,11 +36,11 @@ public class EmailVerificationController {
      * @date 2025-11-06
      * 发送邮箱验证码
      */
-    @ApiOperation(value = "发送邮箱验证码", notes = "向指定邮箱发送验证码")
+    @Operation(summary = "发送邮箱验证码")
     @SentinelResource(value = "sendVerificationCode", blockHandler = "handleBlock")
     @PostMapping("/send-code")
     public ResponseEntity<ApiResponse<Void>> sendVerificationCode(
-            @ApiParam(value = "邮箱地址", required = true)
+            @Parameter(description = "邮箱地址")
             @RequestBody Map<String, String> request) {
         
         try {
@@ -77,10 +77,10 @@ public class EmailVerificationController {
      * @date 2025-11-06
      * 验证邮箱验证码
      */
-    @ApiOperation(value = "验证邮箱验证码", notes = "验证用户输入的验证码")
+    @Operation(summary = "验证邮箱验证码")
     @PostMapping("/verify-code")
     public ResponseEntity<ApiResponse<Boolean>> verifyCode(
-            @ApiParam(value = "验证请求", required = true)
+            @Parameter(description = "验证请求")
             @RequestBody Map<String, String> request) {
         
         try {
@@ -108,10 +108,10 @@ public class EmailVerificationController {
     /**
      * 验证邮箱并激活用户
      */
-    @ApiOperation(value = "验证邮箱并激活用户", notes = "验证码通过后激活用户账户")
+    @Operation(summary = "验证邮箱并激活用户")
     @PostMapping("/verify-and-activate")
     public ResponseEntity<ApiResponse<Void>> verifyAndActivate(
-            @ApiParam(value = "验证请求", required = true)
+            @Parameter(description = "验证请求")
             @RequestBody Map<String, String> request) {
         
         try {

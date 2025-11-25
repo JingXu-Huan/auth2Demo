@@ -7,14 +7,14 @@
         <artifactId>oauth2-demo</artifactId>
         <version>1.0.0</version>
     </parent>
-    <groupId>org.example</groupId>
+    <groupId>com.example</groupId>
     <artifactId>IM-message-server</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>IM-message-server</name>
     <description>IM-message-server</description>
     <url/>
     <properties>
-        <java.version>8</java.version>
+        <java.version>21</java.version>
     </properties>
     <dependencies>
         <dependency>
@@ -41,9 +41,11 @@
             <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
+        <!-- RocketMQ (替代 RabbitMQ) -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            
         </dependency>
 
         <dependency>
@@ -118,14 +120,12 @@
 
         <!-- Spring Cloud Sleuth for distributed tracing -->
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-sleuth</artifactId>
+            <groupId>io.micrometer</groupId><artifactId>micrometer-tracing-bridge-brave</artifactId>
         </dependency>
 
         <!-- Zipkin Client for trace reporting -->
         <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
+            <groupId>io.zipkin.reporter2</groupId><artifactId>zipkin-reporter-brave</artifactId>
         </dependency>
         <dependency>
             <groupId>com.example</groupId>
@@ -150,22 +150,29 @@
             <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
 
+        <!-- FastJSON -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            
+        </dependency>
+        
         <!-- JWT -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
-            <version>0.11.5</version>
+            
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
-            <version>0.11.5</version>
+            
             <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
-            <version>0.11.5</version>
+            
             <scope>runtime</scope>
         </dependency>
     </dependencies>
@@ -180,3 +187,4 @@
     </build>
 
 </project>
+

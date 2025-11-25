@@ -7,18 +7,18 @@ import com.example.domain.vo.Result;
 import com.example.domain.vo.UserRegisterVO;
 import com.example.domain.vo.UserVO;
 import com.example.user.service.UserService;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
 import java.util.Map;
 
 /**
@@ -29,7 +29,7 @@ import java.util.Map;
  * 提供用户相关的 REST API
  */
 @Slf4j
-@Api(tags = "用户管理", description = "用户信息管理接口")
+@Tag(name = "API")
 @RestController
 @RequestMapping("/api/v1/users")
 @Validated
@@ -41,10 +41,10 @@ public class UserController {
     /**
      * 用户注册
      */
-    @ApiOperation(value = "用户注册", notes = "通过邮箱注册新用户")
+    @Operation(summary = "用户注册")
     @PostMapping("/register")
     public ResponseEntity<Result<UserRegisterVO>> register(
-            @ApiParam(value = "用户注册信息", required = true)
+            @Parameter(description = "用户注册信息")
             @Valid @RequestBody UserDTO userDTO) {
         
         try {
@@ -86,10 +86,10 @@ public class UserController {
     /**
      * 根据用户ID获取用户信息
      */
-    @ApiOperation(value = "获取用户信息", notes = "根据用户ID获取用户详细信息")
+    @Operation(summary = "获取用户信息")
     @GetMapping("/{userId}")
     public ResponseEntity<Result<UserVO>> getUserById(
-            @ApiParam(value = "用户ID", required = true)
+            @Parameter(description = "用户ID")
             @PathVariable Long userId) {
         
         try {
@@ -111,10 +111,10 @@ public class UserController {
     /**
      * 检查邮箱是否存在
      */
-    @ApiOperation(value = "检查邮箱是否存在", notes = "用于注册时验证邮箱")
+    @Operation(summary = "检查邮箱是否存在")
     @GetMapping("/check-email")
     public Result<Boolean> checkEmailExists(
-            @ApiParam(value = "邮箱地址", required = true)
+            @Parameter(description = "邮箱地址")
             @RequestParam @Email String email) {
         
         try {
@@ -129,10 +129,10 @@ public class UserController {
     /**
      * 检查用户名是否存在
      */
-    @ApiOperation(value = "检查用户名是否存在", notes = "用于注册时验证用户名")
+    @Operation(summary = "检查用户名是否存在")
     @GetMapping("/check-username")
     public Result<Boolean> checkUsernameExists(
-            @ApiParam(value = "用户名", required = true)
+            @Parameter(description = "用户名")
             @RequestParam @NotBlank String username) {
         
         try {
@@ -147,10 +147,10 @@ public class UserController {
     /**
      * 根据邮箱获取用户详情（用于登录认证）
      */
-    @ApiOperation(value = "根据邮箱获取用户详情", notes = "用于OAuth2认证服务器调用")
+    @Operation(summary = "根据邮箱获取用户详情")
     @GetMapping("/details/email/{email}")
     public ResponseEntity<Result<com.example.domain.dto.UserDetailsDTO>> getUserDetailsByEmail(
-            @ApiParam(value = "邮箱地址", required = true)
+            @Parameter(description = "邮箱地址")
             @PathVariable String email) {
         
         log.info("Controller收到请求: 获取用户详情, email={}", email);
@@ -178,10 +178,10 @@ public class UserController {
     /**
      * 根据用户名获取用户详情
      */
-    @ApiOperation(value = "根据用户名获取用户详情", notes = "用于OAuth2认证服务器调用")
+    @Operation(summary = "根据用户名获取用户详情")
     @GetMapping("/details/username/{username}")
     public com.example.domain.dto.UserDetailsDTO getUserDetailsByUsername(
-            @ApiParam(value = "用户名", required = true)
+            @Parameter(description = "用户名")
             @PathVariable String username) {
         
         try {
@@ -195,12 +195,12 @@ public class UserController {
     /**
      * 更新用户信息
      */
-    @ApiOperation(value = "更新用户信息", notes = "更新用户的基本信息")
+    @Operation(summary = "更新用户信息")
     @PutMapping("/{userId}")
     public ResponseEntity<Result<Void>> updateUser(
-            @ApiParam(value = "用户ID", required = true)
+            @Parameter(description = "用户ID")
             @PathVariable Long userId,
-            @ApiParam(value = "用户信息", required = true)
+            @Parameter(description = "用户信息")
             @Valid @RequestBody UserDTO userDTO) {
         
         try {
@@ -229,12 +229,12 @@ public class UserController {
     /**
      * 修改密码
      */
-    @ApiOperation(value = "修改密码", notes = "用户修改自己的密码")
+    @Operation(summary = "修改密码")
     @PostMapping("/{userId}/change-password")
     public ResponseEntity<Result<Void>> changePassword(
-            @ApiParam(value = "用户ID", required = true)
+            @Parameter(description = "用户ID")
             @PathVariable Long userId,
-            @ApiParam(value = "密码信息", required = true)
+            @Parameter(description = "密码信息")
             @RequestBody Map<String, String> passwordData) {
         
         try {
@@ -259,50 +259,15 @@ public class UserController {
         }
     }
     
-    /**
-     * 创建或更新第三方 OAuth 用户
-     * 此接口由 OAuth2-auth-server 在第三方登录成功后调用
-     */
-    @ApiOperation(value = "创建或更新OAuth用户", notes = "第三方登录时创建或更新用户信息")
-    @PostMapping("/oauth/create-or-update")
-    public ResponseEntity<Result<com.example.domain.dto.UserDetailsDTO>> createOrUpdateOAuthUser(
-            @ApiParam(value = "OAuth提供商", required = true) @RequestParam String provider,
-            @ApiParam(value = "提供商用户ID", required = true) @RequestParam String providerUserId,
-            @ApiParam(value = "用户名", required = true) @RequestParam String username,
-            @ApiParam(value = "邮箱") @RequestParam(required = false) String email,
-            @ApiParam(value = "头像URL") @RequestParam(required = false) String avatarUrl) {
-        
-        try {
-            log.info("创建或更新OAuth用户: provider={}, providerUserId={}, username={}, email={}", 
-                    provider, providerUserId, username, email);
-            
-            User user = userService.createOrUpdateOAuthUser(provider, providerUserId, username, email, avatarUrl);
-            
-            com.example.domain.dto.UserDetailsDTO userDetails = new com.example.domain.dto.UserDetailsDTO();
-            userDetails.setUserId(user.getId());
-            userDetails.setUsername(user.getUsername());
-            userDetails.setEmail(user.getEmail());
-            userDetails.setDisplayName(user.getDisplayName());
-            userDetails.setAvatarUrl(user.getAvatarUrl());
-            userDetails.setProvider(provider);
-            
-            log.info("OAuth用户创建或更新成功: userId={}, username={}", user.getId(), user.getUsername());
-            return ResponseEntity.ok(Result.success("操作成功", userDetails));
-            
-        } catch (Exception e) {
-            log.error("创建或更新OAuth用户失败", e);
-            return ResponseEntity.ok(Result.error(500, "操作失败: " + e.getMessage()));
-        }
-    }
     
     /**
      * 更新用户最后登录时间
      * 此接口由 OAuth2-auth-server 在用户登录成功后调用
      */
-    @ApiOperation(value = "更新最后登录时间", notes = "用户登录成功后更新最后登录时间")
+    @Operation(summary = "更新最后登录时间")
     @PostMapping("/update-login-time")
     public ResponseEntity<Result<Void>> updateLastLoginTime(
-            @ApiParam(value = "用户邮箱", required = true)
+            @Parameter(description = "用户邮箱")
             @RequestParam String email) {
         
         try {
@@ -319,12 +284,12 @@ public class UserController {
     /**
      * 搜索用户（通过邮箱或手机号）
      */
-    @ApiOperation(value = "搜索用户", notes = "通过邮箱或手机号搜索用户")
+    @Operation(summary = "搜索用户")
     @GetMapping("/search")
     public ResponseEntity<Result<UserVO>> searchUser(
-            @ApiParam(value = "搜索类型：email 或 phone", required = true)
+            @Parameter(description = "搜索类型：email 或 phone")
             @RequestParam String searchType,
-            @ApiParam(value = "搜索关键词", required = true)
+            @Parameter(description = "搜索关键词")
             @RequestParam String keyword) {
         
         try {

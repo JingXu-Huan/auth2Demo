@@ -1,5 +1,6 @@
 package com.example.auth;
 
+import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
@@ -14,10 +15,11 @@ import org.springframework.web.client.RestTemplate;
  * @date 2025-11-06
  * OAuth2 授权服务器启动类
  */
-@SpringBootApplication
+@SpringBootApplication(excludeName = {"com.alibaba.cloud.sentinel.feign.SentinelFeignAutoConfiguration"})
 @EnableDiscoveryClient
 @EnableFeignClients
-@ComponentScan(basePackages = {"com.example.auth", "com.example.common"})
+@ComponentScan(basePackages = {"com.example.auth", "com.example.common", "com.example.oauth2authserver"})
+@MapperScan({"com.example.auth.mapper", "com.example.oauth2authserver.mapper"})
 public class AuthServerApplication {
 
     public static void main(String[] args) {

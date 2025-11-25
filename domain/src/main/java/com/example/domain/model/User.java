@@ -54,6 +54,28 @@ public class User {
     private LocalDateTime updatedAt;
 
     /**
+     * 密码哈希
+     */
+    @JsonIgnore
+    private String passwordHash;
+
+    /**
+     * 是否启用MFA
+     */
+    private Boolean mfaEnabled;
+
+    /**
+     * MFA密钥
+     */
+    @JsonIgnore
+    private String mfaSecret;
+
+    /**
+     * 最后登录时间
+     */
+    private LocalDateTime lastLoginAt;
+
+    /**
      * 邮箱验证令牌 - 敏感信息，不应返回给前端
      */
     @JsonIgnore
@@ -64,12 +86,6 @@ public class User {
      */
     @JsonIgnore
     private LocalDateTime tokenExpiry;
-    
-    /**
-     * 最后登录时间 - 敏感信息，不应返回给前端
-     */
-    @JsonIgnore
-    private LocalDateTime lastLoginAt;
     
     /**
      * 账户是否启用（默认启用）

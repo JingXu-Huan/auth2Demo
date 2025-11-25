@@ -8,9 +8,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -54,31 +54,37 @@ public class LoginFailureHandler extends SimpleUrlAuthenticationFailureHandler {
                     username, ipAddress, userAgent, parseDeviceType(userAgent), 
                     exception.getMessage(), remainingAttempts);
             
-            // 如果是 OAuth2 token 请求，返回 JSON
-            if ("/oauth/token".equals(request.getRequestURI())) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json;charset=UTF-8");
-                
-                Map<String, Object> errorResponse = new HashMap<>();
-                errorResponse.put("error", "invalid_grant");
-                errorResponse.put("error_description", exception.getMessage());
-                errorResponse.put("remaining_attempts", remainingAttempts);
-                
-                if (remainingAttempts == 0) {
-                    errorResponse.put("error_description", 
-                        "登录失败次数过多，账户已被锁定15分钟");
-                } else if (remainingAttempts <= 2) {
-                    errorResponse.put("warning", 
-                        "您还有 " + remainingAttempts + " 次尝试机会");
-                }
-                
-                response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
-                return;
+            // 返回 JSON 响应（适用于所有登录端点）
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json;charset=UTF-8");
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", 401);
+            errorResponse.put("message", "登录失败");
+            errorResponse.put("error", exception.getMessage());
+            errorResponse.put("remaining_attempts", remainingAttempts);
+            
+            if (remainingAttempts == 0) {
+                errorResponse.put("error_description", 
+                    "登录失败次数过多，账户已被锁定15分钟");
+            } else if (remainingAttempts <= 2) {
+                errorResponse.put("warning", 
+                    "您还有 " + remainingAttempts + " 次尝试机会");
             }
+            
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
+        } else {
+            // 用户名为空的情况
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setContentType("application/json;charset=UTF-8");
+            
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("code", 400);
+            errorResponse.put("message", "用户名不能为空");
+            errorResponse.put("error", exception.getMessage());
+            
+            response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
         }
-        
-        // 调用父类方法继续处理（表单登录）
-        super.onAuthenticationFailure(request, response, exception);
     }
     
     /**

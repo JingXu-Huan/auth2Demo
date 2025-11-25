@@ -1,5 +1,5 @@
 server:
-  port: 8002
+  port: 8008
   # address: 127.0.0.1  # 注释掉，允许外部访问
 
 spring:
@@ -7,9 +7,13 @@ spring:
     name: IM-message-server
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public
-    username: postgres
-    password: 271224
+    url: jdbc:postgresql://134.175.227.4:5432/admin_db
+    username: lantis-admin
+    password: lantis_admin
+    hikari:
+      maximum-pool-size: 30  # IM服务需要更多连接
+      minimum-idle: 10
+      connection-timeout: 30000
   redis:
     host: localhost
     port: 6379
@@ -22,29 +26,24 @@ spring:
         max-idle: 8
         min-idle: 0
   
-  # RabbitMQ 配置
-  rabbitmq:
-    host: 154.219.109.125
-    port: 5672
-    username: guest
-    password: guest
-    listener:
-      simple:
-        acknowledge-mode: auto
-        retry:
-          enabled: true
-          initial-interval: 3000
-          max-attempts: 3
-  
+  # RocketMQ 配置（替代 RabbitMQ）
+  # rabbitmq:
+  #   host: 154.219.109.125
+  #   port: 5672
+  #   username: guest
+  #   password: guest
+
   data:
     mongodb:
       uri: mongodb://localhost:27017/im_chat
   cloud:
     nacos:
       discovery:
-        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        server-addr: 211.101.236.212:8848  # Nacos 服务器地址
         namespace: public                # 命名空间
         group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
       config:
         import-check:
           enabled: false                   # 禁用配置导入检查
@@ -58,18 +57,27 @@ spring:
         enabled: true
       web-context-unify: false
 
-  mybatis-plus:
-    mapper-locations: classpath:mapper/*.xml
-    type-aliases-package: com.example.user.model
-    configuration:
-      map-underscore-to-camel-case: true
-      log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
-    global-config:
-      db-config:
-        id-type: auto
-        table-prefix: ""
-        # 更新策略：包含 null 值
-        update-strategy: ignored
+# RocketMQ 配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: im_message_producer_group
+    send-message-timeout: 3000
+  consumer:
+    group: im_message_consumer_group
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.im.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      table-prefix: ""
+      # 更新策略：包含 null 值
+      update-strategy: ignored
 # 自定义配置
 chat:
   redis:

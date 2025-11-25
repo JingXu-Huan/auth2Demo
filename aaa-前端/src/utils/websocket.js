@@ -1,79 +1,79 @@
 /**
- * WebSocket 全局连接管理
+ * WebSocket 连接管理
  */
-
 class WebSocketService {
   constructor() {
     this.ws = null
     this.userId = null
     this.reconnectTimer = null
     this.heartbeatTimer = null
-    this.messageHandlers = []
+    this.handlers = new Map()
     this.isConnecting = false
+    this.reconnectCount = 0
+    this.maxReconnect = 5
   }
 
   /**
-   * 建立 WebSocket 连接
+   * 建立连接
    */
   connect(userId) {
     if (this.isConnecting || (this.ws && this.ws.readyState === WebSocket.OPEN)) {
-      console.log('WebSocket 已连接或正在连接中')
       return
     }
 
     this.userId = userId
     this.isConnecting = true
 
-    // 通过 IM-Gateway 连接 (端口 9001)
-    // 使用环境变量支持局域网访问
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:9001'
-    const wsUrl = `${wsBaseUrl}/ws/${userId}`
-    console.log('正在建立 WebSocket 连接 (通过网关):', wsUrl)
+    const wsUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:9090'
+    const url = `${wsUrl}/ws/${userId}`
+    
+    console.log('[WebSocket] 正在连接:', url)
 
     try {
-      this.ws = new WebSocket(wsUrl)
+      this.ws = new WebSocket(url)
 
       this.ws.onopen = () => {
-        console.log('WebSocket 连接成功, userId:', userId)
+        console.log('[WebSocket] 连接成功')
         this.isConnecting = false
+        this.reconnectCount = 0
         this.startHeartbeat()
+        this.emit('connected')
       }
 
       this.ws.onmessage = (event) => {
         try {
           const data = JSON.parse(event.data)
-          console.log('收到 WebSocket 消息:', data)
+          console.log('[WebSocket] 收到消息:', data)
           
-          // 通知所有注册的消息处理器
-          this.messageHandlers.forEach(handler => {
-            try {
-              handler(data)
-            } catch (error) {
-              console.error('消息处理器执行失败:', error)
-            }
-          })
-        } catch (error) {
-          console.error('解析 WebSocket 消息失败:', error, event.data)
+          // 触发对应类型的处理器
+          if (data.type) {
+            this.emit(data.type, data)
+          }
+          this.emit('message', data)
+        } catch (e) {
+          console.error('[WebSocket] 解析消息失败:', e)
         }
       }
 
       this.ws.onclose = (event) => {
-        console.log('WebSocket 连接关闭:', event.code, event.reason)
+        console.log('[WebSocket] 连接关闭:', event.code, event.reason)
         this.isConnecting = false
         this.stopHeartbeat()
+        this.emit('disconnected')
         
         // 非正常关闭，尝试重连
-        if (event.code !== 1000 && this.userId) {
-          this.reconnect()
+        if (event.code !== 1000 && this.userId && this.reconnectCount < this.maxReconnect) {
+          this.scheduleReconnect()
         }
       }
 
       this.ws.onerror = (error) => {
-        console.error('WebSocket 错误:', error)
+        console.error('[WebSocket] 错误:', error)
         this.isConnecting = false
+        this.emit('error', error)
       }
     } catch (error) {
-      console.error('创建 WebSocket 连接失败:', error)
+      console.error('[WebSocket] 创建连接失败:', error)
       this.isConnecting = false
     }
   }
@@ -82,96 +82,80 @@ class WebSocketService {
    * 断开连接
    */
   disconnect() {
-    console.log('主动断开 WebSocket 连接')
     this.stopHeartbeat()
     this.stopReconnect()
     
     if (this.ws) {
-      this.ws.close(1000, 'User logout')
+      this.ws.close(1000, '主动断开')
       this.ws = null
     }
     
     this.userId = null
-    this.messageHandlers = []
-  }
-
-  /**
-   * 重连
-   */
-  reconnect() {
-    if (this.reconnectTimer) {
-      return
-    }
-
-    console.log('5秒后尝试重连...')
-    this.reconnectTimer = setTimeout(() => {
-      this.reconnectTimer = null
-      if (this.userId) {
-        this.connect(this.userId)
-      }
-    }, 5000)
-  }
-
-  /**
-   * 停止重连
-   */
-  stopReconnect() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer)
-      this.reconnectTimer = null
-    }
+    this.reconnectCount = 0
   }
 
   /**
    * 发送消息
    */
-  send(message) {
+  send(data) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      const messageStr = typeof message === 'string' ? message : JSON.stringify(message)
-      this.ws.send(messageStr)
-      console.log('发送 WebSocket 消息:', message)
+      const message = typeof data === 'string' ? data : JSON.stringify(data)
+      this.ws.send(message)
       return true
-    } else {
-      console.warn('WebSocket 未连接，无法发送消息')
-      return false
     }
+    console.warn('[WebSocket] 未连接，无法发送消息')
+    return false
   }
 
   /**
-   * 注册消息处理器
+   * 注册事件处理器
    */
-  onMessage(handler) {
-    if (typeof handler === 'function') {
-      this.messageHandlers.push(handler)
+  on(event, handler) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, [])
     }
+    this.handlers.get(event).push(handler)
   }
 
   /**
-   * 移除消息处理器
+   * 移除事件处理器
    */
-  offMessage(handler) {
-    const index = this.messageHandlers.indexOf(handler)
-    if (index > -1) {
-      this.messageHandlers.splice(index, 1)
+  off(event, handler) {
+    const handlers = this.handlers.get(event)
+    if (handlers) {
+      const index = handlers.indexOf(handler)
+      if (index > -1) {
+        handlers.splice(index, 1)
+      }
     }
   }
 
   /**
-   * 启动心跳
+   * 触发事件
+   */
+  emit(event, data) {
+    const handlers = this.handlers.get(event)
+    if (handlers) {
+      handlers.forEach(handler => {
+        try {
+          handler(data)
+        } catch (e) {
+          console.error('[WebSocket] 事件处理错误:', e)
+        }
+      })
+    }
+  }
+
+  /**
+   * 心跳
    */
   startHeartbeat() {
     this.stopHeartbeat()
-    
     this.heartbeatTimer = setInterval(() => {
-      if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-        this.send({ type: 'ping' })
-      }
-    }, 30000) // 每30秒发送一次心跳
+      this.send({ type: 'ping' })
+    }, 30000)
   }
 
-  /**
-   * 停止心跳
-   */
   stopHeartbeat() {
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer)
@@ -180,14 +164,36 @@ class WebSocketService {
   }
 
   /**
-   * 获取连接状态
+   * 重连
+   */
+  scheduleReconnect() {
+    this.stopReconnect()
+    this.reconnectCount++
+    
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectCount), 30000)
+    console.log(`[WebSocket] ${delay/1000}秒后重连...`)
+    
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null
+      if (this.userId) {
+        this.connect(this.userId)
+      }
+    }, delay)
+  }
+
+  stopReconnect() {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer)
+      this.reconnectTimer = null
+    }
+  }
+
+  /**
+   * 连接状态
    */
   isConnected() {
     return this.ws && this.ws.readyState === WebSocket.OPEN
   }
 }
 
-// 创建全局单例
-const websocketService = new WebSocketService()
-
-export default websocketService
+export default new WebSocketService()

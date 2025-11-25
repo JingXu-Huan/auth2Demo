@@ -1,7 +1,15 @@
 server:
-  port: 8082
+  port: 8001
 
 spring:
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://134.175.227.4:5432/auth_db
+    username: admin
+    password: admin
+  adminautoconfigure:
+    exclude:
+      - com.alibaba.cloud.sentinel.feign.SentinelFeignAutoConfiguration
   mvc:
     pathmatch:
       matching-strategy: ant_path_matcher
@@ -22,11 +30,7 @@ spring:
     enabled: true
   application:
     name: user-server
-  datasource:
-    driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public
-    username: postgres
-    password: 271224
+
 
   # 邮件配置（用于邮箱验证功能）
   mail:
@@ -42,39 +46,27 @@ spring:
             enable: true
             required: true
 
-  redis:
-    host: localhost
-    port: 6379
-    database: 0
-    password:   # 生产环境必须设置密码
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
-
-  # RabbitMQ 配置
-  rabbitmq:
-    host: 154.219.109.125
-    port: 5672
-    username: guest
-    password: guest
-    virtual-host: /
-    # 连接超时配置
-    connection-timeout: 15000
-    # 发布者确认
-    publisher-confirm-type: correlated
-    publisher-returns: true
-    template:
-      mandatory: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      password:   # 生产环境必须设置密码
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
 
   cloud:
     nacos:
       discovery:
-        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        server-addr: 211.101.236.212:8848  # Nacos 服务器地址
         namespace: public                # 命名空间
         group: DEFAULT_GROUP
+        username:
+        password:
       config:
         import-check:
           enabled: false                   # 禁用配置导入检查
@@ -87,6 +79,12 @@ spring:
       filter:
         enabled: true
       web-context-unify: false
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: user_email_producer_group
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml
@@ -121,6 +119,13 @@ management:
 service:
   auth:
     secret: your_32_character_secret_key_here_12345  # 必须至少32位
+
+# Feign 配置
+feign:
+  sentinel:
+    enabled: false  # 禁用，避免与 Spring Cloud OpenFeign 4.x 冲突
+  circuitbreaker:
+    enabled: false
 
 # Knife4j 配置
 knife4j:

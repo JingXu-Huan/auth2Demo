@@ -1,423 +1,413 @@
 <template>
-  <div class="chat-container">
-    <!-- 侧边栏 -->
-    <div class="sidebar">
-      <div class="user-info">
-        <el-avatar :src="userStore.user?.avatar" :size="40" />
-        <div class="user-details">
-          <div class="username">{{ userStore.user?.nickname }}</div>
-          <div class="status">在线</div>
-        </div>
-        <el-dropdown @command="handleCommand">
-          <el-icon class="more-icon"><MoreFilled /></el-icon>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="groups">群组管理</el-dropdown-item>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+  <div class="chat-page">
+    <!-- 左侧会话列表 -->
+    <div class="conversation-panel">
+      <div class="panel-header">
+        <el-input
+          v-model="searchKeyword"
+          placeholder="搜索"
+          :prefix-icon="Search"
+          clearable
+          class="search-input"
+        />
       </div>
 
-      <div class="online-count">
-        <el-icon><User /></el-icon>
-        <span>在线用户: {{ onlineCount }}</span>
-      </div>
-
-      <div class="chat-list">
-        <div class="chat-item active">
-          <el-avatar :size="40">群</el-avatar>
-          <div class="chat-info">
-            <div class="chat-name">全局聊天室</div>
-            <div class="last-message">欢迎来到聊天室</div>
+      <div class="conversation-list">
+        <div
+          v-for="conv in filteredConversations"
+          :key="conv.id"
+          :class="['conversation-item', { active: currentConversation?.id === conv.id }]"
+          @click="selectConversation(conv)"
+        >
+          <el-badge :value="conv.unreadCount" :hidden="!conv.unreadCount" :offset="[-5, 5]">
+            <el-avatar :size="48" :src="conv.avatar">
+              {{ conv.name?.charAt(0) }}
+            </el-avatar>
+          </el-badge>
+          <div class="conv-info">
+            <div class="conv-header">
+              <span class="conv-name">{{ conv.name }}</span>
+              <span class="conv-time">{{ formatTime(conv.lastMessageTime) }}</span>
+            </div>
+            <div class="conv-message">{{ conv.lastMessage || '暂无消息' }}</div>
           </div>
+        </div>
+
+        <el-empty v-if="conversations.length === 0" description="暂无会话" />
+      </div>
+    </div>
+
+    <!-- 右侧聊天区域 -->
+    <div class="chat-panel" v-if="currentConversation">
+      <!-- 聊天头部 -->
+      <div class="chat-header">
+        <div class="header-info">
+          <h3>{{ currentConversation.name }}</h3>
+          <span v-if="currentConversation.type === 'group'" class="member-count">
+            {{ currentConversation.memberCount }} 人
+          </span>
+        </div>
+        <div class="header-actions">
+          <el-button :icon="Phone" circle />
+          <el-button :icon="VideoCamera" circle />
+          <el-button :icon="More" circle />
+        </div>
+      </div>
+
+      <!-- 消息列表 -->
+      <div class="message-list" ref="messageListRef">
+        <div
+          v-for="msg in messages"
+          :key="msg.id"
+          :class="['message-item', { 'own': msg.senderId === userStore.userId }]"
+        >
+          <el-avatar :size="36" :src="msg.senderAvatar" v-if="msg.senderId !== userStore.userId">
+            {{ msg.senderName?.charAt(0) }}
+          </el-avatar>
+          
+          <div class="message-content">
+            <div class="message-sender" v-if="msg.senderId !== userStore.userId && currentConversation.type === 'group'">
+              {{ msg.senderName }}
+            </div>
+            <div class="message-bubble">
+              <template v-if="msg.status === 'recalled'">
+                <span class="recalled-text">消息已撤回</span>
+              </template>
+              <template v-else>
+                {{ msg.content }}
+              </template>
+            </div>
+            <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
+          </div>
+          
+          <el-avatar :size="36" :src="userStore.userAvatar" v-if="msg.senderId === userStore.userId">
+            {{ userStore.userName?.charAt(0) }}
+          </el-avatar>
+        </div>
+      </div>
+
+      <!-- 输入区域 -->
+      <div class="input-area">
+        <div class="input-toolbar">
+          <el-button :icon="Picture" text />
+          <el-button :icon="Folder" text />
+          <el-button :icon="Mic" text />
+        </div>
+        <div class="input-box">
+          <el-input
+            v-model="inputMessage"
+            type="textarea"
+            :rows="3"
+            placeholder="输入消息..."
+            resize="none"
+            @keydown.enter.exact.prevent="sendMessage"
+          />
+          <el-button
+            type="primary"
+            :icon="Promotion"
+            :disabled="!inputMessage.trim()"
+            @click="sendMessage"
+          >
+            发送
+          </el-button>
         </div>
       </div>
     </div>
 
-    <!-- 聊天区域 -->
-    <div class="chat-area">
-      <div class="chat-header">
-        <h3>全局聊天室</h3>
-        <div class="header-actions">
-          <el-button @click="clearMessages" size="small">清空消息</el-button>
-        </div>
-      </div>
-
-      <div class="message-list" ref="messageListRef">
-        <div 
-          v-for="message in messages" 
-          :key="message.id"
-          :class="['message-item', { 'own-message': message.senderId === userStore.user?.id }]"
-        >
-          <el-avatar :src="message.avatar" :size="36" />
-          <div class="message-content">
-            <div class="message-header">
-              <span class="sender-name">{{ message.senderName }}</span>
-              <span class="message-time">{{ formatTime(message.timestamp) }}</span>
-            </div>
-            <div class="message-text">{{ message.content }}</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="input-area">
-        <div class="typing-indicator" v-if="typingUsers.length > 0">
-          {{ typingUsers.join(', ') }} 正在输入...
-        </div>
-        <div class="input-box">
-          <el-input
-            v-model="messageInput"
-            type="textarea"
-            :rows="3"
-            placeholder="输入消息..."
-            @keydown.enter.prevent="handleSendMessage"
-            @input="handleTyping"
-          />
-          <div class="input-actions">
-            <el-button type="primary" @click="handleSendMessage" :disabled="!messageInput.trim()">
-              发送
-            </el-button>
-          </div>
-        </div>
-      </div>
+    <!-- 空状态 -->
+    <div class="empty-panel" v-else>
+      <el-empty description="选择一个会话开始聊天">
+        <template #image>
+          <el-icon :size="80" color="#c0c4cc"><ChatLineRound /></el-icon>
+        </template>
+      </el-empty>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, nextTick } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
-import { MoreFilled, User } from '@element-plus/icons-vue'
+import { Search, Phone, VideoCamera, More, Picture, Folder, Mic, Promotion, ChatLineRound } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
-import { chatAPI } from '../api'
+import { useChatStore } from '../stores/chat'
+import { channelApi, messageApi } from '../api'
+import websocket from '../utils/websocket'
 import dayjs from 'dayjs'
+import relativeTime from 'dayjs/plugin/relativeTime'
+import 'dayjs/locale/zh-cn'
 
-const router = useRouter()
+dayjs.extend(relativeTime)
+dayjs.locale('zh-cn')
+
 const userStore = useUserStore()
+const chatStore = useChatStore()
+
+const searchKeyword = ref('')
+const inputMessage = ref('')
 const messageListRef = ref()
-const messageInput = ref('')
-const onlineCount = ref(0)
-const typingUsers = ref([])
-const messages = ref([])
-let websocket = null
-let typingTimer = null
 
-// 检查登录状态
-if (!userStore.isLoggedIn) {
-  router.push('/login')
-}
+const conversations = computed(() => chatStore.conversations)
+const currentConversation = computed(() => chatStore.currentConversation)
+const messages = computed(() => chatStore.currentMessages)
 
-// WebSocket连接
-const connectWebSocket = () => {
-  const wsUrl = `ws://localhost:8002/ws/${userStore.user.id}`
-  websocket = new WebSocket(wsUrl)
-  
-  websocket.onopen = () => {
-    console.log('WebSocket连接成功')
-    ElMessage.success('连接成功')
-    updateOnlineCount()
-  }
-  
-  websocket.onmessage = (event) => {
-    try {
-      const data = JSON.parse(event.data)
-      handleWebSocketMessage(data)
-    } catch (error) {
-      console.error('解析WebSocket消息失败:', error)
+const filteredConversations = computed(() => {
+  if (!searchKeyword.value) return conversations.value
+  const keyword = searchKeyword.value.toLowerCase()
+  return conversations.value.filter(c => c.name?.toLowerCase().includes(keyword))
+})
+
+// 加载会话列表
+const loadConversations = async () => {
+  try {
+    const res = await channelApi.getChannels()
+    if (res.code === 200) {
+      const list = (res.data || []).map(channel => ({
+        id: channel.id,
+        name: channel.name || '未命名会话',
+        avatar: channel.avatar,
+        type: channel.type,
+        memberCount: channel.memberCount,
+        lastMessage: channel.lastMessage,
+        lastMessageTime: channel.lastActiveAt,
+        unreadCount: channel.unreadCount || 0
+      }))
+      chatStore.setConversations(list)
     }
-  }
-  
-  websocket.onclose = () => {
-    console.log('WebSocket连接关闭')
-    ElMessage.warning('连接已断开')
-  }
-  
-  websocket.onerror = (error) => {
-    console.error('WebSocket错误:', error)
-    ElMessage.error('连接错误')
+  } catch (error) {
+    console.error('加载会话失败:', error)
   }
 }
 
-// 处理WebSocket消息
-const handleWebSocketMessage = (data) => {
-  if (data.type === 'message') {
-    addMessage({
-      id: data.messageId || Date.now(),
-      senderId: data.senderId,
-      senderName: data.senderName || `用户${data.senderId}`,
-      avatar: data.avatar || 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-      content: data.payload?.text || data.content || '消息内容',
-      timestamp: data.createdAt || Date.now()
-    })
-  } else if (data.type === 'typing') {
-    handleTypingIndicator(data)
-  }
+// 选择会话
+const selectConversation = async (conv) => {
+  chatStore.selectConversation(conv)
+  await loadMessages(conv.id)
 }
 
-// 添加消息
-const addMessage = (message) => {
-  messages.value.push(message)
-  nextTick(() => {
-    scrollToBottom()
-  })
-}
-
-// 滚动到底部
-const scrollToBottom = () => {
-  if (messageListRef.value) {
-    messageListRef.value.scrollTop = messageListRef.value.scrollHeight
+// 加载消息
+const loadMessages = async (channelId) => {
+  try {
+    const res = await messageApi.getHistory({ channelId, limit: 50 })
+    if (res.code === 200) {
+      chatStore.setMessages(channelId, res.data || [])
+      scrollToBottom()
+    }
+  } catch (error) {
+    console.error('加载消息失败:', error)
   }
 }
 
 // 发送消息
-const handleSendMessage = () => {
-  if (!messageInput.value.trim()) return
-  
-  const message = {
-    senderId: userStore.user.id,
-    receiverId: null, // 群聊
-    channelType: 'GROUP',
-    contentType: 'TEXT',
-    payload: {
-      text: messageInput.value.trim()
-    },
-    createdAt: Date.now()
-  }
-  
-  if (websocket && websocket.readyState === WebSocket.OPEN) {
-    websocket.send(JSON.stringify(message))
-    
-    // 添加到本地消息列表
-    addMessage({
-      id: Date.now(),
-      senderId: userStore.user.id,
-      senderName: userStore.user.nickname,
-      avatar: userStore.user.avatar,
-      content: messageInput.value.trim(),
-      timestamp: Date.now()
-    })
-    
-    messageInput.value = ''
-  } else {
-    ElMessage.error('连接已断开，请刷新页面重试')
-  }
-}
+const sendMessage = async () => {
+  if (!inputMessage.value.trim() || !currentConversation.value) return
 
-// 处理输入
-const handleTyping = () => {
-  if (typingTimer) {
-    clearTimeout(typingTimer)
+  const content = inputMessage.value.trim()
+  const tempId = `temp_${Date.now()}`
+  
+  // 先添加到本地
+  const tempMessage = {
+    id: tempId,
+    tempId,
+    channelId: currentConversation.value.id,
+    senderId: userStore.userId,
+    senderName: userStore.userName,
+    senderAvatar: userStore.userAvatar,
+    content,
+    type: 'text',
+    status: 'sending',
+    createdAt: new Date().toISOString()
   }
   
-  // 发送正在输入状态
-  if (websocket && websocket.readyState === WebSocket.OPEN) {
-    websocket.send(JSON.stringify({
-      type: 'typing',
-      senderId: userStore.user.id,
-      senderName: userStore.user.nickname
-    }))
-  }
-  
-  // 3秒后停止输入状态
-  typingTimer = setTimeout(() => {
-    if (websocket && websocket.readyState === WebSocket.OPEN) {
-      websocket.send(JSON.stringify({
-        type: 'stop_typing',
-        senderId: userStore.user.id
-      }))
-    }
-  }, 3000)
-}
+  chatStore.addMessage(currentConversation.value.id, tempMessage)
+  inputMessage.value = ''
+  scrollToBottom()
 
-// 处理输入指示器
-const handleTypingIndicator = (data) => {
-  if (data.senderId === userStore.user.id) return
-  
-  if (data.type === 'typing') {
-    if (!typingUsers.value.includes(data.senderName)) {
-      typingUsers.value.push(data.senderName)
-    }
-  } else if (data.type === 'stop_typing') {
-    const index = typingUsers.value.indexOf(data.senderName)
-    if (index > -1) {
-      typingUsers.value.splice(index, 1)
-    }
-  }
-}
-
-// 更新在线用户数
-const updateOnlineCount = async () => {
   try {
-    const response = await chatAPI.getOnlineUsers()
-    onlineCount.value = response.data?.count || 0
+    const res = await messageApi.send({
+      channelId: currentConversation.value.id,
+      content,
+      type: 'text'
+    })
+
+    if (res.code === 200) {
+      chatStore.updateMessage(currentConversation.value.id, tempId, {
+        id: res.data.id,
+        status: 'sent'
+      })
+    } else {
+      chatStore.updateMessage(currentConversation.value.id, tempId, { status: 'failed' })
+      ElMessage.error('发送失败')
+    }
   } catch (error) {
-    console.error('获取在线用户数失败:', error)
+    chatStore.updateMessage(currentConversation.value.id, tempId, { status: 'failed' })
+    ElMessage.error('发送失败')
   }
 }
 
-// 清空消息
-const clearMessages = () => {
-  messages.value = []
-  ElMessage.success('消息已清空')
+// 滚动到底部
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messageListRef.value) {
+      messageListRef.value.scrollTop = messageListRef.value.scrollHeight
+    }
+  })
 }
 
 // 格式化时间
-const formatTime = (timestamp) => {
-  return dayjs(timestamp).format('HH:mm:ss')
-}
-
-// 处理下拉菜单命令
-const handleCommand = (command) => {
-  if (command === 'groups') {
-    router.push('/groups')
-  } else if (command === 'logout') {
-    userStore.logout()
-    router.push('/login')
+const formatTime = (time) => {
+  if (!time) return ''
+  const date = dayjs(time)
+  if (date.isToday()) {
+    return date.format('HH:mm')
   }
+  if (date.isYesterday()) {
+    return '昨天'
+  }
+  return date.format('MM-DD')
 }
 
-onMounted(() => {
-  connectWebSocket()
-  // 定期更新在线用户数
-  setInterval(updateOnlineCount, 5000)
+// 监听WebSocket消息
+websocket.on('message', (data) => {
+  if (data.type === 'NEW_MESSAGE') {
+    chatStore.addMessage(data.channelId, data.message)
+    if (currentConversation.value?.id === data.channelId) {
+      scrollToBottom()
+    }
+  }
 })
 
-onUnmounted(() => {
-  if (websocket) {
-    websocket.close()
-  }
-  if (typingTimer) {
-    clearTimeout(typingTimer)
-  }
+onMounted(() => {
+  loadConversations()
+})
+
+// 监听消息变化，自动滚动
+watch(messages, () => {
+  scrollToBottom()
 })
 </script>
 
 <style scoped>
-.chat-container {
+.chat-page {
   display: flex;
-  height: 100vh;
-  background: #f5f5f5;
+  height: 100%;
+  background: #fff;
 }
 
-.sidebar {
+.conversation-panel {
   width: 300px;
-  background: white;
-  border-right: 1px solid #e0e0e0;
+  border-right: 1px solid #e5e6eb;
   display: flex;
   flex-direction: column;
 }
 
-.user-info {
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.panel-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e6eb;
 }
 
-.user-details {
-  flex: 1;
+.search-input :deep(.el-input__wrapper) {
+  border-radius: 8px;
+  background: #f5f6f7;
 }
 
-.username {
-  font-weight: 500;
-  color: #333;
-}
-
-.status {
-  font-size: 12px;
-  color: #67c23a;
-}
-
-.more-icon {
-  cursor: pointer;
-  color: #666;
-}
-
-.online-count {
-  padding: 15px 20px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #666;
-  font-size: 14px;
-  border-bottom: 1px solid #e0e0e0;
-}
-
-.chat-list {
+.conversation-list {
   flex: 1;
   overflow-y: auto;
 }
 
-.chat-item {
-  padding: 15px 20px;
+.conversation-item {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 12px 16px;
   cursor: pointer;
-  border-bottom: 1px solid #f0f0f0;
+  transition: background 0.2s;
 }
 
-.chat-item:hover {
-  background: #f5f5f5;
+.conversation-item:hover {
+  background: #f5f6f7;
 }
 
-.chat-item.active {
-  background: #e6f7ff;
+.conversation-item.active {
+  background: #e8f3ff;
 }
 
-.chat-info {
+.conv-info {
   flex: 1;
+  min-width: 0;
 }
 
-.chat-name {
-  font-weight: 500;
-  color: #333;
-}
-
-.last-message {
-  font-size: 12px;
-  color: #999;
-  margin-top: 4px;
-}
-
-.chat-area {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  background: white;
-}
-
-.chat-header {
-  padding: 20px;
-  border-bottom: 1px solid #e0e0e0;
+.conv-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 4px;
 }
 
-.chat-header h3 {
+.conv-name {
+  font-weight: 500;
+  color: #1f2329;
+}
+
+.conv-time {
+  font-size: 12px;
+  color: #8f959e;
+}
+
+.conv-message {
+  font-size: 13px;
+  color: #8f959e;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e6eb;
+}
+
+.header-info h3 {
   margin: 0;
-  color: #333;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.member-count {
+  font-size: 12px;
+  color: #8f959e;
+  margin-left: 8px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
 }
 
 .message-list {
   flex: 1;
-  padding: 20px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
+  padding: 20px;
+  background: #f5f6f7;
 }
 
 .message-item {
   display: flex;
   gap: 12px;
+  margin-bottom: 20px;
 }
 
-.message-item.own-message {
+.message-item.own {
   flex-direction: row-reverse;
 }
 
@@ -425,60 +415,71 @@ onUnmounted(() => {
   max-width: 60%;
 }
 
-.message-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.message-sender {
+  font-size: 12px;
+  color: #8f959e;
   margin-bottom: 4px;
 }
 
-.own-message .message-header {
-  flex-direction: row-reverse;
+.message-bubble {
+  padding: 12px 16px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  word-break: break-word;
 }
 
-.sender-name {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
+.message-item.own .message-bubble {
+  background: #3370ff;
+  color: #fff;
+}
+
+.recalled-text {
+  color: #8f959e;
+  font-style: italic;
 }
 
 .message-time {
   font-size: 11px;
-  color: #999;
+  color: #8f959e;
+  margin-top: 4px;
 }
 
-.message-text {
-  background: #f0f0f0;
-  padding: 8px 12px;
-  border-radius: 8px;
-  word-wrap: break-word;
-}
-
-.own-message .message-text {
-  background: #409eff;
-  color: white;
+.message-item.own .message-time {
+  text-align: right;
 }
 
 .input-area {
-  border-top: 1px solid #e0e0e0;
-  padding: 20px;
+  border-top: 1px solid #e5e6eb;
+  background: #fff;
 }
 
-.typing-indicator {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 10px;
-  font-style: italic;
+.input-toolbar {
+  padding: 8px 16px;
+  border-bottom: 1px solid #f0f1f2;
 }
 
 .input-box {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  padding: 12px 16px;
+  align-items: flex-end;
 }
 
-.input-actions {
+.input-box .el-textarea {
+  flex: 1;
+}
+
+.input-box :deep(.el-textarea__inner) {
+  border-radius: 8px;
+  resize: none;
+}
+
+.empty-panel {
+  flex: 1;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: center;
+  background: #f5f6f7;
 }
 </style>

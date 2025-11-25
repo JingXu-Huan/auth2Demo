@@ -1,21 +1,25 @@
 package com.example.auth.handler;
 
+import com.example.auth.context.DeviceContextHolder;
+import com.example.auth.dto.DeviceInfo;
 import com.example.auth.feign.UserServiceClient;
+import com.example.auth.service.DeviceService;
 import com.example.auth.service.LoginAttemptService;
 import com.example.common.util.JwtUtil;
 import com.example.domain.dto.UserDetailsDTO;
 import com.example.domain.vo.Result;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +43,12 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
     
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private DeviceService deviceService;
+    
+    @Autowired(required = false)
+    private RocketMQTemplate rocketMQTemplate;
     
     private static final ObjectMapper objectMapper = new ObjectMapper();
     
@@ -69,6 +79,31 @@ public class LoginSuccessHandler extends SavedRequestAwareAuthenticationSuccessH
             }
             
             UserDetailsDTO userDetails = userResponse.getData();
+            
+            // ⭐ 记录设备信息
+            DeviceInfo deviceInfo = DeviceContextHolder.getDevice();
+            if (deviceInfo != null) {
+                deviceService.upsertDevice(userDetails.getUserId(), deviceInfo);
+                log.info("登录设备已记录: userId={}, deviceId={}", 
+                    userDetails.getUserId(), deviceInfo.getDeviceId());
+            }
+            
+            // ⭐ 发送登录MQ事件
+            try {
+                Map<String, Object> loginEvent = new HashMap<>();
+                loginEvent.put("userId", userDetails.getUserId());
+                loginEvent.put("email", email);
+                loginEvent.put("deviceId", deviceInfo != null ? deviceInfo.getDeviceId() : null);
+                loginEvent.put("ip", ip);
+                loginEvent.put("userAgent", userAgent);
+                loginEvent.put("eventType", "LOGIN");
+                loginEvent.put("timestamp", System.currentTimeMillis());
+                
+                rocketMQTemplate.convertAndSend("USER_EVENT:LOGIN", loginEvent);
+            } catch (Exception e) {
+                log.error("发送登录MQ事件失败: userId={}", userDetails.getUserId(), e);
+                // 不影响主流程
+            }
             
             // 生成 JWT token（包含邮箱验证状态）
             String token = jwtUtil.generateToken(

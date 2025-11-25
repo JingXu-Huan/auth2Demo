@@ -1,30 +1,39 @@
 server:
-  port: 8084
+  port: 8007
 
 spring:
   application:
     name: im-push-server
   
-  # RabbitMQ 配置
-  rabbitmq:
-    host: 154.219.109.125
-    port: 5672
-    username: guest
-    password: guest
-    listener:
-      simple:
-        acknowledge-mode: auto
-        retry:
-          enabled: true
-          initial-interval: 3000
-          max-attempts: 3
+  # Redis 配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000ms
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 211.101.236.212:8848
+        namespace: public
+        group: DEFAULT_GROUP
+        username: nacos
+        password: nacos
 
-  # Redis 配置（保留用于其他用途，如缓存）
-  redis:
-    host: localhost
-    port: 6379
-    database: 0
-    timeout: 3000ms
+# JWT 配置
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000
+
+# RocketMQ 配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: push_server_producer
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
 
 # Feign 配置
 feign:
@@ -37,8 +46,13 @@ feign:
         readTimeout: 5000
         loggerLevel: basic
 
+# 服务间认证配置
+service:
+  auth:
+    secret: your_32_character_secret_key_here_12345
+
 logging:
   level:
     org.example.mpushservice: DEBUG
-    org.springframework.amqp: DEBUG
+    org.apache.rocketmq: INFO
     org.springframework.web.socket: DEBUG

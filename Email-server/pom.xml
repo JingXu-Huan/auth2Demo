@@ -73,7 +73,17 @@
         <!-- JWT (required by common module's JwtUtil) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
+            <artifactId>jjwt-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
         </dependency>
         
         <dependency>
@@ -81,10 +91,11 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <!-- RabbitMQ -->
+        <!-- RocketMQ (替代 RabbitMQ) -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-amqp</artifactId>
+            <groupId>org.apache.rocketmq</groupId>
+            <artifactId>rocketmq-spring-boot-starter</artifactId>
+            
         </dependency>
         
         <!-- Spring Security (required by common module) -->
@@ -93,10 +104,10 @@
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
         
-        <!-- Knife4j (required by common module) -->
+        <!-- Knife4j 4.x for Spring Boot 3 -->
         <dependency>
             <groupId>com.github.xiaoymin</groupId>
-            <artifactId>knife4j-spring-boot-starter</artifactId>
+            <artifactId>knife4j-openapi3-jakarta-spring-boot-starter</artifactId>
         </dependency>
         
         <dependency>
@@ -104,6 +115,13 @@
             <artifactId>common</artifactId>
             <version>1.0.0</version>
             <scope>compile</scope>
+        </dependency>
+        
+        <!-- FastJSON -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
+            
         </dependency>
     </dependencies>
 

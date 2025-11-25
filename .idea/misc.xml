@@ -18,13 +18,15 @@
         <option value="$PROJECT_DIR$/IM-search-service/pom.xml" />
         <option value="$PROJECT_DIR$/IM-av-service/pom.xml" />
         <option value="$PROJECT_DIR$/Asyc-server/pom.xml" />
+        <option value="$PROJECT_DIR$/IM-gateway-netty/pom.xml" />
       </list>
     </option>
     <option name="ignoredFiles">
       <set>
+        <option value="$PROJECT_DIR$/IM-Gateway/pom.xml" />
         <option value="$PROJECT_DIR$/common1/src/main/java/com/example/domain/pom.xml" />
       </set>
     </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" default="true" project-jdk-name="1.8" project-jdk-type="JavaSDK" />
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="21" project-jdk-type="JavaSDK" />
 </project>

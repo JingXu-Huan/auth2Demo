@@ -1,14 +1,16 @@
 package com.example.email.listener;
 
+import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
+import org.apache.rocketmq.spring.core.RocketMQListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Component;
 
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.internet.MimeMessage;
 import java.util.Map;
 
 /**
@@ -20,7 +22,12 @@ import java.util.Map;
  */
 @Slf4j
 @Component
-public class EmailListener {
+@RocketMQMessageListener(
+    topic = "user_email_topic",
+    consumerGroup = "email_consumer_group",
+    selectorExpression = "email_verification"  // 只消费 email_verification 标签的消息
+)
+public class EmailListener implements RocketMQListener<String> {
     
     @Autowired
     private JavaMailSender mailSender;
@@ -28,21 +35,28 @@ public class EmailListener {
     @Value("${spring.mail.username}")
     private String fromEmail;
     
+    
+    
     /**
      * @author Junjie
      * @version 1.0.0
      * @date 2025-11-06
-     * 监听邮件发送队列（通用邮件发送）
-     * 注意：email.confirmation.queue 由 UserListener 处理，避免重复消费
+     * 监听邮件发送队列（RocketMQ 消费者）
      */
-    @RabbitListener(queues = "email.send.queue")
-    public void handleEmailSend(Map<String, Object> emailData) {
+    @Override
+    public void onMessage(String message) {
         try {
+            log.info("收到 RocketMQ 邮件发送请求: {}", message);
+            
+            // 解析 JSON 消息
+            @SuppressWarnings("unchecked")
+            Map<String, Object> emailData = JSON.parseObject(message, Map.class);
+            
             String to = (String) emailData.get("to");
             String subject = (String) emailData.get("subject");
             String content = (String) emailData.get("content");
             
-            log.info("收到邮件发送请求: to={}, subject={}", to, subject);
+            log.info("解析邮件数据: to={}, subject={}", to, subject);
             
             sendEmail(to, subject, content);
             
@@ -50,6 +64,8 @@ public class EmailListener {
             
         } catch (Exception e) {
             log.error("邮件发送失败", e);
+            // 抛出异常触发 RocketMQ 重试机制
+            throw new RuntimeException("邮件发送失败，请求重试", e);
         }
     }
     

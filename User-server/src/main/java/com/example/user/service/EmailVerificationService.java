@@ -4,9 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.example.user.mapper.UserMapper;
 import com.example.domain.model.User;
 
-import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.alibaba.fastjson.JSON;
+import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -32,7 +32,8 @@ public class EmailVerificationService {
     private RedisTemplate<String, String> redisTemplate;
     
     @Autowired
-    private RabbitTemplate rabbitTemplate;
+    private RocketMQTemplate rocketMQTemplate;
+    
     
     @Autowired
     private UserMapper userMapper;
@@ -61,16 +62,19 @@ public class EmailVerificationService {
             
             log.info("验证码已生成并存储到 Redis: email={}, code={}", email, code);
             
-            // 3. 发送邮件（通过 RabbitMQ 异步发送）
+            // 3. 发送邮件（通过 RocketMQ 异步发送）
             Map<String, String> emailData = new HashMap<>();
             emailData.put("to", email);
             emailData.put("subject", "邮箱验证码");
             emailData.put("content", buildEmailContent(code));
             
-            // 使用交换机和路由键发送消息
-            rabbitTemplate.convertAndSend("user.exchange", "email.verification", emailData);
+            // 使用 RocketMQ 发送消息
+            // Topic:Tag 格式
+            String destination = "user_email_topic:email_verification";
+            String jsonPayload = JSON.toJSONString(emailData);
+            rocketMQTemplate.syncSend(destination, jsonPayload);
             
-            log.info("验证码邮件已发送到交换机: email={}, exchange=user.exchange, routingKey=email.verification", email);
+            log.info("验证码邮件已发送到 RocketMQ: email={}, topic=user_email_topic, tag=email_verification", email);
             return true;
             
         } catch (Exception e) {

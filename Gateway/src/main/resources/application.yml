@@ -1,8 +1,17 @@
 server:
-  port: 9000
+  port: 8012
+  
 spring:
   application:
     name: oauth2-gateway
+  # Redis 配置（用于风控检查）
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+    timeout: 3000ms
+  codec:
+    max-in-memory-size: 10MB
   sleuth:
     sampler:
       # 采样率：1.0 表示 100% 采样（生产环境建议降低）
@@ -23,11 +32,13 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 154.219.109.125:8848
+        server-addr: 211.101.236.212:8848
         namespace: public
         group: DEFAULT_GROUP
         # 开发环境允许启动失败容错
         fail-fast: false
+        username: nacos
+        password: nacos
     sentinel:
       enabled: true
       eager: true  # 启动时立即初始化 Sentinel
@@ -76,16 +87,21 @@ spring:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 群组、好友、组织架构服务路由  
+        # 群组、好友、组织架构、租户服务路由 (IM-relationship-server)
         - id: relationship-server
           uri: http://localhost:8003
           predicates:
-            - Path=/api/v1/groups/**,/api/v1/friends/**,/api/v1/organization/**
+            - Path=/api/v1/groups/**,/api/v1/friends/**,/api/v1/organization/**,/api/v1/departments/**,/api/v1/tenants/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
 
 # CORS 配置已完全移至 CorsConfig.java 类中处理
+
+# JWT 配置
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000
 
 # 服务间认证配置
 # 必须与其他服务保持一致

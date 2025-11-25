@@ -2,12 +2,11 @@ package com.example.user.feign;
 
 import feign.RequestInterceptor;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
 
 /**
  * 为 User-server 的 Feign 客户端添加内部服务标识头
+ * 注意: 不要添加 @Configuration 注解，否则会被全局扫描导致 factoryBeanObjectType 错误
  */
-@Configuration
 public class FeignConfig {
 
     @Bean

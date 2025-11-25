@@ -2,9 +2,9 @@ package com.example.auth.controller;
 
 import com.example.auth.feign.UserServiceClient;
 import com.example.domain.vo.Result;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +21,7 @@ import java.util.Map;
  * 提供用户注册、登录前的检查、JWT 登录等功能
  */
 @Slf4j
-@Api(tags = "认证管理", description = "用户认证相关接口控制器")
+@Tag(name = "API")
 @RestController
 @RequestMapping("/api/v1/auth")
 public class AuthController {
@@ -32,10 +32,10 @@ public class AuthController {
     /**
      * 检查邮箱是否已存在
      */
-    @ApiOperation(value = "检查邮箱是否已存在", notes = "用于注册时验证邮箱是否已被使用（返回true表示已存在）")
+    @Operation(summary = "检查邮箱是否已存在")
     @GetMapping("/check-email")
     public ResponseEntity<Map<String, Object>> checkEmail(
-            @ApiParam(value = "电子邮箱", required = true, example = "user@example.com")
+            @Parameter(description = "电子邮箱")
             @RequestParam String email) {
         Map<String, Object> response = new HashMap<>();
         try {
@@ -54,10 +54,10 @@ public class AuthController {
     /**
      * 检查用户名是否已存在（暂不使用）
      */
-    @ApiOperation(value = "检查用户名是否已存在（暂不使用）", notes = "用于注册时验证用户名是否已被其他账户使用（返回true表示已存在）")
+    @Operation(summary = "检查用户名是否已存在（暂不使用）")
     @GetMapping("/check-username")
     public ResponseEntity<Map<String, Object>> checkUsername(
-            @ApiParam(value = "用户名", required = true, example = "testuser")
+            @Parameter(description = "用户名")
             @RequestParam String username) {
         Map<String, Object> response = new HashMap<>();
         

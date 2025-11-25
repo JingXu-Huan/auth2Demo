@@ -35,6 +35,14 @@
             <scope>provided</scope>
         </dependency>
         
+        <!-- Jakarta Persistence (Spring Boot 3 使用 Jakarta EE) -->
+        <dependency>
+            <groupId>jakarta.persistence</groupId>
+            <artifactId>jakarta.persistence-api</artifactId>
+            
+            <scope>provided</scope>
+        </dependency>
+        
         <!-- Jackson (用于 JSON 序列化) -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -45,18 +53,30 @@
         <!-- JWT (用于服务间认证) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt</artifactId>
+            <artifactId>jjwt-api</artifactId>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <scope>runtime</scope>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <scope>runtime</scope>
             <optional>true</optional>
         </dependency>
         
-        <!-- Spring Web (用于 Springfox 配置) -->
+        <!-- Spring Web -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-web</artifactId>
             <optional>true</optional>
         </dependency>
         
-        <!-- Spring WebMVC (用于 Springfox 配置) -->
+        <!-- Spring WebMVC -->
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-webmvc</artifactId>
@@ -70,25 +90,10 @@
             <optional>true</optional>
         </dependency>
         
-        <!-- Spring Security Web (用于 CSRF 配置) -->
+        <!-- Spring Security Web -->
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-web</artifactId>
-            <optional>true</optional>
-        </dependency>
-        
-        <!-- Springfox Swagger (用于 API 文档) -->
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-swagger2</artifactId>
-            <optional>true</optional>
-        </dependency>
-        
-        <!-- Springfox Spring WebMVC (用于 Springfox 配置) -->
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-spring-webmvc</artifactId>
-            <version>3.0.0</version>
             <optional>true</optional>
         </dependency>
         

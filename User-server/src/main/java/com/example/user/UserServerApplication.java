@@ -13,7 +13,7 @@ import org.springframework.scheduling.annotation.EnableAsync;
  * @date 2025-11-06
  * User 服务启动类
  */
-@SpringBootApplication
+@SpringBootApplication(excludeName = {"com.alibaba.cloud.sentinel.feign.SentinelFeignAutoConfiguration"})
 @EnableDiscoveryClient
 @EnableAsync  
 @EnableFeignClients(basePackages = "com.example.user.feign")

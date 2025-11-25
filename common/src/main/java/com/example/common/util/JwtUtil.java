@@ -5,6 +5,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -19,6 +20,7 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@ConditionalOnClass(name = "io.jsonwebtoken.Jwts")
 public class JwtUtil {
     
     @Value("${jwt.secret:mySecretKey123456789012345678901234567890}")

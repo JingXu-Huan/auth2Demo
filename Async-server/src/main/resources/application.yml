@@ -1,15 +1,52 @@
+server:
+  port: 8015
+
 spring:
   application:
-    name: Async-server
+    name: async-server
+  
+  # 启用虚拟线程 (Java 21)
+  threads:
+    virtual:
+      enabled: true
+  
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://134.175.227.4:5432/admin_db
+    username: lantis-admin
+    password: lantis_admin
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 211.101.236.212:8848
+        namespace: public
+        group: DEFAULT_GROUP
 
-  neo4j:
-    uri: bolt://localhost:7687
-    authentication:
-      username: neo4j
-      password: 12345678
+# RocketMQ 配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: async_producer_group
+    send-message-timeout: 3000
+  consumer:
+    group: async_consumer_group
 
-  rabbitmq:
-    host: 154.219.109.125
-    port: 5672
-    username: guest
-    password: guest
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.async.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.example.async: DEBUG

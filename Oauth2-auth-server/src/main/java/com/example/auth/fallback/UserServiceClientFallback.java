@@ -51,7 +51,13 @@ public class UserServiceClientFallback implements UserServiceClient {
     
     @Override
     public void updateLastLoginTime(String email) {
-        log.error("调用 User-server 失败，触发降级: updateLastLoginTime({})", email);
-        // 更新登录时间失败不影响登录流程，只记录日志
+        log.error("[Fallback] 更新最后登录时间失败: email={}", email);
+    }
+    
+    @Override
+    public Result<UserDetailsDTO> createOrUpdateOAuthUser(String provider, String providerUserId, 
+                                                          String username, String email, String avatarUrl) {
+        log.error("[Fallback] 创建或更新OAuth用户失败: provider={}, username={}", provider, username);
+        return Result.error(500, "User服务暂时不可用，请稍后再试");
     }
 }

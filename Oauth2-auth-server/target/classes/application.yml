@@ -1,7 +1,10 @@
 server:
-  port: 8080
+  port: 8003
 
 spring:
+  autoconfigure:
+    exclude:
+      - com.alibaba.cloud.sentinel.feign.SentinelFeignAutoConfiguration
   application:
     name: oauth2-auth-server
   sleuth:
@@ -27,10 +30,13 @@ spring:
   cloud:
     nacos:
       discovery:
-        server-addr: 154.219.109.125:8848  # Nacos 服务器地址
+        server-addr: 211.101.236.212:8848  # Nacos 服务器地址
         namespace: public                # 命名空间
         group: DEFAULT_GROUP               # 分组
+        username: nacos
+        password: nacos
       config:
+        enabled: false                     # 禁用 Nacos 配置中心（仅使用服务发现）
         import-check:
           enabled: false                   # 禁用配置导入检查
     sentinel:
@@ -48,21 +54,42 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=public
-    username: postgres
-    password: 271224
+    url: jdbc:postgresql://134.175.227.4:5432/admin_db
+    username: lantis-admin
+    password: lantis_admin
 
-  redis:
-    host: localhost
-    port: 6379
-    database: 0
-    password:   # 生产环境必须设置密码
-    lettuce:
-      pool:
-        max-active: 8
-        max-idle: 8
-        min-idle: 0
-        max-wait: -1ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      password:   # 生产环境必须设置密码
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# RocketMQ 配置（用于发送用户事件、风控事件等）
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: auth-server-producer
+    send-message-timeout: 3000
+    retry-times-when-send-failed: 2
 
 # 日志配置 - 显示 TraceId 和 SpanId
 logging:
@@ -108,7 +135,9 @@ knife4j:
 # Feign 配置
 feign:
   sentinel:
-    enabled: true  # 启用 Feign Sentinel 支持
+    enabled: false  # 禁用 Feign Sentinel，避免与 Spring Cloud OpenFeign 4.x 冲突
+  circuitbreaker:
+    enabled: false  # 使用 Sentinel 的 @SentinelResource 替代
   client:
     config:
       default:
