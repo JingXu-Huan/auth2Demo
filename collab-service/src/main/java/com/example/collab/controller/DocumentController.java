@@ -27,9 +27,9 @@ public class DocumentController {
      */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createDocument(
-            @RequestHeader("X-User-Id") Long userId,
-            @RequestParam String title,
-            @RequestParam(defaultValue = "text") String docType) {
+            @RequestHeader(value = "X-User-Id") Long userId,
+            @RequestParam(value = "title") String title,
+            @RequestParam(value = "docType", defaultValue = "text") String docType) {
         
         Document document = documentService.createDocument(userId, title, docType);
         
@@ -45,7 +45,7 @@ public class DocumentController {
      * 获取文档
      */
     @GetMapping("/{docId}")
-    public ResponseEntity<Map<String, Object>> getDocument(@PathVariable String docId) {
+    public ResponseEntity<Map<String, Object>> getDocument(@PathVariable("docId") String docId) {
         Document document = documentService.getDocument(docId);
         
         if (document == null) {
@@ -67,7 +67,7 @@ public class DocumentController {
      */
     @GetMapping("/my")
     public ResponseEntity<Map<String, Object>> getMyDocuments(
-            @RequestHeader("X-User-Id") Long userId) {
+            @RequestHeader(value = "X-User-Id") Long userId) {
         
         List<Document> documents = documentService.getUserDocuments(userId);
         
@@ -84,8 +84,8 @@ public class DocumentController {
      */
     @DeleteMapping("/{docId}")
     public ResponseEntity<Map<String, Object>> deleteDocument(
-            @RequestHeader("X-User-Id") Long userId,
-            @PathVariable String docId) {
+            @RequestHeader(value = "X-User-Id") Long userId,
+            @PathVariable("docId") String docId) {
         try {
             documentService.deleteDocument(docId, userId);
             
@@ -107,9 +107,9 @@ public class DocumentController {
      */
     @PostMapping("/{docId}/lock")
     public ResponseEntity<Map<String, Object>> acquireLock(
-            @RequestHeader("X-User-Id") Long userId,
-            @PathVariable String docId,
-            @RequestParam(defaultValue = "300") int ttlSeconds) {
+            @RequestHeader(value = "X-User-Id") Long userId,
+            @PathVariable("docId") String docId,
+            @RequestParam(value = "ttlSeconds", defaultValue = "300") int ttlSeconds) {
         
         boolean acquired = documentService.acquireLock(docId, userId, ttlSeconds);
         
@@ -124,8 +124,8 @@ public class DocumentController {
      */
     @DeleteMapping("/{docId}/lock")
     public ResponseEntity<Map<String, Object>> releaseLock(
-            @RequestHeader("X-User-Id") Long userId,
-            @PathVariable String docId) {
+            @RequestHeader(value = "X-User-Id") Long userId,
+            @PathVariable("docId") String docId) {
         
         documentService.releaseLock(docId, userId);
         

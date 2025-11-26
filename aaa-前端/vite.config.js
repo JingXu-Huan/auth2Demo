@@ -22,7 +22,7 @@ export default defineConfig(({ mode }) => {
       host: '0.0.0.0',  // 允许局域网访问
       proxy: {
         '/api': {
-          target: env.VITE_API_BASE_URL || 'http://localhost:8012',
+          target: env.VITE_API_BASE_URL || 'http://127.0.0.1:8012',
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, '/api')

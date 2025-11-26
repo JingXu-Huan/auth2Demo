@@ -113,6 +113,12 @@ public class GiteeOAuthService {
                 
                 // 获取用户信息
                 user = userMapper.selectById(binding.getUserId());
+                
+                // 如果用户邮箱未验证且Gitee提供了邮箱，自动验证
+                if (user != null && giteeEmail != null && !Boolean.TRUE.equals(user.getEmailVerified())) {
+                    user.setEmailVerified(true);
+                    userMapper.updateById(user);
+                }
             } else {
                 // 新用户或未绑定
                 // 尝试通过邮箱查找用户
@@ -135,6 +141,12 @@ public class GiteeOAuthService {
                     user.setStatus(1); // 正常状态
                     user.setCreatedAt(OffsetDateTime.now());
                     userMapper.insert(user);
+                } else {
+                    // 已存在的用户，如果Gitee提供了邮箱，更新邮箱验证状态
+                    if (giteeEmail != null && !Boolean.TRUE.equals(user.getEmailVerified())) {
+                        user.setEmailVerified(true);
+                        userMapper.updateById(user);
+                    }
                 }
                 
                 // 创建绑定关系

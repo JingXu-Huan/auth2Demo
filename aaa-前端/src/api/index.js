@@ -5,7 +5,7 @@ import axios from 'axios'
 export const authApi = {
   // 登录
   login: async (email, password) => {
-    const authUrl = import.meta.env.VITE_AUTH_BASE_URL || 'http://localhost:8003'
+    const authUrl = import.meta.env.VITE_AUTH_BASE_URL || 'http://127.0.0.1:8012'
     const params = new URLSearchParams()
     params.append('username', email)
     params.append('password', password)

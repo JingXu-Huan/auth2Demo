@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.annotation.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 文档实体
@@ -103,7 +104,7 @@ public class Document {
     /**
      * 锁过期时间
      */
-    private LocalDateTime lockExpiresAt;
+    private OffsetDateTime lockExpiresAt;
 
     /**
      * 浏览次数
@@ -170,13 +171,13 @@ public class Document {
      */
     private Boolean published;
 
-    private LocalDateTime publishedAt;
+    private OffsetDateTime publishedAt;
 
     @TableField(fill = FieldFill.INSERT)
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 
     @TableField(fill = FieldFill.INSERT_UPDATE)
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 
-    private LocalDateTime deletedAt;
+    private OffsetDateTime deletedAt;
 }

@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,8 +45,8 @@ public class DocumentService {
         document.setEditCount(0);
         document.setCommentCount(0);
         document.setStarCount(0);
-        document.setCreatedAt(LocalDateTime.now());
-        document.setUpdatedAt(LocalDateTime.now());
+        document.setCreatedAt(OffsetDateTime.now());
+        document.setUpdatedAt(OffsetDateTime.now());
 
         documentMapper.insert(document);
         log.info("文档创建成功: docId={}, title={}", document.getDocId(), title);
@@ -92,7 +92,7 @@ public class DocumentService {
         document.setContentSize((long) content.length);
         document.setContentVersion(document.getContentVersion() + 1);
         document.setEditCount(document.getEditCount() + 1);
-        document.setUpdatedAt(LocalDateTime.now());
+        document.setUpdatedAt(OffsetDateTime.now());
 
         documentMapper.updateById(document);
         log.debug("文档内容更新: docId={}, version={}", docId, document.getContentVersion());
@@ -112,7 +112,7 @@ public class DocumentService {
         }
 
         document.setStatus(4); // 已删除
-        document.setDeletedAt(LocalDateTime.now());
+        document.setDeletedAt(OffsetDateTime.now());
         documentMapper.updateById(document);
 
         log.info("文档删除成功: docId={}", docId);
@@ -128,7 +128,7 @@ public class DocumentService {
             return false;
         }
 
-        LocalDateTime now = LocalDateTime.now();
+        OffsetDateTime now = OffsetDateTime.now();
 
         // 检查锁是否已被占用
         if (document.getLockUserId() != null && 

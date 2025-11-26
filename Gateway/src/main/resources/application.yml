@@ -105,14 +105,14 @@ spring:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 文档服务路由 (collab-service) - 暂未启动，注释掉
-        # - id: doc-server
-        #   uri: http://localhost:8014
-        #   predicates:
-        #     - Path=/api/v1/docs/**
-        #   filters:
-        #     - StripPrefix=0
-        #     - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        # 文档服务路由 (Aio-Doc)
+        - id: doc-server
+          uri: http://localhost:8014
+          predicates:
+            - Path=/api/v1/docs/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
         # 文件服务路由 (IM-file-server)
         - id: file-server

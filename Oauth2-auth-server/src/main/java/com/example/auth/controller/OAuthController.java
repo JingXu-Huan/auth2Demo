@@ -71,14 +71,25 @@ public class OAuthController {
             @SuppressWarnings("unchecked")
             Map<String, Object> user = (Map<String, Object>) result.get("user");
             
-            String redirectUrl = String.format(
-                "http://localhost:3000/oauth/callback?token=%s&userId=%s&username=%s&provider=gitee",
-                token,
-                user.get("id"),
-                java.net.URLEncoder.encode((String) user.get("username"), "UTF-8")
-            );
+            // 构建重定向URL，包含完整用户信息
+            StringBuilder redirectUrl = new StringBuilder("http://localhost:3000/oauth/callback?");
+            redirectUrl.append("token=").append(token);
+            redirectUrl.append("&userId=").append(user.get("id"));
+            redirectUrl.append("&username=").append(java.net.URLEncoder.encode(String.valueOf(user.get("username")), "UTF-8"));
+            redirectUrl.append("&provider=gitee");
             
-            response.sendRedirect(redirectUrl);
+            // 添加昵称和头像
+            if (user.get("nickname") != null) {
+                redirectUrl.append("&nickname=").append(java.net.URLEncoder.encode(String.valueOf(user.get("nickname")), "UTF-8"));
+            }
+            if (user.get("avatar") != null) {
+                redirectUrl.append("&avatar=").append(java.net.URLEncoder.encode(String.valueOf(user.get("avatar")), "UTF-8"));
+            }
+            if (user.get("email") != null) {
+                redirectUrl.append("&email=").append(java.net.URLEncoder.encode(String.valueOf(user.get("email")), "UTF-8"));
+            }
+            
+            response.sendRedirect(redirectUrl.toString());
         } catch (Exception e) {
             log.error("Gitee登录失败", e);
             // 重定向到前端登录页，携带错误信息

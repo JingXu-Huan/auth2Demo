@@ -45,12 +45,17 @@ const handleOAuthCallback = async () => {
     const token = getQueryParam('token')
     const userId = getQueryParam('userId')
     const username = getQueryParam('username')
+    const nickname = getQueryParam('nickname')
+    const avatar = getQueryParam('avatar')
+    const email = getQueryParam('email')
     const provider = getQueryParam('provider')
     const errorMsg = getQueryParam('error')
     
     console.log('token:', token, 'type:', typeof token)
     console.log('userId:', userId)
     console.log('username:', username)
+    console.log('nickname:', nickname)
+    console.log('avatar:', avatar)
     console.log('provider:', provider)
     
     if (errorMsg) {
@@ -66,11 +71,14 @@ const handleOAuthCallback = async () => {
       return
     }
     
-    // 保存登录信息
+    // 保存登录信息（包含完整用户信息）
     console.log('Calling userStore.login...')
     userStore.login({
       id: userId,
       username: decodeURIComponent(username || ''),
+      nickname: nickname ? decodeURIComponent(nickname) : null,
+      avatar: avatar ? decodeURIComponent(avatar) : null,
+      email: email ? decodeURIComponent(email) : null,
       provider
     }, token)
     
