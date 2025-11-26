@@ -7,9 +7,9 @@ spring:
     name: IM-message-server
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://134.175.227.4:5432/admin_db
-    username: lantis-admin
-    password: lantis_admin
+    url: jdbc:postgresql://134.175.227.4:5432/im_db
+    username: admin
+    password: admin
     hikari:
       maximum-pool-size: 30  # IM服务需要更多连接
       minimum-idle: 10
@@ -87,6 +87,8 @@ chat:
 service:
   auth:
     secret: "IM-message-server-secret-key-for-service-authentication-2025"
+  user-server:
+    url: http://localhost:8082
 
 # Feign 配置
 feign:

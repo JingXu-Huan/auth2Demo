@@ -130,17 +130,25 @@ public class EmailVerificationService {
         // 2. 更新用户的邮箱验证状态
         try {
             QueryWrapper<User> queryWrapper = new QueryWrapper<>();
-            queryWrapper.eq("email", email);
+            queryWrapper.eq("email", email).isNull("deleted_at");  // 排除已软删除的用户
             
             User user = userMapper.selectOne(queryWrapper);
             if (user == null) {
-                log.error("用户不存在: email={}", email);
+                log.error("用户不存在或已删除: email={}", email);
                 return false;
             }
             
             // 更新邮箱验证状态
             user.setEmailVerified(true);
             userMapper.updateById(user);
+            
+            // 3. 清除用户详情缓存，确保登录时读取最新数据
+            try {
+                redisTemplate.delete("userDetails::" + email);
+                log.info("已清除用户缓存: key=userDetails::{}", email);
+            } catch (Exception cacheEx) {
+                log.warn("清除用户缓存失败，但不影响验证结果: {}", cacheEx.getMessage());
+            }
             
             log.info("用户邮箱验证成功: userId={}, email={}", user.getId(), email);
             return true;

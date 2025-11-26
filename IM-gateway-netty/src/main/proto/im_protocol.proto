@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package com.example.im.protocol;
+
+option java_package = "com.example.im.protocol";
+option java_outer_classname = "IMProtocol";
+
+// 顶层数据包
+message IMPacket {
+    Header header = 1;
+    bytes body = 2;  // 根据command解析为具体的Message对象
+}
+
+// 消息头
+message Header {
+    int32 command = 1;     // 指令类型
+    int32 version = 2;     // 协议版本
+    string client_id = 3;  // 客户端ID（设备ID）
+    int64 seq = 4;         // 请求序号
+    int64 timestamp = 5;   // 时间戳
+}
+
+// 指令类型枚举
+enum CommandType {
+    UNKNOWN = 0;
+    AUTH = 1;              // 鉴权
+    HEARTBEAT = 2;         // 心跳
+    MSG_PUSH = 3;          // 消息推送
+    MSG_ACK = 4;           // 消息确认
+    KICK_OUT = 5;          // 踢下线
+}
+
+// 鉴权请求体 (Command = 1)
+message AuthRequest {
+    string token = 1;      // JWT Token
+    string device_id = 2;  // 设备ID
+    string device_type = 3; // 设备类型: WEB/MOBILE/DESKTOP
+}
+
+// 鉴权响应体
+message AuthResponse {
+    bool success = 1;
+    string message = 2;
+    int64 user_id = 3;
+}
+
+// 心跳请求 (Command = 2)
+message HeartbeatRequest {
+    int64 timestamp = 1;
+}
+
+// 心跳响应
+message HeartbeatResponse {
+    int64 timestamp = 1;
+    string message = 2;
+}
+
+// 消息推送体 (Command = 3)
+message PushMessage {
+    int64 sender_id = 1;    // 发送者ID
+    int64 receiver_id = 2;  // 接收者ID
+    int64 group_id = 3;     // 群组ID（0表示单聊）
+    int32 msg_type = 4;     // 消息类型: 1=文本, 2=图片, 3=语音, 4=视频
+    string content = 5;     // 消息内容（JSON字符串）
+    int64 msg_id = 6;       // 消息ID
+    int64 timestamp = 7;    // 时间戳
+}
+
+// 消息确认 (Command = 4)
+message MessageAck {
+    int64 msg_id = 1;
+    int64 receiver_id = 2;
+    int64 timestamp = 3;
+}
+
+// 踢下线通知 (Command = 5)
+message KickOutNotify {
+    string reason = 1;      // 踢下线原因
+    int64 timestamp = 2;
+}

@@ -27,10 +27,10 @@ public class UserConverter {
         UserVO vo = new UserVO();
         vo.setId(user.getId());
         vo.setUsername(user.getUsername());
-        vo.setDisplayName(user.getDisplayName());
+        vo.setDisplayName(user.getUsername());  // users 表无 displayName，使用 username
         vo.setEmail(user.getEmail());
         vo.setEmailVerified(user.getEmailVerified());
-        vo.setAvatarUrl(user.getAvatarUrl());
+        vo.setAvatarUrl(null);  // avatarUrl 在 user_profiles 表中
         vo.setCreatedAt(user.getCreatedAt());
         
         return vo;

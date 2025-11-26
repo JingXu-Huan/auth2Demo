@@ -53,6 +53,7 @@ service:
 
 logging:
   level:
-    org.example.mpushservice: DEBUG
-    org.apache.rocketmq: INFO
+    root: INFO
+    com.example.push: DEBUG
+    org.apache.rocketmq: DEBUG
     org.springframework.web.socket: DEBUG

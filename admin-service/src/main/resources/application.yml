@@ -1,0 +1,57 @@
+server:
+  port: 8016
+
+spring:
+  application:
+    name: admin-service
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://134.175.227.4:5432/admin_db
+    username: lantis-admin
+    password: lantis_admin
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 5
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 5
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 211.101.236.212:8848
+        namespace: public
+        username: nacos
+        password: nacos
+
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# Knife4j
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# Feign 配置
+feign:
+  sentinel:
+    enabled: false
+  circuitbreaker:
+    enabled: false
+
+# 日志
+logging:
+  level:
+    root: INFO
+    com.example.admin: DEBUG

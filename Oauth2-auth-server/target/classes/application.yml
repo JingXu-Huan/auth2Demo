@@ -54,9 +54,9 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://134.175.227.4:5432/admin_db
-    username: lantis-admin
-    password: lantis_admin
+    url: jdbc:postgresql://134.175.227.4:5432/auth_db
+    username: admin
+    password: admin
 
   data:
     redis:
@@ -114,7 +114,8 @@ gitee:
     # 应用密钥（Client Secret）
     client-secret: 5131627b7d3f69838d9a155e78e8478b0779060551ff2da8c6615c885c5dbe4e
     # 授权回调地址（需要在Gitee应用中配置）
-    redirect-uri: http://localhost:8080/oauth/gitee/callback
+    # 生产环境建议使用 Gateway: http://localhost:8012/oauth/gitee/callback
+    redirect-uri: http://localhost:8003/oauth/gitee/callback
     # 授权页面URL
     authorize-url: https://gitee.com/oauth/authorize
     # 获取access_token的URL

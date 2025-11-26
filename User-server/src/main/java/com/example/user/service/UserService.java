@@ -17,7 +17,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import org.springframework.data.redis.core.RedisTemplate;
+
+import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
@@ -49,22 +51,37 @@ public class UserService {
     @Autowired
     private PasswordValidator passwordValidator;
     
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
+    
     private static final int PASSWORD_HISTORY_LIMIT = 5;
     
     /**
      * 根据邮箱获取用户详情（用于登录认证）
      */
-    @Cacheable(value = "userDetails", key = "#email")
+    @Cacheable(value = "userDetails", key = "#p0", unless = "#result == null")
     public UserDetailsDTO getUserDetailsByEmail(String email) {
+        log.info("======== UserService.getUserDetailsByEmail 开始 ========");
+        log.info("查询邮箱: {}", email);
+        
         try {
             User user = userMapper.selectOne(
-                new QueryWrapper<User>().eq("email", email)
+                new QueryWrapper<User>()
+                    .eq("email", email)
+                    .isNull("deleted_at")  // 排除已软删除的用户
             );
             
             if (user == null) {
-                log.debug("用户不存在: email={}", email);
+                log.warn("用户不存在或已删除: email={}", email);
                 return null;
             }
+            
+            log.info("数据库查询成功: userId={}, username={}, email={}", 
+                user.getId(), user.getUsername(), user.getEmail());
+            log.info("用户状态: status={}, emailVerified={}, mfaEnabled={}", 
+                user.getStatus(), user.getEmailVerified(), user.getMfaEnabled());
+            log.info("密码哈希: passwordHash={}", 
+                user.getPasswordHash() != null ? "存在(长度:" + user.getPasswordHash().length() + ")" : "NULL");
             
             // 构建用户详情DTO
             UserDetailsDTO dto = new UserDetailsDTO();
@@ -74,13 +91,23 @@ public class UserService {
             dto.setPasswordHash(user.getPasswordHash());
             dto.setEmailVerified(user.getEmailVerified());
             
+            log.info("DTO构建完成: userId={}, passwordHash={}, emailVerified={}", 
+                dto.getUserId(), 
+                dto.getPasswordHash() != null ? "存在(长度:" + dto.getPasswordHash().length() + ")" : "NULL",
+                dto.getEmailVerified());
+            
             // 获取用户详细资料
-            UserProfile profile = userProfileService.getUserProfile(user.getId());
-            if (profile != null) {
-                dto.setDisplayName(profile.getNickname());
-                dto.setAvatarUrl(profile.getAvatarUrl());
+            try {
+                UserProfile profile = userProfileService.getUserProfile(user.getId());
+                if (profile != null) {
+                    dto.setDisplayName(profile.getNickname());
+                    dto.setAvatarUrl(profile.getAvatarUrl());
+                }
+            } catch (Exception profileEx) {
+                log.warn("获取用户资料失败，忽略: {}", profileEx.getMessage());
             }
             
+            log.info("======== UserService.getUserDetailsByEmail 完成 ========");
             return dto;
         } catch (Exception e) {
             log.error("获取用户详情失败: email={}", email, e);
@@ -91,10 +118,14 @@ public class UserService {
     /**
      * 根据用户ID获取用户详情
      */
-    @Cacheable(value = "userDetails", key = "'id:' + #userId")
+    @Cacheable(value = "userDetails", key = "'id:' + #p0", unless = "#result == null")
     public UserDetailsDTO getUserDetailsById(Long userId) {
         try {
-            User user = userMapper.selectById(userId);
+            User user = userMapper.selectOne(
+                new QueryWrapper<User>()
+                    .eq("id", userId)
+                    .isNull("deleted_at")  // 排除已软删除的用户
+            );
             if (user == null) {
                 return null;
             }
@@ -123,11 +154,13 @@ public class UserService {
     /**
      * 根据用户名获取用户详情
      */
-    @Cacheable(value = "userDetails", key = "'username:' + #username")
+    @Cacheable(value = "userDetails", key = "'username:' + #p0", unless = "#result == null")
     public UserDetailsDTO getUserDetailsByUsername(String username) {
         try {
             User user = userMapper.selectOne(
-                new QueryWrapper<User>().eq("username", username)
+                new QueryWrapper<User>()
+                    .eq("username", username)
+                    .isNull("deleted_at")  // 排除已软删除的用户
             );
             
             if (user == null) {
@@ -147,7 +180,9 @@ public class UserService {
     public boolean checkEmailExists(String email) {
         try {
             Long count = userMapper.selectCount(
-                new QueryWrapper<User>().eq("email", email)
+                new QueryWrapper<User>()
+                    .eq("email", email)
+                    .isNull("deleted_at")  // 排除已软删除的用户
             );
             return count > 0;
         } catch (Exception e) {
@@ -162,7 +197,9 @@ public class UserService {
     public boolean checkUsernameExists(String username) {
         try {
             Long count = userMapper.selectCount(
-                new QueryWrapper<User>().eq("username", username)
+                new QueryWrapper<User>()
+                    .eq("username", username)
+                    .isNull("deleted_at")  // 排除已软删除的用户
             );
             return count > 0;
         } catch (Exception e) {
@@ -178,11 +215,13 @@ public class UserService {
     public void updateLastLoginTime(String email) {
         try {
             User user = userMapper.selectOne(
-                new QueryWrapper<User>().eq("email", email)
+                new QueryWrapper<User>()
+                    .eq("email", email)
+                    .isNull("deleted_at")
             );
             
             if (user != null) {
-                user.setLastLoginAt(LocalDateTime.now());
+                user.setLastLoginAt(OffsetDateTime.now());
                 userMapper.updateById(user);
                 log.info("更新最后登录时间成功: email={}", email);
             }
@@ -196,7 +235,11 @@ public class UserService {
      */
     public User getUserById(Long userId) {
         try {
-            return userMapper.selectById(userId);
+            return userMapper.selectOne(
+                new QueryWrapper<User>()
+                    .eq("id", userId)
+                    .isNull("deleted_at")
+            );
         } catch (Exception e) {
             log.error("查询用户失败: userId={}", userId, e);
             return null;
@@ -209,7 +252,9 @@ public class UserService {
     public User getUserByEmail(String email) {
         try {
             return userMapper.selectOne(
-                new QueryWrapper<User>().eq("email", email)
+                new QueryWrapper<User>()
+                    .eq("email", email)
+                    .isNull("deleted_at")
             );
         } catch (Exception e) {
             log.error("查询用户失败: email={}", email, e);
@@ -241,10 +286,10 @@ public class UserService {
             user.setUsername(username);
             user.setEmail(email);
             user.setPasswordHash(passwordEncoder.encode(password)); // 新数据库设计：密码直接存在users表
-            user.setEmailVerified(false);
-            user.setStatus("active");
-            user.setCreatedAt(LocalDateTime.now());
-            user.setUpdatedAt(LocalDateTime.now());
+            user.setEmailVerified(true);  // 注册即验证通过
+            user.setStatus((short) 1);  // 1=active
+            user.setCreatedAt(OffsetDateTime.now());
+            user.setUpdatedAt(OffsetDateTime.now());
             
             userMapper.insert(user);
             log.info("用户创建成功: userId={}, username={}, email={}", user.getId(), username, email);
@@ -264,11 +309,29 @@ public class UserService {
                 // 不影响注册流程
             }
             
+            // 7. 清除可能存在的旧缓存（防止缓存脏数据）
+            evictUserCache(email);
+            
             return user;
             
         } catch (Exception e) {
             log.error("创建用户失败: username={}, email={}", username, email, e);
             throw new RuntimeException("创建用户失败", e);
+        }
+    }
+    
+    /**
+     * 清除用户缓存
+     * 在用户信息变更时调用，确保下次读取时获取最新数据
+     */
+    public void evictUserCache(String email) {
+        try {
+            // Spring Cache 使用的 key 格式: cacheName::key
+            String cacheKey = "userDetails::" + email;
+            Boolean deleted = redisTemplate.delete(cacheKey);
+            log.info("清除用户缓存: key={}, deleted={}", cacheKey, deleted);
+        } catch (Exception e) {
+            log.warn("清除用户缓存失败: email={}, error={}", email, e.getMessage());
         }
     }
     
@@ -281,7 +344,7 @@ public class UserService {
             PasswordHistory history = new PasswordHistory();
             history.setUserId(userId);
             history.setPasswordHash(passwordHash);
-            history.setCreatedAt(LocalDateTime.now());
+            history.setCreatedAt(OffsetDateTime.now());
             passwordHistoryMapper.insert(history);
             
             // 删除超过限制的旧记录
@@ -321,7 +384,7 @@ public class UserService {
     @Transactional(rollbackFor = Exception.class)
     public boolean updateUser(User user) {
         try {
-            user.setUpdatedAt(LocalDateTime.now());
+            user.setUpdatedAt(OffsetDateTime.now());
             int rows = userMapper.updateById(user);
             
             if (rows > 0) {
@@ -373,13 +436,13 @@ public class UserService {
             // 4. 更新密码
             String newPasswordHash = passwordEncoder.encode(newPassword);
             user.setPasswordHash(newPasswordHash);
-            user.setUpdatedAt(LocalDateTime.now());
+            user.setUpdatedAt(OffsetDateTime.now());
             int rows = userMapper.updateById(user);
             
             if (rows > 0) {
-                // 记录密码历史
+                // 5. 记录密码历史
                 savePasswordHistory(userId, newPasswordHash);
-                log.info("修改密码成功: userId={}", userId);
+                log.info("密码修改成功: userId={}", userId);
                 return true;
             }
             

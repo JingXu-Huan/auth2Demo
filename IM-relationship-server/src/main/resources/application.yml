@@ -6,9 +6,9 @@ spring:
     name: relationship-server
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://134.175.227.4:5432/admin_db
-    username: lantis-admin
-    password: lantis_admin
+    url: jdbc:postgresql://134.175.227.4:5432/relationship_db
+    username: admin
+    password: admin
     hikari:
       maximum-pool-size: 20
       minimum-idle: 5

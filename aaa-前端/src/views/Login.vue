@@ -160,7 +160,8 @@ const handleLogin = async () => {
 }
 
 const handleGiteeLogin = () => {
-  window.location.href = 'http://localhost:9000/oauth/gitee/login'
+  // 直连 Auth 服务，避免 Gateway 干扰
+  window.location.href = 'http://localhost:8003/oauth/gitee/login'
 }
 </script>
 

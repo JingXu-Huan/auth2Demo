@@ -1,0 +1,75 @@
+server:
+  port: 8009
+
+spring:
+  application:
+    name: im-gateway-netty
+  
+  # 排除 DataSource 自动配置（本服务不使用数据库）
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+      - org.mybatis.spring.boot.autoconfigure.MybatisAutoConfiguration
+  
+  # Redis配置
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password:
+      database: 0
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+  # Nacos配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 211.101.236.212:8848
+        namespace: public
+        group: DEFAULT_GROUP
+
+# Netty配置
+netty:
+  port: 9090
+  boss-threads: 1
+  worker-threads: 16
+  reader-idle-time: 180
+  writer-idle-time: 0
+  all-idle-time: 0
+  backlog: 1024
+  max-frame-length: 65536
+
+# RocketMQ配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+  consumer:
+    group: im-gateway-consumer
+  producer:
+    group: im-gateway-producer
+    send-message-timeout: 3000
+
+# JWT配置
+jwt:
+  secret: mySecretKey123456789012345678901234567890
+  expiration: 86400000
+
+# 服务间认证配置
+service:
+  auth:
+    secret: myServiceAuthSecret1234567890123456789012
+
+# 日志配置
+logging:
+  level:
+    root: INFO
+    com.example.imgateway: DEBUG
+    io.netty: INFO
+  pattern:
+    console: '%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n'

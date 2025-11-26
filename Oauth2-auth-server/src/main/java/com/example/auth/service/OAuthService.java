@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -162,8 +163,8 @@ public class OAuthService {
         binding.setProviderData(providerData);
         binding.setIsPrimary(false);
         binding.setBindStatus(1);
-        binding.setBoundAt(LocalDateTime.now());
-        binding.setLastLoginAt(LocalDateTime.now());
+        binding.setBoundAt(OffsetDateTime.now());
+        binding.setLastLoginAt(OffsetDateTime.now());
         
         oauthBindingMapper.insert(binding);
     }
@@ -178,7 +179,7 @@ public class OAuthService {
         binding.setProviderNickname(username);
         binding.setProviderAvatarUrl(avatar);
         binding.setProviderData(providerData);
-        binding.setLastLoginAt(LocalDateTime.now());
+        binding.setLastLoginAt(OffsetDateTime.now());
         
         oauthBindingMapper.updateById(binding);
     }
@@ -225,7 +226,7 @@ public class OAuthService {
             }
             
             binding.setBindStatus(2); // 已解绑
-            binding.setUnboundAt(LocalDateTime.now());
+            binding.setUnboundAt(OffsetDateTime.now());
             oauthBindingMapper.updateById(binding);
             
             log.info("OAuth解绑成功: userId={}, provider={}", userId, provider);

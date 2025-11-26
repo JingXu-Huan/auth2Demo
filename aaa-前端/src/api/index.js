@@ -5,7 +5,7 @@ import axios from 'axios'
 export const authApi = {
   // 登录
   login: async (email, password) => {
-    const authUrl = import.meta.env.VITE_AUTH_BASE_URL || 'http://localhost:8080'
+    const authUrl = import.meta.env.VITE_AUTH_BASE_URL || 'http://localhost:8003'
     const params = new URLSearchParams()
     params.append('username', email)
     params.append('password', password)
@@ -28,6 +28,12 @@ export const authApi = {
 export const userApi = {
   // 注册
   register: (data) => request.post('/v1/users/register', data),
+  
+  // 检查邮箱是否已注册
+  checkEmail: (email) => request.get('/v1/users/check-email', { params: { email } }),
+  
+  // 检查用户名是否已存在
+  checkUsername: (username) => request.get('/v1/users/check-username', { params: { username } }),
   
   // 获取用户信息
   getUser: (userId) => request.get(`/v1/users/${userId}`),
@@ -54,46 +60,47 @@ export const userApi = {
 // ==================== 频道/会话相关 ====================
 export const channelApi = {
   // 获取用户频道列表
-  getChannels: () => request.get('/im/channels/user'),
+  getChannels: () => request.get('/v1/im/channels/user'),
   
   // 获取频道详情
-  getChannel: (channelId) => request.get(`/im/channels/${channelId}`),
+  getChannel: (channelId) => request.get(`/v1/im/channels/${channelId}`),
   
   // 创建频道
-  createChannel: (data) => request.post('/im/channels', data),
+  createChannel: (data) => request.post('/v1/im/channels', data),
   
   // 获取或创建私聊频道
-  getPrivateChannel: (targetUserId) => request.post(`/im/channels/private/${targetUserId}`),
+  getPrivateChannel: (targetUserId) => request.post(`/v1/im/channels/private/${targetUserId}`),
   
   // 获取频道成员
-  getMembers: (channelId) => request.get(`/im/channels/${channelId}/members`),
+  getMembers: (channelId) => request.get(`/v1/im/channels/${channelId}/members`),
   
   // 添加成员
-  addMembers: (channelId, memberIds) => request.post(`/im/channels/${channelId}/members`, memberIds),
+  addMembers: (channelId, memberIds) => request.post(`/v1/im/channels/${channelId}/members`, memberIds),
   
   // 退出频道
-  leave: (channelId) => request.post(`/im/channels/${channelId}/leave`)
+  leave: (channelId) => request.post(`/v1/im/channels/${channelId}/leave`)
 }
 
 // ==================== 消息相关 ====================
+// 后端路径: /api/v1/chat/**
 export const messageApi = {
   // 发送消息
-  send: (data) => request.post('/v1/chat/send', data),
+  send: (data) => request.post('/v1/chat/messages', data),
   
-  // 获取历史消息
-  getHistory: (params) => request.get('/v1/chat/history', { params }),
+  // 获取历史消息（同步消息）
+  getHistory: (params) => request.get('/v1/chat/messages/sync', { params }),
   
   // 撤回消息
-  recall: (messageId) => request.post(`/v1/chat/recall/${messageId}`),
+  recall: (messageId) => request.post(`/v1/chat/messages/${messageId}/recall`),
   
   // 标记已读
-  markRead: (data) => request.post('/v1/chat/messages/read', data),
+  markRead: (channelId, messageId) => request.post('/v1/chat/messages/read', null, { params: { channelId, messageId } }),
   
   // 获取已读回执
-  getReadReceipts: (messageId) => request.get(`/v1/chat/messages/${messageId}/reads`),
+  getReadReceipts: (messageId, channelId) => request.get(`/v1/chat/messages/${messageId}/reads`, { params: { channelId } }),
   
   // 添加表情反应
-  addReaction: (messageId, emoji) => request.post(`/v1/chat/messages/${messageId}/reactions`, { emoji }),
+  addReaction: (messageId, emoji) => request.post(`/v1/chat/messages/${messageId}/reactions`, null, { params: { emoji } }),
   
   // 移除表情反应
   removeReaction: (messageId, emoji) => request.delete(`/v1/chat/messages/${messageId}/reactions`, { params: { emoji } }),
@@ -102,52 +109,60 @@ export const messageApi = {
   search: (params) => request.get('/v1/chat/messages/search', { params }),
   
   // 转发消息
-  forward: (messageId, data) => request.post(`/v1/chat/messages/${messageId}/forward`, data)
+  forward: (messageId, targetChannelId) => request.post(`/v1/chat/messages/${messageId}/forward`, null, { params: { targetChannelId } })
 }
 
 // ==================== 好友相关 ====================
+// 后端路径: /api/v1/relations/**
 export const friendApi = {
-  // 获取好友列表
-  getFriends: (userId) => request.get('/v1/friends', { params: { userId } }),
+  // 获取好友列表 (需要 X-User-Id header，由 request 拦截器自动添加)
+  getFriends: () => request.get('/v1/relations/friends'),
   
   // 发送好友请求
-  sendRequest: (data) => request.post('/v1/friends/request', data),
+  sendRequest: (data) => request.post('/v1/relations/friend/apply', data),
   
   // 获取待处理请求
-  getPendingRequests: (userId) => request.get('/v1/friends/pending', { params: { userId } }),
+  getPendingRequests: () => request.get('/v1/relations/friend/requests/pending'),
   
-  // 接受好友请求
-  accept: (userId, requesterId) => request.post('/v1/friends/accept', { userId, requesterId }),
-  
-  // 拒绝好友请求
-  reject: (userId, requesterId) => request.post('/v1/friends/reject', { userId, requesterId }),
+  // 审核好友请求 (接受/拒绝)
+  auditRequest: (data) => request.put('/v1/relations/friend/audit', data),
   
   // 删除好友
-  remove: (userId, friendId) => request.delete(`/v1/friends/${friendId}`, { params: { userId } })
+  remove: (friendId) => request.delete(`/v1/relations/friends/${friendId}`),
+  
+  // 检查是否是好友
+  checkFriend: (targetId) => request.get('/v1/relations/check', { params: { targetId } }),
+  
+  // 获取好友详情
+  getFriendDetail: (friendId) => request.get(`/v1/relations/friends/${friendId}`),
+  
+  // 更新好友备注
+  updateRemark: (friendId, remark) => request.put(`/v1/relations/friends/${friendId}/remark`, null, { params: { remark } }),
+  
+  // 获取黑名单
+  getBlacklist: () => request.get('/v1/relations/blacklist'),
+  
+  // 拉黑用户
+  blockUser: (targetId, reason) => request.post(`/v1/relations/blacklist/${targetId}`, null, { params: { reason } }),
+  
+  // 取消拉黑
+  unblockUser: (targetId) => request.delete(`/v1/relations/blacklist/${targetId}`)
 }
 
-// ==================== 群组相关 ====================
+// ==================== 好友分组相关 ====================
+// 后端路径: /api/v1/relations/groups/**
 export const groupApi = {
-  // 创建群组
-  create: (data) => request.post('/v1/groups', data),
+  // 创建分组
+  create: (name) => request.post('/v1/relations/groups', null, { params: { name } }),
   
-  // 获取群组信息
-  getGroup: (groupId) => request.get(`/v1/groups/${groupId}`),
+  // 获取分组列表
+  getGroups: () => request.get('/v1/relations/groups'),
   
-  // 获取用户群组列表
-  getUserGroups: (userId) => request.get(`/v1/groups/user/${userId}`),
+  // 删除分组
+  remove: (groupId) => request.delete(`/v1/relations/groups/${groupId}`),
   
-  // 添加成员
-  addMembers: (groupId, data) => request.post(`/v1/groups/${groupId}/members`, data),
-  
-  // 移除成员
-  removeMember: (groupId, userId) => request.delete(`/v1/groups/${groupId}/members/${userId}`),
-  
-  // 退出群组
-  leave: (groupId, userId) => request.delete(`/v1/groups/${groupId}/members/leave`, { params: { userId } }),
-  
-  // 解散群组
-  dissolve: (groupId) => request.delete(`/v1/groups/${groupId}`)
+  // 移动好友到分组
+  moveFriendToGroup: (friendId, groupId) => request.put(`/v1/relations/friends/${friendId}/group`, null, { params: { groupId } })
 }
 
 // ==================== 文档相关 ====================

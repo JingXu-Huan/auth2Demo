@@ -59,14 +59,14 @@
         <div
           v-for="msg in messages"
           :key="msg.id"
-          :class="['message-item', { 'own': msg.senderId === userStore.userId }]"
+          :class="['message-item', { 'own': String(msg.senderId) === String(userStore.userId) }]"
         >
-          <el-avatar :size="36" :src="msg.senderAvatar" v-if="msg.senderId !== userStore.userId">
+          <el-avatar :size="36" :src="msg.senderAvatar" v-if="String(msg.senderId) !== String(userStore.userId)">
             {{ msg.senderName?.charAt(0) }}
           </el-avatar>
           
           <div class="message-content">
-            <div class="message-sender" v-if="msg.senderId !== userStore.userId && currentConversation.type === 'group'">
+            <div class="message-sender" v-if="String(msg.senderId) !== String(userStore.userId) && currentConversation.type === 'group'">
               {{ msg.senderName }}
             </div>
             <div class="message-bubble">
@@ -80,7 +80,7 @@
             <div class="message-time">{{ formatTime(msg.createdAt) }}</div>
           </div>
           
-          <el-avatar :size="36" :src="userStore.userAvatar" v-if="msg.senderId === userStore.userId">
+          <el-avatar :size="36" :src="userStore.userAvatar" v-if="String(msg.senderId) === String(userStore.userId)">
             {{ userStore.userName?.charAt(0) }}
           </el-avatar>
         </div>
@@ -105,7 +105,7 @@
           <el-button
             type="primary"
             :icon="Promotion"
-            :disabled="!inputMessage.trim()"
+            :disabled="!inputMessage || !inputMessage.trim()"
             @click="sendMessage"
           >
             发送
@@ -126,7 +126,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Search, Phone, VideoCamera, More, Picture, Folder, Mic, Promotion, ChatLineRound } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
@@ -135,9 +135,13 @@ import { channelApi, messageApi } from '../api'
 import websocket from '../utils/websocket'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
+import isToday from 'dayjs/plugin/isToday'
+import isYesterday from 'dayjs/plugin/isYesterday'
 import 'dayjs/locale/zh-cn'
 
 dayjs.extend(relativeTime)
+dayjs.extend(isToday)
+dayjs.extend(isYesterday)
 dayjs.locale('zh-cn')
 
 const userStore = useUserStore()
@@ -227,12 +231,13 @@ const sendMessage = async () => {
     const res = await messageApi.send({
       channelId: currentConversation.value.id,
       content,
-      type: 'text'
+      msgType: 1  // 1-文本, 2-图片, 3-文件, 4-语音, 5-视频
     })
 
     if (res.code === 200) {
+      // 后端返回的是 messageId (Long)，不是对象
       chatStore.updateMessage(currentConversation.value.id, tempId, {
-        id: res.data.id,
+        id: res.data,
         status: 'sent'
       })
     } else {
@@ -267,18 +272,52 @@ const formatTime = (time) => {
   return date.format('MM-DD')
 }
 
-// 监听WebSocket消息
-websocket.on('message', (data) => {
-  if (data.type === 'NEW_MESSAGE') {
-    chatStore.addMessage(data.channelId, data.message)
+// 消息处理函数
+const handleWebSocketMessage = (data) => {
+  console.log('[Chat] 收到WebSocket消息:', data)
+  
+  // 判断是否是聊天消息（有 messageId 和 channelId 字段）
+  if (data.messageId && data.channelId) {
+    // 构建消息对象
+    const message = {
+      id: data.messageId,
+      content: data.content,
+      senderId: data.senderId,
+      type: data.msgType === 1 ? 'text' : 'other',
+      createdAt: data.createdAt,
+      status: 'sent'
+    }
+    
+    // 不添加自己发送的消息（已经在发送时添加了）
+    if (String(data.senderId) !== String(userStore.userId)) {
+      chatStore.addMessage(data.channelId, message)
+      console.log('[Chat] 添加新消息到会话:', data.channelId, message)
+    }
+    
     if (currentConversation.value?.id === data.channelId) {
       scrollToBottom()
     }
   }
-})
+}
 
 onMounted(() => {
   loadConversations()
+  
+  // 先清除所有 message 事件处理器，再注册新的（防止重复）
+  websocket.offAll('message')
+  websocket.on('message', handleWebSocketMessage)
+  
+  // 连接 WebSocket
+  if (userStore.userId) {
+    websocket.connect(userStore.userId)
+    console.log('[Chat] WebSocket 连接已发起, userId:', userStore.userId)
+  }
+})
+
+// 组件卸载时移除监听器
+onUnmounted(() => {
+  websocket.offAll('message')
+  console.log('[Chat] WebSocket 消息监听器已移除')
 })
 
 // 监听消息变化，自动滚动
@@ -473,6 +512,9 @@ watch(messages, () => {
 .input-box :deep(.el-textarea__inner) {
   border-radius: 8px;
   resize: none;
+  color: #333 !important;
+  background: #fff !important;
+  caret-color: #333 !important;
 }
 
 .empty-panel {

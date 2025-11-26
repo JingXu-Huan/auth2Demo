@@ -35,8 +35,8 @@ spring:
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://134.175.227.4:5432/admin_db
-    username: lantis-admin
-    password: lantis_admin
+    username: admin
+    password: admin
   data:
     redis:
       host: localhost

@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @FeignClient(
     name = "user-server",
-    url = "http://localhost:8082",  // 直接指定 User-server 地址
+    url = "http://localhost:8001",  // User-server 端口 8001
     fallback = com.example.auth.fallback.UserServiceClientFallback.class
 )
 

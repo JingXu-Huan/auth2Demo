@@ -90,7 +90,7 @@ public class UserController {
     @GetMapping("/{userId}")
     public ResponseEntity<Result<UserVO>> getUserById(
             @Parameter(description = "用户ID")
-            @PathVariable Long userId) {
+            @PathVariable("userId") Long userId) {
         
         try {
             User user = userService.getUserById(userId);
@@ -115,7 +115,7 @@ public class UserController {
     @GetMapping("/check-email")
     public Result<Boolean> checkEmailExists(
             @Parameter(description = "邮箱地址")
-            @RequestParam @Email String email) {
+            @RequestParam(value = "email") @Email String email) {
         
         try {
             boolean exists = userService.checkEmailExists(email);
@@ -133,7 +133,7 @@ public class UserController {
     @GetMapping("/check-username")
     public Result<Boolean> checkUsernameExists(
             @Parameter(description = "用户名")
-            @RequestParam @NotBlank String username) {
+            @RequestParam(value = "username") @NotBlank String username) {
         
         try {
             boolean exists = userService.checkUsernameExists(username);
@@ -151,14 +151,14 @@ public class UserController {
     @GetMapping("/details/email/{email}")
     public ResponseEntity<Result<com.example.domain.dto.UserDetailsDTO>> getUserDetailsByEmail(
             @Parameter(description = "邮箱地址")
-            @PathVariable String email) {
+            @PathVariable("email") String email) {
         
         log.info("Controller收到请求: 获取用户详情, email={}", email);
         
         try {
             log.info("调用Service层查询用户");
             com.example.domain.dto.UserDetailsDTO userDetails = userService.getUserDetailsByEmail(email);
-            log.info("Service层返回: userDetails={}", userDetails != null ? "存在" : "null");
+            log.info("Service层返回: userDetails={}", userDetails);
             
             if (userDetails == null) {
                 log.warn("用户不存在: email={}", email);
@@ -182,7 +182,7 @@ public class UserController {
     @GetMapping("/details/username/{username}")
     public com.example.domain.dto.UserDetailsDTO getUserDetailsByUsername(
             @Parameter(description = "用户名")
-            @PathVariable String username) {
+            @PathVariable("username") String username) {
         
         try {
             return userService.getUserDetailsByUsername(username);
@@ -199,7 +199,7 @@ public class UserController {
     @PutMapping("/{userId}")
     public ResponseEntity<Result<Void>> updateUser(
             @Parameter(description = "用户ID")
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Parameter(description = "用户信息")
             @Valid @RequestBody UserDTO userDTO) {
         
@@ -233,7 +233,7 @@ public class UserController {
     @PostMapping("/{userId}/change-password")
     public ResponseEntity<Result<Void>> changePassword(
             @Parameter(description = "用户ID")
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Parameter(description = "密码信息")
             @RequestBody Map<String, String> passwordData) {
         
@@ -268,7 +268,7 @@ public class UserController {
     @PostMapping("/update-login-time")
     public ResponseEntity<Result<Void>> updateLastLoginTime(
             @Parameter(description = "用户邮箱")
-            @RequestParam String email) {
+            @RequestParam(value = "email") String email) {
         
         try {
             userService.updateLastLoginTime(email);
@@ -288,9 +288,9 @@ public class UserController {
     @GetMapping("/search")
     public ResponseEntity<Result<UserVO>> searchUser(
             @Parameter(description = "搜索类型：email 或 phone")
-            @RequestParam String searchType,
+            @RequestParam(value = "searchType") String searchType,
             @Parameter(description = "搜索关键词")
-            @RequestParam String keyword) {
+            @RequestParam(value = "keyword") String keyword) {
         
         try {
             User user = null;

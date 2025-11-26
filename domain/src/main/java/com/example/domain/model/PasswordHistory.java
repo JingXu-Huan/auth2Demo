@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * @author Junjie
@@ -33,5 +33,5 @@ public class PasswordHistory {
     /**
      * 创建时间
      */
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 }

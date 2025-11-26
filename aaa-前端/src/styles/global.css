@@ -1,0 +1,66 @@
+/* 全局样式 */
+:root {
+  --primary-color: #1890ff;
+  --primary-hover: #40a9ff;
+  --success-color: #52c41a;
+  --warning-color: #faad14;
+  --error-color: #ff4d4f;
+  --text-primary: #1f2329;
+  --text-secondary: #646a73;
+  --text-placeholder: #8f959e;
+  --border-color: #e5e6eb;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f6f7;
+  --bg-hover: #f0f1f2;
+  --sidebar-bg: #2b2f36;
+  --sidebar-active: #3370ff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* 滚动条美化 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c4c9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8abb2;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 动画 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from {
+  transform: translateX(-100%);
+}
+
+.slide-leave-to {
+  transform: translateX(100%);
+}

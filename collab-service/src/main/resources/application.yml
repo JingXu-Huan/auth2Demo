@@ -1,0 +1,46 @@
+server:
+  port: 8014
+
+spring:
+  application:
+    name: collab-service
+  
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://134.175.227.4:5432/doc_db
+    username: admin
+    password: admin
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+  
+  redis:
+    host: localhost
+    port: 6379
+    database: 0
+  
+  cloud:
+    nacos:
+      discovery:
+        server-addr: 211.101.236.212:8848
+        namespace: public
+        group: DEFAULT_GROUP
+
+# RocketMQ 配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+  producer:
+    group: collab_producer_group
+  consumer:
+    group: collab_consumer_group
+
+# MyBatis Plus 配置
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.collab.entity
+  configuration:
+    map-underscore-to-camel-case: true
+
+logging:
+  level:
+    com.example.collab: DEBUG

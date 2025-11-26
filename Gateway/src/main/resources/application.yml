@@ -62,7 +62,7 @@ spring:
         
         # OAuth2认证服务路由
         - id: auth-server
-          uri: http://localhost:8080
+          uri: http://localhost:8003
           predicates:
             - Path=/api/v1/auth/**,/api/oauth/**,/oauth/**
           filters:
@@ -71,7 +71,7 @@ spring:
         
         # 用户服务路由
         - id: user-server
-          uri: http://localhost:8082
+          uri: http://localhost:8001
           predicates:
             - Path=/api/v1/users/**,/api/v1/email/**,/api/v1/security/**
           filters:
@@ -80,18 +80,45 @@ spring:
         
         # 消息服务路由
         - id: message-server
-          uri: http://localhost:8002
+          uri: http://localhost:8008
           predicates:
             - Path=/api/v1/chat/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 群组、好友、组织架构、租户服务路由 (IM-relationship-server)
+        # 好友关系服务路由 (IM-relationship-server)
         - id: relationship-server
-          uri: http://localhost:8003
+          uri: http://localhost:8006
           predicates:
-            - Path=/api/v1/groups/**,/api/v1/friends/**,/api/v1/organization/**,/api/v1/departments/**,/api/v1/tenants/**
+            - Path=/api/v1/relations/**,/api/v1/organization/**,/api/v1/departments/**,/api/v1/tenants/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        
+        # IM 频道服务路由 (IM-message-server)
+        - id: im-channel-server
+          uri: http://localhost:8008
+          predicates:
+            - Path=/api/v1/im/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        
+        # 文档服务路由 (collab-service) - 暂未启动，注释掉
+        # - id: doc-server
+        #   uri: http://localhost:8014
+        #   predicates:
+        #     - Path=/api/v1/docs/**
+        #   filters:
+        #     - StripPrefix=0
+        #     - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        
+        # 文件服务路由 (IM-file-server)
+        - id: file-server
+          uri: http://localhost:8010
+          predicates:
+            - Path=/api/v1/files/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway

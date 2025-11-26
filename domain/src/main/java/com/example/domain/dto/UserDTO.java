@@ -2,7 +2,7 @@ package com.example.domain.dto;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 用户 DTO
@@ -28,7 +28,7 @@ public class UserDTO {
     
     private String avatarUrl;
     
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
     
-    private LocalDateTime updatedAt;
+    private OffsetDateTime updatedAt;
 }

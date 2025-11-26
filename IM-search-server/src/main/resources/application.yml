@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: IM-search-service
+
+server:
+  port: 8005
+
+# Elasticsearch 配置
+elasticsearch:
+  host: http://localhost:9200
+
+# RocketMQ 配置
+rocketmq:
+  name-server: 211.101.236.212:9876
+
+# AI Embedding 配置（LangChain4j OpenAI 兼容）
+ai:
+  embedding:
+    api-key: YOUR_OPENAI_OR_COMPATIBLE_API_KEY
+    model: text-embedding-3-small
+
+# 日志配置
+logging:
+  level:
+    org.example.imsearchservice: INFO
+    org.elasticsearch: WARN

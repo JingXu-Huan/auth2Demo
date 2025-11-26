@@ -179,7 +179,7 @@ import { ElMessage } from 'element-plus'
 import { User, UserFilled, Message, Plus, Search, ChatLineRound, Phone } from '@element-plus/icons-vue'
 import { useUserStore } from '../stores/user'
 import { useChatStore } from '../stores/chat'
-import { friendApi, groupApi, channelApi } from '../api'
+import { userApi, friendApi, groupApi, channelApi } from '../api'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -216,7 +216,7 @@ const filteredFriends = computed(() => {
 // 加载好友列表
 const loadFriends = async () => {
   try {
-    const res = await friendApi.getFriends(userStore.userId)
+    const res = await friendApi.getFriends()
     if (res.code === 200) {
       friends.value = res.data || []
     }
@@ -225,10 +225,10 @@ const loadFriends = async () => {
   }
 }
 
-// 加载群组列表
+// 加载群组列表（暂时使用好友分组 API）
 const loadGroups = async () => {
   try {
-    const res = await groupApi.getUserGroups(userStore.userId)
+    const res = await groupApi.getGroups()
     if (res.code === 200) {
       groups.value = res.data || []
     }
@@ -240,7 +240,7 @@ const loadGroups = async () => {
 // 加载好友请求
 const loadRequests = async () => {
   try {
-    const res = await friendApi.getPendingRequests(userStore.userId)
+    const res = await friendApi.getPendingRequests()
     if (res.code === 200) {
       requests.value = res.data || []
     }
@@ -271,10 +271,11 @@ const sendFriendRequest = async () => {
   if (!searchResult.value) return
   
   try {
+    // 后端需要 targetUserId, message, source 等字段
     await friendApi.sendRequest({
-      userId: userStore.userId,
-      friendId: searchResult.value.id,
-      message: '请求添加您为好友'
+      targetUserId: searchResult.value.id,
+      message: '请求添加您为好友',
+      source: 'search'
     })
     ElMessage.success('请求已发送')
     showAddFriend.value = false
@@ -288,11 +289,19 @@ const sendFriendRequest = async () => {
 // 接受请求
 const acceptRequest = async (req) => {
   try {
-    await friendApi.accept(userStore.userId, req.fromUserId)
-    ElMessage.success('已添加为好友')
-    loadRequests()
-    loadFriends()
+    const res = await friendApi.auditRequest({
+      requestId: req.id,
+      action: 'ACCEPT'
+    })
+    if (res.code === 200) {
+      ElMessage.success('已添加为好友')
+      loadRequests()
+      loadFriends()
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
   } catch (error) {
+    console.error('接受请求失败:', error)
     ElMessage.error('操作失败')
   }
 }
@@ -300,10 +309,18 @@ const acceptRequest = async (req) => {
 // 拒绝请求
 const rejectRequest = async (req) => {
   try {
-    await friendApi.reject(userStore.userId, req.fromUserId)
-    ElMessage.success('已拒绝')
-    loadRequests()
+    const res = await friendApi.auditRequest({
+      requestId: req.id,
+      action: 'REJECT'
+    })
+    if (res.code === 200) {
+      ElMessage.success('已拒绝')
+      loadRequests()
+    } else {
+      ElMessage.error(res.message || '操作失败')
+    }
   } catch (error) {
+    console.error('拒绝请求失败:', error)
     ElMessage.error('操作失败')
   }
 }
@@ -343,19 +360,16 @@ const enterGroup = (group) => {
   router.push('/chat')
 }
 
-// 创建群组
+// 创建好友分组（注意：这是好友分组，不是群聊）
 const createGroup = async () => {
   if (!groupForm.name) {
-    ElMessage.warning('请输入群名称')
+    ElMessage.warning('请输入分组名称')
     return
   }
   
   try {
-    const res = await groupApi.create({
-      name: groupForm.name,
-      description: groupForm.description,
-      ownerId: userStore.userId
-    })
+    // groupApi.create 只需要 name 参数
+    const res = await groupApi.create(groupForm.name)
     
     if (res.code === 200) {
       ElMessage.success('创建成功')
@@ -363,8 +377,11 @@ const createGroup = async () => {
       groupForm.name = ''
       groupForm.description = ''
       loadGroups()
+    } else {
+      ElMessage.error(res.message || '创建失败')
     }
   } catch (error) {
+    console.error('创建分组失败:', error)
     ElMessage.error('创建失败')
   }
 }

@@ -14,6 +14,12 @@ const routes = [
     meta: { guest: true }
   },
   {
+    path: '/oauth/callback',
+    name: 'OAuthCallback',
+    component: () => import('../views/OAuthCallback.vue'),
+    meta: { guest: true }
+  },
+  {
     path: '/',
     component: () => import('../views/Layout.vue'),
     redirect: '/chat',

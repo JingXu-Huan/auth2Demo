@@ -2,7 +2,7 @@ package com.example.domain.vo;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 /**
  * 用户 VO
@@ -26,5 +26,5 @@ public class UserVO {
     
     private String avatarUrl;
     
-    private LocalDateTime createdAt;
+    private OffsetDateTime createdAt;
 }

@@ -38,7 +38,7 @@
       <module name="IM-Gateway" options="" />
       <module name="IM-av-server" options="" />
       <module name="IM-file-server" options="" />
-      <module name="IM-message-server" options="" />
+      <module name="IM-message-server" options="-parameters" />
       <module name="IM-push-server" options="" />
       <module name="IM-relationship-server" options="" />
       <module name="IM-search-server" options="" />
