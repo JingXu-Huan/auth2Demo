@@ -166,18 +166,25 @@ export const groupApi = {
 }
 
 // ==================== 文档相关 ====================
+// 后端路径: /api/v1/docs/**
 export const docApi = {
-  // 获取我的文档
+  // 获取我的文档列表
   getMyDocs: () => request.get('/v1/docs/my'),
   
   // 创建文档
   create: (title, docType = 'text') => request.post('/v1/docs', null, { params: { title, docType } }),
   
-  // 获取文档
+  // 获取文档详情
   getDoc: (docId) => request.get(`/v1/docs/${docId}`),
   
   // 删除文档
-  remove: (docId) => request.delete(`/v1/docs/${docId}`)
+  remove: (docId) => request.delete(`/v1/docs/${docId}`),
+  
+  // 获取协同锁
+  acquireLock: (docId, ttlSeconds = 300) => request.post(`/v1/docs/${docId}/lock`, null, { params: { ttlSeconds } }),
+  
+  // 释放协同锁
+  releaseLock: (docId) => request.delete(`/v1/docs/${docId}/lock`)
 }
 
 // ==================== 文件相关 ====================

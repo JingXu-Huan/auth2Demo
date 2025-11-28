@@ -21,6 +21,7 @@ import java.util.UUID;
 public class DocumentService {
 
     private final DocumentMapper documentMapper;
+    private final MinioStorageService minioStorageService;
 
     /**
      * 创建文档
@@ -78,7 +79,7 @@ public class DocumentService {
     }
 
     /**
-     * 更新文档内容
+     * 更新文档内容（混合存储：小文档存数据库，大文档存 MinIO）
      */
     @Transactional
     public void updateContent(String docId, byte[] content, byte[] yjsState) {
@@ -87,7 +88,23 @@ public class DocumentService {
             throw new RuntimeException("文档不存在");
         }
 
-        document.setContent(content);
+        long threshold = minioStorageService.getThreshold();
+        
+        if (content.length > threshold) {
+            // 大文档存 MinIO
+            String objectName = docId + "/content";
+            String url = minioStorageService.upload(objectName, content, "application/octet-stream");
+            document.setContentUrl(url);
+            document.setContent(null); // 清空数据库存储
+            document.setStorageType("minio");
+            log.info("大文档存储到 MinIO: docId={}, size={}", docId, content.length);
+        } else {
+            // 小文档存数据库
+            document.setContent(content);
+            document.setContentUrl(null);
+            document.setStorageType("database");
+        }
+        
         document.setYjsState(yjsState);
         document.setContentSize((long) content.length);
         document.setContentVersion(document.getContentVersion() + 1);
@@ -95,7 +112,26 @@ public class DocumentService {
         document.setUpdatedAt(OffsetDateTime.now());
 
         documentMapper.updateById(document);
-        log.debug("文档内容更新: docId={}, version={}", docId, document.getContentVersion());
+        log.debug("文档内容更新: docId={}, version={}, storage={}", docId, document.getContentVersion(), document.getStorageType());
+    }
+    
+    /**
+     * 获取文档内容（自动从数据库或 MinIO 读取）
+     */
+    public byte[] getContent(String docId) {
+        Document document = getDocument(docId);
+        if (document == null) {
+            return null;
+        }
+        
+        if ("minio".equals(document.getStorageType()) && document.getContentUrl() != null) {
+            // 从 MinIO 读取
+            String objectName = docId + "/content";
+            return minioStorageService.download(objectName);
+        } else {
+            // 从数据库读取
+            return document.getContent();
+        }
     }
 
     /**
