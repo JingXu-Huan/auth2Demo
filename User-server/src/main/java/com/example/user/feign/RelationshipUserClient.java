@@ -8,8 +8,8 @@ import org.springframework.web.bind.annotation.PostMapping;
  * 调用 IM-relationship-server，在 Neo4j 中初始化用户节点
  */
 @FeignClient(
-        name = "IM-group-server",
-        url = "${feign.group-service.url:http://localhost:8003}",
+        name = "im-relationship-server",
+        // 移除url参数，使用Nacos服务发现
         path = "/api/v1/relationship/internal/users",
         configuration = FeignConfig.class
 )

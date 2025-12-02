@@ -6,22 +6,57 @@ import com.example.domain.vo.UserVO;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
-
-
-
 /**
+ * ====================================================================
+ * User服务 Feign 客户端 (Declarative HTTP Client)
+ * ====================================================================
+ * 
+ * 【Feign简介】
+ * Feign是一个声明式的HTTP客户端，让服务间调用像本地方法调用一样简单：
+ * - 只需定义接口，无需编写HTTP请求代码
+ * - 自动集成服务发现（Nacos）
+ * - 自动集成负载均衡（LoadBalancer）
+ * - 支持降级处理（Fallback）
+ * 
+ * 【服务间调用流程】
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  Oauth2-auth-server                                         │
+ * │       ↓                                                     │
+ * │  UserServiceClient.getUserDetailsByEmail("test@test.com")  │
+ * │       ↓                                                     │
+ * │  Feign 拦截方法调用                                          │
+ * │       ↓                                                     │
+ * │  从Nacos获取 user-server 的实例列表                          │
+ * │       ↓                                                     │
+ * │  LoadBalancer 选择一个实例                                   │
+ * │       ↓                                                     │
+ * │  发送 HTTP GET 请求                                          │
+ * │       ↓                                                     │
+ * │  User-server 处理请求并返回                                  │
+ * │       ↓                                                     │
+ * │  Feign 反序列化响应为 Result<UserDetailsDTO>                │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * 【核心注解说明】
+ * @FeignClient(name = "user-server")
+ *   - name: 目标服务在Nacos中注册的名称
+ *   - fallback: 服务不可用时的降级处理类
+ *   - url: 硬编码URL（已移除，使用服务发现）
+ * 
+ * 【降级处理 Fallback】
+ * 当user-server不可用时，调用会自动转到UserServiceClientFallback
+ * 返回默认值或错误信息，保证系统不会级联崩溃
+ * 
  * @author Junjie
  * @version 1.0.0
  * @date 2025-11-06
- * User 服务 Feign 客户端
- * 用于调用 User-server 的接口
+ * @see UserServiceClientFallback 降级处理实现类
  */
 @FeignClient(
-    name = "user-server",
-    url = "http://localhost:8001",  // User-server 端口 8001
-    fallback = com.example.auth.fallback.UserServiceClientFallback.class
+    name = "user-server",              // 目标服务名（Nacos注册名）
+    // 已移除url参数，使用Nacos服务发现
+    fallback = com.example.auth.fallback.UserServiceClientFallback.class  // 降级处理
 )
-
 public interface UserServiceClient {
     
     /**

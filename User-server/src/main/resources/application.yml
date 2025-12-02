@@ -115,10 +115,10 @@ management:
     tags:
       application: user-server
 
-# 服务间认证配置（必须与 auth-server 保持一致）
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    secret: your_32_character_secret_key_here_12345  # 必须至少32位
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars
 
 # Feign 配置
 feign:

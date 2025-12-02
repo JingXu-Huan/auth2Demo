@@ -3,7 +3,7 @@ package com.example.av.controller;
 import com.example.av.entity.CallRoom;
 import com.example.av.service.CallRoomService;
 import com.example.av.service.SignalingService;
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

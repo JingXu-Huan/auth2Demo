@@ -1,6 +1,6 @@
 package com.example.im.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.im.entity.Channel;
 import com.example.im.entity.ChannelMember;
 import com.example.im.service.ChannelService;

@@ -57,10 +57,10 @@ rocketmq:
     consume-thread-max: 20
 
 
-# 服务间认证配置
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    secret: your_32_character_secret_key_here_12345  # 必须至少32位
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars
 
 mybatis-plus:
   mapper-locations: classpath:mapper/*.xml

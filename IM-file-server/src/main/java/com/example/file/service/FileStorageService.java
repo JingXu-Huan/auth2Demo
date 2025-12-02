@@ -22,19 +22,72 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 文件存储服务
- * 基于CAS（内容寻址存储）实现去重
+ * ====================================================================
+ * 文件存储服务 (File Storage Service with CAS Deduplication)
+ * ====================================================================
+ * 
+ * 【核心功能】
+ * 实现企业级文件存储功能：
+ * - 文件上传/下载
+ * - CAS去重（秒传）
+ * - 分片上传（大文件）
+ * - 引用计数管理
+ * 
+ * 【CAS（内容寻址存储）原理】
+ * ┌─────────────────────────────────────────────────────────┐
+ * │  CAS = Content-Addressable Storage                      │
+ * │                                                         │
+ * │  传统存储：文件名 → 文件内容                             │
+ * │  CAS存储：SHA-256(内容) → 文件内容                       │
+ * │                                                         │
+ * │  优点：                                                  │
+ * │  1. 自动去重：相同内容只存一份                           │
+ * │  2. 秒传：已存在的文件无需重传                           │
+ * │  3. 完整性校验：哈希值可验证文件是否损坏                 │
+ * └─────────────────────────────────────────────────────────┘
+ * 
+ * 【文件上传流程】
+ * 1. 客户端计算文件SHA-256哈希
+ * 2. 查询数据库是否已存在该哈希
+ * 3. 存在 → 秒传成功（仅增加引用计数）
+ * 4. 不存在 → 上传到MinIO → 保存元数据
+ * 
+ * 【引用计数机制】
+ * - 每个文件有 ref_count 字段
+ * - 用户上传相同文件：ref_count++
+ * - 用户删除文件：ref_count--
+ * - ref_count = 0 时，才真正删除物理文件
+ * 
+ * 【数据模型】
+ * FileMetadata（物理文件，用哈希做主键）
+ *      ↑
+ *      │ N:1（多个用户可以引用同一个物理文件）
+ *      │
+ * UserFile（用户的文件引用，包含文件名、路径等）
+ * 
+ * @author 学习笔记
+ * @see MinioClient MinIO对象存储客户端
+ * @see FileMetadata 物理文件元数据
+ * @see UserFile 用户文件引用
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FileStorageService {
 
+    /** MinIO客户端 - 对象存储操作 */
     private final MinioClient minioClient;
+    
+    /** 文件元数据访问 - 物理文件信息（CAS表） */
     private final FileMetadataMapper fileMetadataMapper;
+    
+    /** 用户文件访问 - 用户与文件的关联关系 */
     private final UserFileMapper userFileMapper;
+    
+    /** 上传会话访问 - 分片上传状态管理 */
     private final FileUploadSessionMapper uploadSessionMapper;
 
+    /** MinIO存储桶名称 */
     @Value("${minio.bucket-name:files}")
     private String bucketName;
 

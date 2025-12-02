@@ -5,11 +5,12 @@ spring:
   application:
     name: oauth2-gateway
   # Redis 配置（用于风控检查）
-  redis:
-    host: localhost
-    port: 6379
-    database: 0
-    timeout: 3000ms
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000ms
   codec:
     max-in-memory-size: 10MB
   sleuth:
@@ -57,12 +58,17 @@ spring:
           response-body: '{"code":429,"message":"请求过于频繁，请稍后再试"}'
       web-context-unify: false
     gateway:
+      # 开启服务发现路由
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
       routes:
-        # ========== 公开接口（不需要认证） ==========
+        # ========== 使用 lb:// 服务发现路由 ==========
         
         # OAuth2认证服务路由
         - id: auth-server
-          uri: http://localhost:8003
+          uri: lb://oauth2-auth-server
           predicates:
             - Path=/api/v1/auth/**,/api/oauth/**,/oauth/**
           filters:
@@ -71,7 +77,7 @@ spring:
         
         # 用户服务路由
         - id: user-server
-          uri: http://localhost:8001
+          uri: lb://user-server
           predicates:
             - Path=/api/v1/users/**,/api/v1/email/**,/api/v1/security/**
           filters:
@@ -80,7 +86,7 @@ spring:
         
         # 消息服务路由
         - id: message-server
-          uri: http://localhost:8008
+          uri: lb://im-message-server
           predicates:
             - Path=/api/v1/chat/**
           filters:
@@ -89,7 +95,7 @@ spring:
         
         # 好友关系服务路由 (IM-relationship-server)
         - id: relationship-server
-          uri: http://localhost:8006
+          uri: lb://im-relationship-server
           predicates:
             - Path=/api/v1/relations/**,/api/v1/organization/**,/api/v1/departments/**,/api/v1/tenants/**
           filters:
@@ -98,16 +104,16 @@ spring:
         
         # IM 频道服务路由 (IM-message-server)
         - id: im-channel-server
-          uri: http://localhost:8008
+          uri: lb://im-message-server
           predicates:
             - Path=/api/v1/im/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
         
-        # 文档服务路由 (Aio-Doc)
+        # 文档服务路由 (collab-service)
         - id: doc-server
-          uri: http://localhost:8014
+          uri: lb://collab-service
           predicates:
             - Path=/api/v1/docs/**
           filters:
@@ -116,9 +122,18 @@ spring:
         
         # 文件服务路由 (IM-file-server)
         - id: file-server
-          uri: http://localhost:8010
+          uri: lb://im-file-server
           predicates:
             - Path=/api/v1/files/**
+          filters:
+            - StripPrefix=0
+            - AddRequestHeader=X-Gateway-Service, IM-Gateway
+        
+        # 组织服务路由 (org-service)
+        - id: org-server
+          uri: lb://org-service
+          predicates:
+            - Path=/api/v1/org/**
           filters:
             - StripPrefix=0
             - AddRequestHeader=X-Gateway-Service, IM-Gateway
@@ -130,12 +145,10 @@ jwt:
   secret: mySecretKey123456789012345678901234567890
   expiration: 86400000
 
-# 服务间认证配置
-# 必须与其他服务保持一致
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    # 密钥必须至少32位
-    secret: your_32_character_secret_key_here_12345
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars
 
 # 日志配置 - 显示 TraceId 和 SpanId
 logging:

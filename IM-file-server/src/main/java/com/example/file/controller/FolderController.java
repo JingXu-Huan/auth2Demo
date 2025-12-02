@@ -1,6 +1,6 @@
 package com.example.file.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.file.entity.Folder;
 import com.example.file.service.FolderService;
 import lombok.RequiredArgsConstructor;

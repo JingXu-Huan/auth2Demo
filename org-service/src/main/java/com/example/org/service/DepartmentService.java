@@ -16,18 +16,82 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 部门服务
+ * ====================================================================
+ * 部门管理服务 (Department Service)
+ * ====================================================================
+ * 
+ * 【核心职责】
+ * 管理组织架构中的部门数据，包括：
+ * - 部门的CRUD操作
+ * - 部门树结构管理
+ * - 部门移动（更新父部门）
+ * - 部门成员统计
+ * 
+ * 【树形结构存储设计】
+ * 采用"路径枚举"模式存储部门树：
+ * 
+ * 部门表结构：
+ * ┌─────┬──────────┬──────────┬────────┬───────┐
+ * │ id  │ name     │ parent_id│ path   │ level │
+ * ├─────┼──────────┼──────────┼────────┼───────┤
+ * │ 1   │ 总公司   │ 0        │ /      │ 0     │
+ * │ 2   │ 技术部   │ 1        │ /1/    │ 1     │
+ * │ 3   │ 后端组   │ 2        │ /1/2/  │ 2     │
+ * │ 4   │ 前端组   │ 2        │ /1/2/  │ 2     │
+ * └─────┴──────────┴──────────┴────────┴───────┘
+ * 
+ * 【路径枚举的优点】
+ * - 快速查询某部门的所有子孙：WHERE path LIKE '/1/2/%'
+ * - 快速查询某部门的所有祖先：解析path字符串
+ * - 支持任意深度的树结构
+ * 
+ * 【缓存策略】
+ * - 部门树缓存在Redis中
+ * - 任何部门变更都会清除缓存
+ * - 下次查询时重新构建树
+ * 
+ * 【事件驱动】
+ * 部门变更后通过RocketMQ发送事件，通知其他服务：
+ * - 权限服务：更新部门权限
+ * - 搜索服务：更新索引
+ * - 通知服务：发送组织变更通知
+ * 
+ * @author 学习笔记
+ * @see DepartmentMapper 部门数据访问层
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DepartmentService {
     
+    /** 部门数据访问对象 */
     private final DepartmentMapper deptMapper;
+    
+    /**
+     * RocketMQ模板 - 发送组织事件
+     * 
+     * 【事件类型】
+     * - DEPT_CREATED: 部门创建
+     * - DEPT_UPDATED: 部门更新
+     * - DEPT_DELETED: 部门删除
+     * - DEPT_MOVED: 部门移动
+     */
     private final RocketMQTemplate rocketMQTemplate;
+    
+    /**
+     * Redis模板 - 缓存部门树
+     * 
+     * 【为什么缓存部门树？】
+     * - 部门树结构相对稳定，变更频率低
+     * - 树的构建需要多次数据库查询
+     * - 前端频繁请求部门树用于选择器
+     */
     private final RedisTemplate<String, Object> redisTemplate;
     
+    /** 部门树缓存Key */
     private static final String CACHE_TREE_KEY = "org:tree";
+    
+    /** 组织事件Topic */
     private static final String TOPIC_ORG_EVENT = "ORG_EVENT";
     
     /**

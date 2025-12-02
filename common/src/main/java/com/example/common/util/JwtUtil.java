@@ -15,18 +15,81 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * JWT 工具类
- * 用于生成和验证 JWT token
+ * ====================================================================
+ * JWT (JSON Web Token) 工具类
+ * ====================================================================
+ * 
+ * 【JWT简介】
+ * JWT是一种开放标准（RFC 7519），用于在各方之间安全传输信息。
+ * 它由三部分组成，用点(.)分隔：
+ * 
+ *   Header.Payload.Signature
+ *   头部.负载.签名
+ * 
+ * 【JWT结构详解】
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │ Header (头部) - Base64编码                                  │
+ * │ {                                                           │
+ * │   "alg": "HS256",    // 签名算法                            │
+ * │   "typ": "JWT"       // Token类型                           │
+ * │ }                                                           │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │ Payload (负载) - Base64编码                                 │
+ * │ {                                                           │
+ * │   "userId": 123,          // 自定义声明                     │
+ * │   "username": "admin",    // 自定义声明                     │
+ * │   "iat": 1234567890,      // 签发时间                       │
+ * │   "exp": 1234654290       // 过期时间                       │
+ * │ }                                                           │
+ * ├─────────────────────────────────────────────────────────────┤
+ * │ Signature (签名) - 防篡改                                    │
+ * │ HMACSHA256(                                                  │
+ * │   base64UrlEncode(header) + "." +                           │
+ * │   base64UrlEncode(payload),                                 │
+ * │   secret                                                     │
+ * │ )                                                            │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * 【使用流程】
+ * 1. 用户登录成功 → 服务器生成JWT → 返回给客户端
+ * 2. 客户端存储JWT（localStorage或Cookie）
+ * 3. 后续请求携带JWT（通常在Authorization头：Bearer <token>）
+ * 4. 服务器验证JWT签名和有效期
+ * 
+ * 【安全注意事项】
+ * - 密钥(secret)必须保密，建议使用环境变量
+ * - 不要在Payload中存放敏感信息（如密码）
+ * - 设置合理的过期时间
+ * - 生产环境建议使用HTTPS
+ * 
+ * @author 学习笔记
+ * @see io.jsonwebtoken.Jwts JJWT库核心类
  */
 @Slf4j
 @Component
-@ConditionalOnClass(name = "io.jsonwebtoken.Jwts")
+@ConditionalOnClass(name = "io.jsonwebtoken.Jwts")  // 只有存在JJWT库时才创建Bean
 public class JwtUtil {
     
+    /**
+     * JWT签名密钥
+     * 
+     * 【@Value注解说明】
+     * - 从application.yml读取配置值
+     * - 冒号后面是默认值，配置不存在时使用
+     * - 生产环境应使用环境变量：${JWT_SECRET}
+     * 
+     * 【密钥要求】
+     * - HS256算法要求密钥至少256位（32字节）
+     * - 密钥越长越安全
+     */
     @Value("${jwt.secret:mySecretKey123456789012345678901234567890}")
     private String secret;
     
-    @Value("${jwt.expiration:86400000}") // 默认24小时
+    /**
+     * Token有效期（毫秒）
+     * 默认24小时 = 24 * 60 * 60 * 1000 = 86400000
+     */
+    @Value("${jwt.expiration:86400000}")
     private Long expiration;
     
     /**

@@ -1,6 +1,6 @@
 package com.example.org.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.org.dto.DepartmentNode;
 import com.example.org.entity.Department;
 import com.example.org.service.DepartmentService;

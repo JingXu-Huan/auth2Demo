@@ -1,6 +1,6 @@
 package com.example.file.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.file.entity.UserStorageQuota;
 import com.example.file.service.UserStorageService;
 import lombok.RequiredArgsConstructor;

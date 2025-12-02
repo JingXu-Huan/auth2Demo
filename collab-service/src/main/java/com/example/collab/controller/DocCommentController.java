@@ -2,7 +2,7 @@ package com.example.collab.controller;
 
 import com.example.collab.entity.DocComment;
 import com.example.collab.service.DocCommentService;
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

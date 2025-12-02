@@ -10,18 +10,68 @@ import org.springframework.stereotype.Service;
 import jakarta.mail.internet.MimeMessage;
 
 /**
- * 邮件服务
+ * ====================================================================
+ * 邮件服务 (Email Service)
+ * ====================================================================
+ * 
+ * 【功能概述】
+ * 提供系统级邮件发送功能，支持：
+ * - 验证码邮件（注册/登录验证）
+ * - 欢迎邮件（用户注册成功）
+ * - 密码重置邮件
+ * - 安全提醒邮件（异常登录通知）
+ * 
+ * 【技术栈】
+ * - Spring Boot Mail（基于JavaMail）
+ * - SMTP协议发送邮件
+ * - HTML模板（支持富文本）
+ * 
+ * 【邮件发送流程】
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  业务服务调用                                                │
+ * │       ↓                                                     │
+ * │  EmailService.sendXxxEmail()                                │
+ * │       ↓                                                     │
+ * │  构建HTML邮件内容（使用模板）                                 │
+ * │       ↓                                                     │
+ * │  JavaMailSender.send()                                      │
+ * │       ↓                                                     │
+ * │  SMTP服务器（如QQ邮箱、阿里云邮件）                          │
+ * │       ↓                                                     │
+ * │  目标邮箱收到邮件                                            │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * 【配置说明】
+ * 在 application.yml 中配置：
+ * spring.mail:
+ *   host: smtp.qq.com       # SMTP服务器
+ *   port: 587               # SMTP端口
+ *   username: xxx@qq.com    # 发件人邮箱
+ *   password: xxxx          # 授权码（非登录密码）
+ * 
+ * 【安全注意】
+ * - 密码应使用邮箱授权码，不是登录密码
+ * - 敏感配置应放环境变量，不提交代码库
+ * 
+ * @author 学习笔记
+ * @see JavaMailSender Spring邮件发送器
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailService {
 
+    /**
+     * Spring邮件发送器
+     * 自动从配置文件读取SMTP配置
+     */
     private final JavaMailSender mailSender;
 
+    /** 发件人邮箱地址 */
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+    /** 前端URL（用于邮件中的链接跳转） */
     @Value("${server.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 

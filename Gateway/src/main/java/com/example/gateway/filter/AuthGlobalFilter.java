@@ -24,19 +24,75 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * 全局鉴权过滤器
- * 实现 JWT 验签 + Redis 风控检查
+ * ====================================================================
+ * 全局鉴权过滤器 (Gateway Global Authentication Filter)
+ * ====================================================================
+ * 
+ * 【核心作用】
+ * 作为微服务网关的第一道防线，负责：
+ * 1. JWT Token 验证 - 确保请求携带有效的认证令牌
+ * 2. 用户信息传递 - 将用户ID等信息传递给下游服务
+ * 3. 风控检查 - 通过Redis检查用户是否被封禁
+ * 
+ * 【请求处理流程】
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │  客户端请求                                                  │
+ * │      ↓                                                      │
+ * │  Gateway 网关接收                                            │
+ * │      ↓                                                      │
+ * │  AuthGlobalFilter（本类）                                    │
+ * │      ├─ 白名单检查 → 跳过认证                                │
+ * │      ├─ 提取Token                                           │
+ * │      ├─ JWT验签                                              │
+ * │      ├─ Redis风控检查                                        │
+ * │      └─ 添加用户信息到请求头                                 │
+ * │      ↓                                                      │
+ * │  路由到下游微服务                                            │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * 【核心接口说明】
+ * GlobalFilter - Spring Cloud Gateway 的全局过滤器接口
+ * Ordered      - 定义过滤器执行顺序（数值越小优先级越高）
+ * 
+ * 【响应式编程】
+ * Gateway基于WebFlux（响应式编程模型），使用Mono/Flux：
+ * - Mono<T> - 0或1个元素的异步序列
+ * - Flux<T> - 0到N个元素的异步序列
+ * - 所有操作都是非阻塞的
+ * 
+ * @author 学习笔记
+ * @see GlobalFilter Spring Cloud Gateway全局过滤器
+ * @see JwtVerifier JWT验证工具
  */
 @Slf4j
 @Component
 public class AuthGlobalFilter implements GlobalFilter, Ordered {
 
+    /** JWT验证工具 - 负责Token的解析和验证 */
     @Autowired
     private JwtVerifier jwtVerifier;
 
+    /**
+     * 响应式Redis模板
+     * 
+     * 【响应式Redis说明】
+     * - Gateway使用WebFlux，必须用响应式Redis客户端
+     * - required=false: Redis不可用时不影响启动
+     * - 用于检查用户封禁状态、Token黑名单等
+     */
     @Autowired(required = false)
     private ReactiveStringRedisTemplate redisTemplate;
 
+    /**
+     * Ant风格路径匹配器
+     * 
+     * 支持的通配符：
+     * - ? 匹配单个字符
+     * - * 匹配0个或多个字符（不含路径分隔符）
+     * - ** 匹配0个或多个目录
+     * 
+     * 示例：/api/** 匹配 /api/users, /api/v1/users 等
+     */
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
     /**

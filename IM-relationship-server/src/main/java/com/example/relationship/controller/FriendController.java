@@ -1,6 +1,6 @@
 package com.example.relationship.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.relationship.dto.*;
 import com.example.relationship.entity.Blacklist;
 import com.example.relationship.entity.FriendGroup;

@@ -20,20 +20,73 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
- * 好友关系服务
+ * ====================================================================
+ * 好友关系服务 (Friend Relation Service)
+ * ====================================================================
+ * 
+ * 【业务场景】
+ * 实现IM系统中的好友关系管理，类似于：
+ * - 微信的好友列表
+ * - QQ的好友系统
+ * 
+ * 【好友关系模型】
+ * ┌─────────────────────────────────────────────────────────────┐
+ * │                    好友关系（双向）                          │
+ * │                                                             │
+ * │   用户A ◄─────────────────────────────────► 用户B           │
+ * │          │                               │                 │
+ * │          │  FriendRelation表             │                 │
+ * │          │  (user_id=A, friend_id=B)    │                 │
+ * │          │  (user_id=B, friend_id=A)    │  ← 存储两条记录  │
+ * │          │                               │                 │
+ * └─────────────────────────────────────────────────────────────┘
+ * 
+ * 【为什么存储双向记录？】
+ * 1. 查询效率：直接通过user_id查询我的所有好友
+ * 2. 独立设置：A可以给B设置备注，B可以给A设置不同备注
+ * 3. 分组管理：A把B放"同事"组，B把A放"朋友"组
+ * 
+ * 【功能模块】
+ * - 好友列表查询（支持分组）
+ * - 好友关系判断（高频操作，需缓存）
+ * - 好友分组管理
+ * - 黑名单管理
+ * - 好友互动统计（亲密度等）
+ * 
+ * 【缓存策略】
+ * - friend:ids:{userId} → Set<Long> 好友ID集合（判断好友用）
+ * - friend:list:{userId} → List<FriendVO> 好友列表（展示用）
+ * - 缓存过期时间：10分钟
+ * - 好友变动时主动清除缓存
+ * 
+ * @author 学习笔记
+ * @see FriendRequestService 好友申请服务
+ * @see FriendRelation 好友关系实体
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class FriendRelationService {
     
+    /** 好友关系数据访问 */
     private final FriendRelationMapper friendRelationMapper;
+    
+    /** 好友分组数据访问 */
     private final FriendGroupMapper friendGroupMapper;
+    
+    /** 黑名单数据访问 */
     private final BlacklistMapper blacklistMapper;
+    
+    /** Redis模板 - 好友关系缓存 */
     private final RedisTemplate<String, Object> redisTemplate;
+    
+    /** RocketMQ模板 - 好友事件通知 */
     private final RocketMQTemplate rocketMQTemplate;
     
+    /** 好友列表缓存Key前缀 */
     private static final String CACHE_FRIEND_LIST = "friend:list:";
+    
+    /** 好友ID集合缓存Key前缀（高频判断用） */
     private static final String CACHE_FRIEND_IDS = "friend:ids:";
     
     /**

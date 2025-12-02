@@ -1,6 +1,6 @@
 package com.example.org.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.org.entity.DeptUserRelation;
 import com.example.org.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -10,13 +10,49 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 成员管理接口
+ * ====================================================================
+ * 成员管理控制器 (Member Controller)
+ * ====================================================================
+ * 
+ * 【业务场景】
+ * 管理组织中用户与部门的关系，支持：
+ * - 一个用户可以属于多个部门（多部门任职）
+ * - 每个用户有一个主属部门（primary department）
+ * - 部门调动（从A部门调到B部门）
+ * 
+ * 【数据模型】
+ * ┌────────────┐     ┌──────────────────┐     ┌────────────┐
+ * │   用户     │     │  部门用户关系     │     │   部门     │
+ * │  (User)    │ 1:N │ (DeptUserRelation)│ N:1 │(Department)│
+ * ├────────────┤     ├──────────────────┤     ├────────────┤
+ * │ id         │────►│ user_id          │     │ id         │
+ * │ username   │     │ dept_id          │◄────│ name       │
+ * └────────────┘     │ is_primary       │     │ parent_id  │
+ *                    │ title (职位)      │     └────────────┘
+ *                    │ employee_no      │
+ *                    └──────────────────┘
+ * 
+ * 【主属部门概念】
+ * - 用户可以属于多个部门，但只有一个主属部门
+ * - 主属部门用于：工资发放、考勤统计、组织架构展示
+ * - 通过 is_primary 字段标识
+ * 
+ * 【API设计特点】
+ * - POST   /api/org/members/dept/{deptId}        → 添加成员到部门
+ * - DELETE /api/org/members/dept/{deptId}/user/{userId} → 移除成员
+ * - PUT    /api/org/members/move                 → 调整部门
+ * - PUT    /api/org/members/primary              → 设置主属部门
+ * 
+ * @author 学习笔记
+ * @see MemberService 成员业务服务
+ * @see DeptUserRelation 部门用户关系实体
  */
 @RestController
 @RequestMapping("/api/org/members")
 @RequiredArgsConstructor
 public class MemberController {
     
+    /** 成员服务 - 处理用户与部门关系的业务逻辑 */
     private final MemberService memberService;
     
     /**

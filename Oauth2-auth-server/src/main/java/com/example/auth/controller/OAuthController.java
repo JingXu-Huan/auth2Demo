@@ -4,6 +4,7 @@ import com.example.auth.service.GiteeOAuthService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -20,6 +21,9 @@ import java.util.Map;
 public class OAuthController {
     
     private final GiteeOAuthService giteeOAuthService;
+    
+    @Value("${server.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
     
     /**
      * 获取Gitee授权URL
@@ -72,7 +76,7 @@ public class OAuthController {
             Map<String, Object> user = (Map<String, Object>) result.get("user");
             
             // 构建重定向URL，包含完整用户信息
-            StringBuilder redirectUrl = new StringBuilder("http://localhost:3000/oauth/callback?");
+            StringBuilder redirectUrl = new StringBuilder(frontendUrl + "/oauth/callback?");
             redirectUrl.append("token=").append(token);
             redirectUrl.append("&userId=").append(user.get("id"));
             redirectUrl.append("&username=").append(java.net.URLEncoder.encode(String.valueOf(user.get("username")), "UTF-8"));
@@ -93,7 +97,7 @@ public class OAuthController {
         } catch (Exception e) {
             log.error("Gitee登录失败", e);
             // 重定向到前端登录页，携带错误信息
-            String errorUrl = "http://localhost:3000/login?error=" + 
+            String errorUrl = frontendUrl + "/login?error=" + 
                 java.net.URLEncoder.encode(e.getMessage(), "UTF-8");
             response.sendRedirect(errorUrl);
         }

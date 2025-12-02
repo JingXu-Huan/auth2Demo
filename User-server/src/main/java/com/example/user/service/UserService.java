@@ -23,37 +23,90 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
- * 用户核心服务
- * 基于新数据库设计，处理用户的基本信息管理
+ * ====================================================================
+ * 用户核心服务 (User Service)
+ * ====================================================================
+ * 
+ * 【服务职责】
+ * 本服务是User-server模块的核心，负责用户相关的业务逻辑：
+ * - 用户信息的CRUD操作
+ * - 用户注册与邮箱验证
+ * - 密码管理（加密、修改、历史记录）
+ * - 登录认证信息查询
+ * 
+ * 【分层架构中的位置】
+ * Controller → Service（本类） → Mapper → Database
+ *              ↓
+ *         业务逻辑处理
+ *         事务管理
+ *         缓存处理
+ *         调用其他Service
+ * 
+ * 【核心注解说明】
+ * @Service - 标记为Spring服务组件，会被自动扫描并注册为Bean
+ * @Slf4j   - Lombok注解，自动生成 log 日志对象
+ * 
+ * 【依赖注入】
+ * 本类使用 @Autowired 字段注入（简单但不推荐）
+ * 更好的方式是构造器注入（参考RoleController）
+ * 
+ * 【关键设计模式】
+ * 1. 缓存策略：使用Spring Cache + Redis缓存用户信息
+ * 2. 密码安全：BCrypt加密 + 密码历史防重复
+ * 3. 软删除：使用deleted_at字段标记删除
  * 
  * @author System
  * @since 2024-11-25
+ * @see UserMapper 用户数据访问层
+ * @see UserProfileService 用户资料服务
  */
 @Slf4j
 @Service
 public class UserService {
     
+    /** 用户数据访问对象 - 操作users表 */
     @Autowired
     private UserMapper userMapper;
     
+    /** 密码历史记录访问对象 - 防止使用最近用过的密码 */
     @Autowired
     private PasswordHistoryMapper passwordHistoryMapper;
     
+    /** 用户资料服务 - 管理用户详细信息 */
     @Autowired
     private UserProfileService userProfileService;
     
+    /** 邮箱验证服务 - 处理邮箱验证码 */
     @Autowired
     private EmailVerificationService emailVerificationService;
     
+    /**
+     * 密码编码器 - 使用BCrypt算法
+     * 
+     * 【BCrypt特点】
+     * - 自动加盐，每次结果不同
+     * - 可配置迭代次数（默认10轮）
+     * - 单向加密，无法解密
+     */
     @Autowired
     private PasswordEncoder passwordEncoder;
     
+    /** 密码强度验证器 - 检查密码复杂度 */
     @Autowired
     private PasswordValidator passwordValidator;
     
+    /**
+     * Redis模板 - 用于缓存操作
+     * 
+     * 【缓存策略】
+     * - 用户信息缓存Key: user:{userId}
+     * - 缓存过期时间: 通常1小时
+     * - 写操作时清除缓存
+     */
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
     
+    /** 密码历史记录限制 - 不能使用最近5次用过的密码 */
     private static final int PASSWORD_HISTORY_LIMIT = 5;
     
     /**

@@ -19,22 +19,84 @@ import java.time.OffsetDateTime;
 import java.util.List;
 
 /**
- * 消息服务
- * 负责消息的发送、存储、同步
+ * ====================================================================
+ * 即时通讯消息服务 (IM Message Service)
+ * ====================================================================
+ * 
+ * 【核心职责】
+ * IM系统的核心服务，负责消息的完整生命周期管理：
+ * - 消息发送与权限校验
+ * - 消息ID生成（雪花算法）
+ * - 消息持久化存储
+ * - 消息推送（通过RocketMQ）
+ * 
+ * 【消息投递模型 - 混合策略】
+ * ┌───────────────────────────────────────────────────────────────┐
+ * │                    消息投递策略选择                            │
+ * │                                                               │
+ * │   群成员数 < 500                    群成员数 >= 500            │
+ * │        ↓                                ↓                    │
+ * │   写扩散 (Inbox)                   读扩散 (Timeline)          │
+ * │        ↓                                ↓                    │
+ * │   为每个成员写入消息              只写入一份到群消息表          │
+ * │   用户拉取自己收件箱              用户拉取时聚合多个群消息      │
+ * │                                                               │
+ * │   优点：拉取快                     优点：写入快                 │
+ * │   缺点：写入压力大                 缺点：拉取需要聚合           │
+ * └───────────────────────────────────────────────────────────────┘
+ * 
+ * 【消息ID生成 - 雪花算法】
+ * 64位ID = 1位符号 + 41位时间戳 + 10位机器ID + 12位序列号
+ * - 每毫秒可生成4096个ID
+ * - 支持69年不重复
+ * - 天然有序，适合做数据库主键
+ * 
+ * 【消息可靠性 - 事务消息】
+ * 使用RocketMQ事务消息保证：消息存储 和 消息推送 的一致性
+ * 
+ * 1. 发送半消息（Half Message）
+ * 2. 执行本地事务（存储消息）
+ * 3. 根据本地事务结果提交/回滚
+ * 
+ * @author 学习笔记
+ * @see SnowflakeIdWorker 雪花算法ID生成器
+ * @see RocketMQTemplate RocketMQ消息模板
  */
 @Slf4j
 @Service
-@RequiredArgsConstructor
+@RequiredArgsConstructor  // Lombok: 为final字段生成构造函数
 public class MessageService {
 
+    /** 消息数据访问 - 操作messages表 */
     private final MessageMapper messageMapper;
+    
+    /** 会话/频道数据访问 - 操作channels表 */
     private final ChannelMapper channelMapper;
+    
+    /** 会话成员数据访问 - 用于权限校验和成员列表 */
     private final ChannelMemberMapper channelMemberMapper;
+    
+    /** 序列号服务 - 为每个会话生成递增的消息序号 */
     private final SequenceService sequenceService;
+    
+    /**
+     * RocketMQ消息模板
+     * 
+     * 【RocketMQ简介】
+     * 阿里开源的分布式消息中间件，支持：
+     * - 事务消息（本项目使用）
+     * - 顺序消息
+     * - 延迟消息
+     * - 批量消息
+     */
     private final RocketMQTemplate rocketMQTemplate;
 
     /**
-     * 写扩散阈值（小于此值采用写扩散）
+     * 写扩散阈值
+     * 
+     * 【策略说明】
+     * - 群成员 < 500: 写扩散，为每个成员写入消息副本
+     * - 群成员 >= 500: 读扩散，只存储一份，读取时聚合
      */
     private static final int WRITE_DIFFUSION_THRESHOLD = 500;
 

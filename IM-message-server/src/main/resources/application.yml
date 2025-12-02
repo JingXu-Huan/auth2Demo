@@ -83,10 +83,10 @@ chat:
   redis:
     topic: chat-messages
 
-# 服务间认证配置
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    secret: "IM-message-server-secret-key-for-service-authentication-2025"
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars
   user-server:
     url: http://localhost:8082
 

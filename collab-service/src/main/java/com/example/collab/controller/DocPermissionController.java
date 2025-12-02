@@ -2,7 +2,7 @@ package com.example.collab.controller;
 
 import com.example.collab.entity.DocPermission;
 import com.example.collab.service.DocPermissionService;
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

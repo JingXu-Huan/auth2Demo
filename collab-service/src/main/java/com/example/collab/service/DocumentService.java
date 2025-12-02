@@ -13,14 +13,68 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * 文档服务
+ * ====================================================================
+ * 协同文档服务 (Collaborative Document Service)
+ * ====================================================================
+ * 
+ * 【功能概述】
+ * 实现类似飞书文档、Notion的在线协同编辑功能：
+ * - 文档的创建、编辑、删除
+ * - 多人实时协同编辑
+ * - 版本管理与历史记录
+ * - 权限控制（查看/编辑/评论）
+ * 
+ * 【协同编辑技术方案】
+ * ┌─────────────────────────────────────────────────────────┐
+ * │                    CRDT / Yjs 方案                       │
+ * │                                                         │
+ * │  用户A编辑 ──┬──► 本地CRDT状态 ──► 同步到服务器          │
+ * │              │                         ↓                │
+ * │  用户B编辑 ──┴──► 本地CRDT状态 ←── 广播给其他用户        │
+ * │                                                         │
+ * │  特点：                                                  │
+ * │  - 无冲突合并（Conflict-free）                           │
+ * │  - 支持离线编辑                                          │
+ * │  - 最终一致性                                            │
+ * └─────────────────────────────────────────────────────────┘
+ * 
+ * 【文档存储策略】
+ * - 小文档：直接存储在数据库（storageType = "database"）
+ * - 大文档：存储在MinIO对象存储（storageType = "minio"）
+ * - Yjs状态：二进制格式，定期快照
+ * 
+ * 【文档状态 status】
+ * - 1: 正常
+ * - 2: 归档
+ * - 3: 回收站
+ * - 4: 已删除（软删除）
+ * 
+ * 【版本管理】
+ * - content_version: 内容版本号，每次编辑+1
+ * - 定期创建快照，支持历史版本回溯
+ * - 支持查看任意版本的内容
+ * 
+ * @author 学习笔记
+ * @see MinioStorageService MinIO对象存储服务
+ * @see DocumentMapper 文档数据访问层
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
 
+    /** 文档数据访问对象 */
     private final DocumentMapper documentMapper;
+    
+    /**
+     * MinIO存储服务
+     * 
+     * 【MinIO简介】
+     * MinIO是高性能的对象存储服务，兼容S3 API：
+     * - 适合存储大文件（图片、视频、文档）
+     * - 支持分布式部署
+     * - 支持版本管理
+     */
     private final MinioStorageService minioStorageService;
 
     /**

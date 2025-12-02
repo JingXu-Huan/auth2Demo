@@ -1,6 +1,6 @@
 package com.example.org.controller;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import com.example.org.entity.Organization;
 import com.example.org.entity.OrgMember;
 import com.example.org.service.OrganizationService;
@@ -10,13 +10,53 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * 组织管理接口
+ * ====================================================================
+ * 组织管理控制器 (Organization Controller)
+ * ====================================================================
+ * 
+ * 【业务场景】
+ * 管理系统中的组织/团队/公司，类似于：
+ * - 企业微信中的"企业"
+ * - 钉钉中的"组织"
+ * - Slack中的"Workspace"
+ * 
+ * 【组织架构层次】
+ * ┌─────────────────────────────────────────────────────────┐
+ * │                    组织 (Organization)                   │
+ * │  ┌─────────────┐   ┌─────────────┐   ┌─────────────┐    │
+ * │  │   部门A     │   │   部门B     │   │   部门C     │    │
+ * │  │ (Department)│   │ (Department)│   │ (Department)│    │
+ * │  └──────┬──────┘   └──────┬──────┘   └─────────────┘    │
+ * │         ▼                 ▼                              │
+ * │    ┌────────┐        ┌────────┐                         │
+ * │    │ 子部门  │        │ 子部门  │                         │
+ * │    └────────┘        └────────┘                         │
+ * └─────────────────────────────────────────────────────────┘
+ * 
+ * 【组织与部门的区别】
+ * - 组织(Organization): 顶层容器，代表一个独立的实体（公司/团队）
+ * - 部门(Department): 组织内部的划分，有层级关系
+ * 
+ * 【成员管理】
+ * - 用户通过 OrgMember 加入组织
+ * - OrgMember 记录用户在组织中的：部门、职位、加入时间等
+ * - 一个用户可以加入多个组织（如多个项目团队）
+ * 
+ * 【典型使用场景】
+ * 1. 创建公司 → 创建各部门 → 邀请员工加入
+ * 2. 创建项目组 → 添加项目成员 → 分配角色权限
+ * 
+ * @author 学习笔记
+ * @see OrganizationService 组织业务服务
+ * @see DepartmentController 部门管理（组织下的部门）
+ * @see MemberController 成员管理（部门成员）
  */
 @RestController
 @RequestMapping("/api/org/organizations")
 @RequiredArgsConstructor
 public class OrganizationController {
     
+    /** 组织服务 - 处理组织相关的业务逻辑 */
     private final OrganizationService organizationService;
     
     /**

@@ -9,7 +9,7 @@ import java.util.Map;
 /**
  * 用户服务 Feign Client
  */
-@FeignClient(name = "user-server", url = "${service.user-server.url:http://localhost:8082}")
+@FeignClient(name = "user-server")  // 使用Nacos服务发现
 public interface UserClient {
     
     /**

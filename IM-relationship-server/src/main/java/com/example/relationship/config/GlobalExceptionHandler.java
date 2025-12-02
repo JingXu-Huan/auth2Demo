@@ -1,6 +1,6 @@
 package com.example.relationship.config;
 
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

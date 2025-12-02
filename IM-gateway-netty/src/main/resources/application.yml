@@ -60,10 +60,10 @@ jwt:
   secret: mySecretKey123456789012345678901234567890
   expiration: 86400000
 
-# 服务间认证配置
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    secret: myServiceAuthSecret1234567890123456789012
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars
 
 # 日志配置
 logging:

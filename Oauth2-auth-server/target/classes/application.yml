@@ -1,5 +1,7 @@
 server:
   port: 8003
+  # 前端URL配置（用于OAuth回调重定向）
+  frontend-url: ${FRONTEND_URL:http://localhost:3000}
 
 spring:
   autoconfigure:
@@ -167,7 +169,7 @@ management:
     tags:
       application: oauth2-auth-server
 
-# 服务间认证配置
+# 服务间认证配置（统一密钥）
 service:
   auth:
-    secret: your_32_character_secret_key_here_12345  # 必须至少32位
+    secret: unified-service-auth-secret-key-2024-minimum-32-chars

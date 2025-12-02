@@ -8,7 +8,7 @@ import com.example.admin.service.DashboardService;
 import com.example.admin.service.ReportService;
 import com.example.admin.service.SensitiveWordService;
 import com.example.admin.service.SysConfigService;
-import com.example.common.result.Result;
+import com.example.domain.vo.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
